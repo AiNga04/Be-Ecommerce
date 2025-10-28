@@ -1,0 +1,31 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ecommerce
+    username: postgres
+    password: 123123
+#    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update          # tự tạo / cập nhật bảng khi entity thay đổi (dev mode)
+    show-sql: true              # log câu SQL ra console
+    properties:
+      hibernate:
+        format_sql: true        # định dạng SQL cho dễ đọc
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false         # khuyến nghị tắt để tránh lazy-loading lỗi
+
+  # Nếu bạn dùng file .sql hoặc data.sql seed data
+  sql:
+    init:
+      mode: always
+
+logging:
+  level:
+    org.hibernate.SQL: debug         # log câu SQL
+    org.hibernate.type.descriptor.sql.BasicBinder: trace  # log giá trị parameter
