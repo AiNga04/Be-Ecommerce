@@ -42,17 +42,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApplicationException.class)
     public ResponseEntity<ApiResponse<Object>> handleApplicationException(ApplicationException ex) {
 
-        Map<String, Object> errorPayload = null;
+        Object payload = null;
+
+        // Ưu tiên errors nếu có
         if (ex.getErrors() != null && !ex.getErrors().isEmpty()) {
-            errorPayload = Map.of("errors", ex.getErrors());
-        } else if (ex.getData() != null) {
-            errorPayload = Map.of("data", ex.getData());
+            payload = Map.of("errors", ex.getErrors());
+        }
+        // Nếu không có errors mà có data tuỳ biến -> dùng data
+        else if (ex.getData() != null) {
+            payload = ex.getData();
         }
 
         ApiResponse<Object> body = ApiResponse.failedResponse(
                 ex.getHttpStatus().value(),
                 ex.getMessage(),
-                errorPayload
+                payload
         );
 
         return ResponseEntity.status(ex.getHttpStatus()).body(body);

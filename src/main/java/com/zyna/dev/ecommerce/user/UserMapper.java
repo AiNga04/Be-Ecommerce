@@ -15,12 +15,11 @@ public class UserMapper {
                 .email(dto.getEmail())
                 .dateOfBirth(dto.getDateOfBirth())
                 .gender(dto.getGender())
-                .password(dto.getPassword()) // sẽ mã hoá ở service
+                .password(dto.getPassword())
                 .role(dto.getRole())
                 .phone(dto.getPhone())
                 .address(dto.getAddress())
                 .city(dto.getCity())
-                // status & isDeleted để service lo
                 .build();
     }
 
