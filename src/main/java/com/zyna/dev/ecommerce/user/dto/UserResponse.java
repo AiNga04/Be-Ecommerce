@@ -4,15 +4,14 @@ import com.zyna.dev.ecommerce.common.enums.City;
 import com.zyna.dev.ecommerce.common.enums.Gender;
 import com.zyna.dev.ecommerce.common.enums.Role;
 import com.zyna.dev.ecommerce.common.enums.Status;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserResponse {
@@ -20,7 +19,7 @@ public class UserResponse {
     private String firstName;
     private String lastName;
     private String email;
-    private LocalDateTime dateOfBirth;
+    private LocalDate dateOfBirth;
     private Gender gender;
     private Role role;
     private String phone;
