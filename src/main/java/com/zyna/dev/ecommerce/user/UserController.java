@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.*;
+
 @Slf4j
 @RestController
 @RequestMapping("/users")
@@ -113,5 +115,84 @@ public class UserController {
                 "Delete user successfully!",
                 "User " + id + " deleted!"
         );
+    }
+
+    // SOFT DELETE NHIỀU
+    @DeleteMapping("/batch")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Map<String, Object>> softDeleteUsers(@RequestBody List<Long> ids) {
+        var deletedIds = userService.softDeleteUsers(ids);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("requestedIds", ids);
+        result.put("deletedIds", deletedIds);
+        result.put("notDeletedIds", diff(ids, deletedIds));
+
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Soft delete users successfully!",
+                result
+        );
+    }
+
+    // RESTORE NHIỀU
+    @PatchMapping("/batch/restore")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Map<String, Object>> restoreUsers(@RequestBody List<Long> ids) {
+        var restoredIds = userService.restoreUsers(ids);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("requestedIds", ids);
+        result.put("restoredIds", restoredIds);
+        result.put("notRestoredIds", diff(ids, restoredIds));
+
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Restore users successfully!",
+                result
+        );
+    }
+
+    // HARD DELETE NHIỀU
+    @DeleteMapping("/batch/hard")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Map<String, Object>> hardDeleteUsers(@RequestBody List<Long> ids) {
+        var deletedIds = userService.hardDeleteUsers(ids);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("requestedIds", ids);
+        result.put("deletedIds", deletedIds);
+        result.put("notDeletedIds", diff(ids, deletedIds));
+
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Hard delete users successfully!",
+                result
+        );
+    }
+
+    // GET DELETED
+    @GetMapping("/deleted")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Page<UserResponse>> getDeletedUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction,
+            UserCriteria criteria
+    ) {
+        Page<UserResponse> deletedUsers = userService.getDeletedUsers(criteria, page, size);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "List of soft-deleted users!",
+                deletedUsers
+        );
+    }
+
+    private List<Long> diff(List<Long> requested, List<Long> processed) {
+        Set<Long> processedSet = new HashSet<>(processed);
+        return requested.stream()
+                .filter(id -> !processedSet.contains(id))
+                .toList();
     }
 }

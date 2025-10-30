@@ -21,6 +21,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -173,4 +175,106 @@ public class UserServiceImpl implements UserService {
         userRepository.delete(user);
         log.info("Hard deleted user id={}", id);
     }
+
+    @Override
+    public List<Long> softDeleteUsers(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // chỉ lấy user chưa xóa
+        List<User> users = userRepository.findAllByIdInAndIsDeletedFalse(ids);
+
+        LocalDateTime now = LocalDateTime.now();
+        users.forEach(u -> {
+            u.setDeleted(true);
+            u.setDeletedAt(now);
+        });
+
+        userRepository.saveAll(users);
+
+        List<Long> processedIds = users.stream()
+                .map(User::getId)
+                .toList();
+
+        log.info("Soft deleted {} users: {}", processedIds.size(), processedIds);
+        return processedIds;
+    }
+
+    @Override
+    public List<Long> restoreUsers(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // lấy all user để kiểm tra trạng thái
+        List<User> users = userRepository.findAllByIdIn(ids);
+
+        List<User> toRestore = users.stream()
+                .filter(User::isDeleted)
+                .toList();
+
+        toRestore.forEach(u -> {
+            u.setDeleted(false);
+            u.setDeletedAt(null);
+        });
+
+        userRepository.saveAll(toRestore);
+
+        List<Long> restoredIds = toRestore.stream()
+                .map(User::getId)
+                .toList();
+
+        log.info("Restored {} users: {}", restoredIds.size(), restoredIds);
+        return restoredIds;
+    }
+
+    @Override
+    public List<Long> hardDeleteUsers(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<User> users = userRepository.findAllByIdIn(ids);
+
+        userRepository.deleteAll(users);
+
+        List<Long> deletedIds = users.stream()
+                .map(User::getId)
+                .toList();
+
+        log.info("Hard deleted {} users: {}", deletedIds.size(), deletedIds);
+        return deletedIds;
+    }
+
+    @Override
+    public Page<UserResponse> getDeletedUsers(UserCriteria criteria, int page, int size) {
+        Page<User> basePage = userRepository.findAllByIsDeletedTrue(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+
+        Predicate<User> matches = u -> {
+            if (criteria.getFirstName() != null && !u.getFirstName().toLowerCase().contains(criteria.getFirstName().toLowerCase()))
+                return false;
+            if (criteria.getLastName() != null && !u.getLastName().toLowerCase().contains(criteria.getLastName().toLowerCase()))
+                return false;
+            if (criteria.getRole() != null && !u.getRole().name().equalsIgnoreCase(criteria.getRole()))
+                return false;
+            if (criteria.getPhone() != null && (u.getPhone() == null || !u.getPhone().contains(criteria.getPhone())))
+                return false;
+            if (criteria.getDateOfBirth() != null && (u.getDateOfBirth() == null || !u.getDateOfBirth().isEqual(criteria.getDateOfBirth())))
+                return false;
+            if (criteria.getGender() != null && (u.getGender() == null || u.getGender() != criteria.getGender()))
+                return false;
+            if (criteria.getCity() != null && (u.getCity() == null || u.getCity() != criteria.getCity()))
+                return false;
+            return true;
+        };
+
+        var filtered = basePage.getContent().stream()
+                .filter(matches)
+                .map(userMapper::toUserResponse)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(filtered, basePage.getPageable(), basePage.getTotalElements());
+    }
+
 }

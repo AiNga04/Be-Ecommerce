@@ -6,6 +6,8 @@ import com.zyna.dev.ecommerce.user.dto.UserResponse;
 import com.zyna.dev.ecommerce.user.dto.request.UserUpdateRequest;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
+
 public interface UserService {
     UserResponse createUser(UserCreateRequest request);
 
@@ -20,4 +22,13 @@ public interface UserService {
     void restoreUser(Long id);
 
     void hardDeleteUser(Long id);
+
+    List<Long> softDeleteUsers(List<Long> ids);
+
+    List<Long> restoreUsers(List<Long> ids);
+
+    List<Long> hardDeleteUsers(List<Long> ids);
+
+    Page<UserResponse> getDeletedUsers(UserCriteria criteria, int page, int size);
+
 }
