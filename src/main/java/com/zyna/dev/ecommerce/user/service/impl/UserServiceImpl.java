@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserResponse createUser(UserCreateRequest createRequest) {
@@ -45,6 +46,9 @@ public class UserServiceImpl implements UserService {
         if (user.getStatus() == null) {
             user.setStatus(Status.PENDING);
         }
+
+        user.setPassword(passwordEncoder.encode(createRequest.getPassword()));
+
         User saved = userRepository.save(user);
         return userMapper.toUserResponse(saved);
     }
@@ -115,6 +119,8 @@ public class UserServiceImpl implements UserService {
         }
 
         userMapper.applyUpdate(user, updateRequest);
+
+        user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
 
         User saved = userRepository.save(user);
 

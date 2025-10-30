@@ -1,14 +1,14 @@
-package com.zyna.dev.ecommerce.user;
+package com.zyna.dev.ecommerce.auth;
 
+import com.zyna.dev.ecommerce.auth.dto.request.RegisterRequest;
+import com.zyna.dev.ecommerce.user.User;
 import com.zyna.dev.ecommerce.user.dto.UserResponse;
-import com.zyna.dev.ecommerce.user.dto.request.UserCreateRequest;
-import com.zyna.dev.ecommerce.user.dto.request.UserUpdateRequest;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UserMapper {
+public class AuthMapper {
 
-    public User createToUser(UserCreateRequest dto) {
+    public User toUser(RegisterRequest dto) {
         return User.builder()
                 .firstName(dto.getFirstName())
                 .lastName(dto.getLastName())
@@ -16,41 +16,10 @@ public class UserMapper {
                 .dateOfBirth(dto.getDateOfBirth())
                 .gender(dto.getGender())
                 .password(dto.getPassword())
-                .role(dto.getRole())
                 .phone(dto.getPhone())
                 .address(dto.getAddress())
                 .city(dto.getCity())
                 .build();
-    }
-
-    public void applyUpdate(User target, UserUpdateRequest dto) {
-        if (dto.getFirstName() != null) {
-            target.setFirstName(dto.getFirstName());
-        }
-        if (dto.getLastName() != null) {
-            target.setLastName(dto.getLastName());
-        }
-        if (dto.getDateOfBirth() != null) {
-            target.setDateOfBirth(dto.getDateOfBirth());
-        }
-        if (dto.getGender() != null) {
-            target.setGender(dto.getGender());
-        }
-        if (dto.getPassword() != null) {
-            target.setPassword(dto.getPassword());
-        }
-        if (dto.getRole() != null) {
-            target.setRole(dto.getRole());
-        }
-        if (dto.getPhone() != null) {
-            target.setPhone(dto.getPhone());
-        }
-        if (dto.getAddress() != null) {
-            target.setAddress(dto.getAddress());
-        }
-        if (dto.getCity() != null) {
-            target.setCity(dto.getCity());
-        }
     }
 
     public UserResponse toUserResponse(User entity) {
