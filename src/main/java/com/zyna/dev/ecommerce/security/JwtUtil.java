@@ -64,14 +64,11 @@ public class JwtUtil {
     }
 
     public String extractUsername(String token) {
-        return getAllClaims(token).getSubject();
-    }
-
-    private Claims getAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
-                .getBody();
+                .getBody()
+                .getSubject();
     }
 }

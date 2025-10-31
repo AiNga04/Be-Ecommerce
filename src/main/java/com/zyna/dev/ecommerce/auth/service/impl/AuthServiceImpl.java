@@ -1,9 +1,12 @@
 package com.zyna.dev.ecommerce.auth.service.impl;
 
+import com.nimbusds.jose.JWSVerifier;
 import com.zyna.dev.ecommerce.auth.AuthMapper;
 import com.zyna.dev.ecommerce.auth.AuthRepository;
+import com.zyna.dev.ecommerce.auth.dto.request.IntrospectRequest;
 import com.zyna.dev.ecommerce.auth.dto.request.LoginRequest;
 import com.zyna.dev.ecommerce.auth.dto.request.RegisterRequest;
+import com.zyna.dev.ecommerce.auth.dto.response.IntrospectResponse;
 import com.zyna.dev.ecommerce.auth.dto.response.LoginResponse;
 import com.zyna.dev.ecommerce.auth.service.interfaces.AuthService;
 import com.zyna.dev.ecommerce.common.enums.Status;
@@ -72,5 +75,21 @@ public class AuthServiceImpl implements AuthService {
         User saved = authRepository.save(user);
         return authMapper.toUserResponse(saved);
     }
+
+    @Override
+    public IntrospectResponse introspect(IntrospectRequest introspectRequest) {
+        String token = introspectRequest.getToken();
+
+        boolean isValid = jwtUtil.validateToken(token);
+
+        String email  = jwtUtil.extractUsername(token);
+
+        if (!isValid) {
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid or expired token!");
+        }
+
+        return new IntrospectResponse(isValid, email);
+    }
+
 
 }

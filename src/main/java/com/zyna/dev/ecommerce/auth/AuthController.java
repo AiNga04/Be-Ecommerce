@@ -1,7 +1,9 @@
 package com.zyna.dev.ecommerce.auth;
 
+import com.zyna.dev.ecommerce.auth.dto.request.IntrospectRequest;
 import com.zyna.dev.ecommerce.auth.dto.request.LoginRequest;
 import com.zyna.dev.ecommerce.auth.dto.request.RegisterRequest;
+import com.zyna.dev.ecommerce.auth.dto.response.IntrospectResponse;
 import com.zyna.dev.ecommerce.auth.dto.response.LoginResponse;
 import com.zyna.dev.ecommerce.auth.service.interfaces.AuthService;
 import com.zyna.dev.ecommerce.common.ApiResponse;
@@ -38,4 +40,19 @@ public class AuthController {
                 userResponse
         );
     }
+
+    @PostMapping("/introspect")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<IntrospectResponse> introspect(
+            @RequestBody @Valid IntrospectRequest introspectRequest
+    ) {
+        IntrospectResponse introspectResponse = authService.introspect(introspectRequest);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Token introspection successful!",
+                introspectResponse
+        );
+    }
+
+
 }
