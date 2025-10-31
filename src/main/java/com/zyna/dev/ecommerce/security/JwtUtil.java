@@ -1,67 +1,77 @@
 package com.zyna.dev.ecommerce.security;
 
 import com.zyna.dev.ecommerce.user.User;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
 
-    // nhớ thay bằng secret thực sự dài 32+ ký tự
-    private static final String SECRET = "replace-with-very-long-secret-key-of-32+-chars-123456";
-    private static final long EXPIRATION_MS = 1000L * 60 * 60 * 24; // 24h
+    private final SecretKey key;
+    private final long expirationMs;
+    private final String issuer;
 
-    private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
+    public JwtUtil(
+            @Value("${app.jwt.secret}") String secret,
+            @Value("${app.jwt.expiration-ms:86400000}") long expirationMs,
+            @Value("${app.jwt.issuer:zyna-app}") String issuer
+    ) {
+        this.expirationMs = expirationMs;
+        this.issuer = issuer;
+        this.key = parseSecret(secret);
+    }
 
-    // ✅ generate từ User
+    private SecretKey parseSecret(String secret) {
+        try {
+            return Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
+        } catch (IllegalArgumentException e) {
+            return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    // Generate JWT từ User
     public String generateToken(User user) {
         long now = System.currentTimeMillis();
-
         return Jwts.builder()
-                .setSubject(user.getEmail())               // sẽ dùng email làm subject
-                .claim("id", user.getId())                  // claim thêm, sau này dễ lấy
+                .setSubject(user.getEmail())
+                .setIssuer(issuer)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + expirationMs))
+                .claim("id", user.getId())
                 .claim("role", user.getRole() != null ? user.getRole().name() : null)
-                .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + EXPIRATION_MS))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
-    }
-
-    // nếu bạn muốn generate từ email cũng được, giữ lại cho tiện
-    public String generateToken(String username) {
-        long now = System.currentTimeMillis();
-        return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + EXPIRATION_MS))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-    }
-
-    public String extractUsername(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
     }
 
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
                     .setSigningKey(key)
+                    .requireIssuer(issuer)
                     .build()
                     .parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    public String extractUsername(String token) {
+        return getAllClaims(token).getSubject();
+    }
+
+    private Claims getAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

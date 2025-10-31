@@ -10,6 +10,9 @@ spring:
     password: 123123
 #    driver-class-name: org.postgresql.Driver
 
+  config:
+    import: optional:file:.env[.properties]
+
   jpa:
     hibernate:
       ddl-auto: update          # tự tạo / cập nhật bảng khi entity thay đổi (dev mode)
@@ -29,3 +32,10 @@ logging:
   level:
     org.hibernate.SQL: debug         # log câu SQL
     org.hibernate.type.descriptor.sql.BasicBinder: trace  # log giá trị parameter
+
+
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET}
+    expiration-ms: ${APP_JWT_EXPIRATION_MS:86400000}
+    issuer: ${APP_JWT_ISSUER:zyna-app}
