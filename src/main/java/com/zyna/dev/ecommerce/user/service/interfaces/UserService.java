@@ -1,8 +1,10 @@
 package com.zyna.dev.ecommerce.user.service.interfaces;
 
 import com.zyna.dev.ecommerce.user.criteria.UserCriteria;
+import com.zyna.dev.ecommerce.user.dto.request.UserBatchCreateRequest;
 import com.zyna.dev.ecommerce.user.dto.request.UserCreateRequest;
-import com.zyna.dev.ecommerce.user.dto.UserResponse;
+import com.zyna.dev.ecommerce.user.dto.response.UserBatchCreateResponse;
+import com.zyna.dev.ecommerce.user.dto.response.UserResponse;
 import com.zyna.dev.ecommerce.user.dto.request.UserUpdateRequest;
 import org.springframework.data.domain.Page;
 
@@ -30,5 +32,7 @@ public interface UserService {
     List<Long> hardDeleteUsers(List<Long> ids);
 
     Page<UserResponse> getDeletedUsers(UserCriteria criteria, int page, int size);
+
+    UserBatchCreateResponse createUsers(UserBatchCreateRequest request);
 
 }

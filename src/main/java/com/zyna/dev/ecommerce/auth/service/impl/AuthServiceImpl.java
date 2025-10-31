@@ -10,7 +10,7 @@ import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.security.JwtUtil;
 import com.zyna.dev.ecommerce.user.User;
-import com.zyna.dev.ecommerce.user.dto.UserResponse;
+import com.zyna.dev.ecommerce.user.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;

@@ -1,6 +1,6 @@
 package com.zyna.dev.ecommerce.auth.dto.response;
 
-import com.zyna.dev.ecommerce.user.dto.UserResponse;
+import com.zyna.dev.ecommerce.user.dto.response.UserResponse;
 import lombok.*;
 
 @Getter

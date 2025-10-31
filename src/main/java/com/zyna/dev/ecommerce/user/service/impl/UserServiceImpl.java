@@ -6,8 +6,10 @@ import com.zyna.dev.ecommerce.user.User;
 import com.zyna.dev.ecommerce.user.UserMapper;
 import com.zyna.dev.ecommerce.user.UserRepository;
 import com.zyna.dev.ecommerce.user.criteria.UserCriteria;
+import com.zyna.dev.ecommerce.user.dto.request.UserBatchCreateRequest;
 import com.zyna.dev.ecommerce.user.dto.request.UserCreateRequest;
-import com.zyna.dev.ecommerce.user.dto.UserResponse;
+import com.zyna.dev.ecommerce.user.dto.response.UserBatchCreateResponse;
+import com.zyna.dev.ecommerce.user.dto.response.UserResponse;
 import com.zyna.dev.ecommerce.user.dto.request.UserUpdateRequest;
 import com.zyna.dev.ecommerce.user.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
@@ -276,5 +278,64 @@ public class UserServiceImpl implements UserService {
 
         return new PageImpl<>(filtered, basePage.getPageable(), basePage.getTotalElements());
     }
+
+    @Override
+    public UserBatchCreateResponse createUsers(UserBatchCreateRequest request) {
+        var createdList = new java.util.ArrayList<UserResponse>();
+        var failedList = new java.util.ArrayList<UserBatchCreateResponse.FailedUser>();
+
+        // thời điểm tạo
+        var now = java.time.LocalDateTime.now();
+
+        request.getUsers().forEach(item -> {
+            try {
+                // check email trùng giống createUser()
+                if (userRepository.existsByEmail(item.getEmail())) {
+                    failedList.add(
+                            UserBatchCreateResponse.FailedUser.builder()
+                                    .email(item.getEmail())
+                                    .reason("Email already in use!")
+                                    .build()
+                    );
+                    return;
+                }
+
+                // map dto -> entity
+                User user = userMapper.createToUser(item);  // :contentReference[oaicite:10]{index=10}
+
+                // set status nếu null
+                if (user.getStatus() == null) {
+                    user.setStatus(com.zyna.dev.ecommerce.common.enums.Status.PENDING);
+                }
+
+                // encode password giống createUser()
+                user.setPassword(passwordEncoder.encode(item.getPassword()));
+
+                // set các field audit nếu cần (tùy bạn, vì @CreationTimestamp tự set)
+                user.setCreatedAt(now);
+
+                User saved = userRepository.save(user);
+
+                createdList.add(userMapper.toUserResponse(saved)); // :contentReference[oaicite:11]{index=11}
+            } catch (Exception e) {
+                // nếu có lỗi khác (ví dụ enum city sai) thì cũng add vào failed
+                failedList.add(
+                        UserBatchCreateResponse.FailedUser.builder()
+                                .email(item.getEmail())
+                                .reason(e.getMessage())
+                                .build()
+                );
+                log.error("Failed to create user email={}", item.getEmail(), e);
+            }
+        });
+
+        log.info("Batch create users: success={}, failed={}", createdList.size(), failedList.size());
+
+        return UserBatchCreateResponse.builder()
+                .created(createdList)
+                .failed(failedList)
+                .build();
+    }
+
 
 }

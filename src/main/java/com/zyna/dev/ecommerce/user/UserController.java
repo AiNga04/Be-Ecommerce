@@ -2,7 +2,8 @@ package com.zyna.dev.ecommerce.user;
 
 import com.zyna.dev.ecommerce.common.ApiResponse;
 import com.zyna.dev.ecommerce.user.criteria.UserCriteria;
-import com.zyna.dev.ecommerce.user.dto.UserResponse;
+import com.zyna.dev.ecommerce.user.dto.response.UserBatchCreateResponse;
+import com.zyna.dev.ecommerce.user.dto.response.UserResponse;
 import com.zyna.dev.ecommerce.user.dto.request.UserCreateRequest;
 import com.zyna.dev.ecommerce.user.dto.request.UserUpdateRequest;
 import com.zyna.dev.ecommerce.user.service.interfaces.UserService;
@@ -188,6 +189,20 @@ public class UserController {
                 deletedUsers
         );
     }
+
+    @PostMapping("/batch-create")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<UserBatchCreateResponse> createUsers(
+            @Valid @RequestBody com.zyna.dev.ecommerce.user.dto.request.UserBatchCreateRequest request
+    ) {
+        var result = userService.createUsers(request);
+        return ApiResponse.successfulResponse(
+                HttpStatus.CREATED.value(),
+                "Batch create users done!",
+                result
+        );
+    }
+
 
     private List<Long> diff(List<Long> requested, List<Long> processed) {
         Set<Long> processedSet = new HashSet<>(processed);
