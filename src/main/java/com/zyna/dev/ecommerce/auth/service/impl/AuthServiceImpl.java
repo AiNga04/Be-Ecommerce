@@ -3,6 +3,7 @@ package com.zyna.dev.ecommerce.auth.service.impl;
 import com.nimbusds.jose.JWSVerifier;
 import com.zyna.dev.ecommerce.auth.AuthMapper;
 import com.zyna.dev.ecommerce.auth.AuthRepository;
+import com.zyna.dev.ecommerce.auth.LoginRateLimiter;
 import com.zyna.dev.ecommerce.auth.dto.request.IntrospectRequest;
 import com.zyna.dev.ecommerce.auth.dto.request.LoginRequest;
 import com.zyna.dev.ecommerce.auth.dto.request.RegisterRequest;
@@ -27,28 +28,45 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthMapper authMapper;
+    private final LoginRateLimiter rateLimiter;
 
     @Override
     public LoginResponse login(LoginRequest loginRequest) {
-        // 1. tìm user theo email (chỉ user chưa bị xóa mềm)
-        User user = authRepository.findByEmailAndIsDeletedFalse(loginRequest.getEmail())
-                .orElseThrow(() ->
-                        new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password")
-                );
+        String email = loginRequest.getEmail();
 
-        // 2. kiểm tra
+        // 0. Kiểm tra nếu user đang bị block
+        if (rateLimiter.isBlocked(email)) {
+            throw new ApplicationException(
+                    HttpStatus.TOO_MANY_REQUESTS,
+                    "Too many failed attempts. Please try again later!"
+            );
+        }
+
+        // 1. tìm user theo email (chỉ user chưa bị xóa mềm)
+        User user = authRepository.findByEmailAndIsDeletedFalse(email)
+                .orElseThrow(() -> {
+                    rateLimiter.recordFailedAttempt(email);
+                    return new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+                });
+
+        // 2. kiểm tra mật khẩu
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            rateLimiter.recordFailedAttempt(email);
             throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
+        // 3. kiểm tra trạng thái user
         if (user.getStatus() != null && user.getStatus() != Status.ACTIVE) {
             throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Account is not active");
         }
 
-        // 3. sinh JWT
+        // ✅ Reset đếm lỗi khi login thành công
+        rateLimiter.resetAttempts(email);
+
+        // 4. sinh JWT
         String token = jwtUtil.generateToken(user);
 
-        // 4. map sang response (ẩn password)
+        // 5. map sang response (ẩn password)
         UserResponse userResponse = authMapper.toUserResponse(user);
 
         return LoginResponse.builder()
