@@ -1,12 +1,12 @@
-package com.zyna.dev.ecommerce.user;
+package com.zyna.dev.ecommerce.users;
 
 import com.zyna.dev.ecommerce.common.ApiResponse;
-import com.zyna.dev.ecommerce.user.criteria.UserCriteria;
-import com.zyna.dev.ecommerce.user.dto.response.UserBatchCreateResponse;
-import com.zyna.dev.ecommerce.user.dto.response.UserResponse;
-import com.zyna.dev.ecommerce.user.dto.request.UserCreateRequest;
-import com.zyna.dev.ecommerce.user.dto.request.UserUpdateRequest;
-import com.zyna.dev.ecommerce.user.service.interfaces.UserService;
+import com.zyna.dev.ecommerce.users.criteria.UserCriteria;
+import com.zyna.dev.ecommerce.users.dto.response.UserBatchCreateResponse;
+import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
+import com.zyna.dev.ecommerce.users.dto.request.UserCreateRequest;
+import com.zyna.dev.ecommerce.users.dto.request.UserUpdateRequest;
+import com.zyna.dev.ecommerce.users.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -193,7 +193,7 @@ public class UserController {
     @PostMapping("/batch-create")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<UserBatchCreateResponse> createUsers(
-            @Valid @RequestBody com.zyna.dev.ecommerce.user.dto.request.UserBatchCreateRequest request
+            @Valid @RequestBody com.zyna.dev.ecommerce.users.dto.request.UserBatchCreateRequest request
     ) {
         var result = userService.createUsers(request);
         return ApiResponse.successfulResponse(

@@ -1,6 +1,5 @@
 package com.zyna.dev.ecommerce.auth.dto.response;
 
-import com.zyna.dev.ecommerce.user.dto.response.UserResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

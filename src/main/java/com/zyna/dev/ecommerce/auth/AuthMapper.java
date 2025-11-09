@@ -1,8 +1,8 @@
 package com.zyna.dev.ecommerce.auth;
 
 import com.zyna.dev.ecommerce.auth.dto.request.RegisterRequest;
-import com.zyna.dev.ecommerce.user.User;
-import com.zyna.dev.ecommerce.user.dto.response.UserResponse;
+import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
 import org.springframework.stereotype.Component;
 
 @Component

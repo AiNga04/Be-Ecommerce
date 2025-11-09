@@ -1,6 +1,6 @@
 package com.zyna.dev.ecommerce.security;
 
-import com.zyna.dev.ecommerce.user.User;
+import com.zyna.dev.ecommerce.users.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;

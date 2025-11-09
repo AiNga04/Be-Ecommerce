@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.user.dto.response;
+package com.zyna.dev.ecommerce.users.dto.response;
 
 import com.zyna.dev.ecommerce.common.enums.City;
 import com.zyna.dev.ecommerce.common.enums.Gender;

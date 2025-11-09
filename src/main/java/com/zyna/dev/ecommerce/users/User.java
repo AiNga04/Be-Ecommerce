@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.user;
+package com.zyna.dev.ecommerce.users;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.zyna.dev.ecommerce.common.enums.City;

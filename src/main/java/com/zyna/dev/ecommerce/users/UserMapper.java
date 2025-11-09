@@ -1,8 +1,8 @@
-package com.zyna.dev.ecommerce.user;
+package com.zyna.dev.ecommerce.users;
 
-import com.zyna.dev.ecommerce.user.dto.response.UserResponse;
-import com.zyna.dev.ecommerce.user.dto.request.UserCreateRequest;
-import com.zyna.dev.ecommerce.user.dto.request.UserUpdateRequest;
+import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
+import com.zyna.dev.ecommerce.users.dto.request.UserCreateRequest;
+import com.zyna.dev.ecommerce.users.dto.request.UserUpdateRequest;
 import org.springframework.stereotype.Component;
 
 @Component

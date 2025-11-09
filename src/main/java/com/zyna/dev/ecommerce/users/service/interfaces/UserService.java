@@ -1,11 +1,11 @@
-package com.zyna.dev.ecommerce.user.service.interfaces;
+package com.zyna.dev.ecommerce.users.service.interfaces;
 
-import com.zyna.dev.ecommerce.user.criteria.UserCriteria;
-import com.zyna.dev.ecommerce.user.dto.request.UserBatchCreateRequest;
-import com.zyna.dev.ecommerce.user.dto.request.UserCreateRequest;
-import com.zyna.dev.ecommerce.user.dto.response.UserBatchCreateResponse;
-import com.zyna.dev.ecommerce.user.dto.response.UserResponse;
-import com.zyna.dev.ecommerce.user.dto.request.UserUpdateRequest;
+import com.zyna.dev.ecommerce.users.criteria.UserCriteria;
+import com.zyna.dev.ecommerce.users.dto.request.UserBatchCreateRequest;
+import com.zyna.dev.ecommerce.users.dto.request.UserCreateRequest;
+import com.zyna.dev.ecommerce.users.dto.response.UserBatchCreateResponse;
+import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
+import com.zyna.dev.ecommerce.users.dto.request.UserUpdateRequest;
 import org.springframework.data.domain.Page;
 
 import java.util.List;

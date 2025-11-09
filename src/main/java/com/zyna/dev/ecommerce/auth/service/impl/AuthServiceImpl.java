@@ -1,6 +1,5 @@
 package com.zyna.dev.ecommerce.auth.service.impl;
 
-import com.nimbusds.jose.JWSVerifier;
 import com.zyna.dev.ecommerce.auth.AuthMapper;
 import com.zyna.dev.ecommerce.auth.AuthRepository;
 import com.zyna.dev.ecommerce.auth.LoginRateLimiter;
@@ -13,8 +12,8 @@ import com.zyna.dev.ecommerce.auth.service.interfaces.AuthService;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.security.JwtUtil;
-import com.zyna.dev.ecommerce.user.User;
-import com.zyna.dev.ecommerce.user.dto.response.UserResponse;
+import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;

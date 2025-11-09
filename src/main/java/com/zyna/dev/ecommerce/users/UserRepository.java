@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.user;
+package com.zyna.dev.ecommerce.users;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
