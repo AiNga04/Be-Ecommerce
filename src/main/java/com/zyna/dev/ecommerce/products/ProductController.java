@@ -3,7 +3,9 @@ package com.zyna.dev.ecommerce.products;
 import com.zyna.dev.ecommerce.common.ApiResponse;
 import com.zyna.dev.ecommerce.products.criteria.ProductCriteria;
 import com.zyna.dev.ecommerce.products.dto.request.*;
+import com.zyna.dev.ecommerce.products.dto.response.PriceHistoryResponse;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
+import com.zyna.dev.ecommerce.products.repository.PriceHistoryRepository;
 import com.zyna.dev.ecommerce.products.service.interfaces.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;
+    private final PriceHistoryRepository priceHistoryRepository;
 
     @PostMapping(consumes = {"multipart/form-data"})
     @ResponseStatus(HttpStatus.CREATED)
@@ -150,4 +153,20 @@ public class ProductController {
                 count
         );
     }
+
+    @GetMapping("/{id}/price-history")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<List<PriceHistoryResponse>> getPriceHistory(@PathVariable Long id) {
+        List<PriceHistory> histories = priceHistoryRepository.findByProductIdOrderByChangedAtDesc(id);
+        List<PriceHistoryResponse> response = histories.stream()
+                .map(h -> PriceHistoryResponse.builder()
+                        .oldPrice(h.getOldPrice())
+                        .newPrice(h.getNewPrice())
+                        .changedAt(h.getChangedAt())
+                        .build())
+                .toList();
+
+        return ApiResponse.successfulResponse(HttpStatus.OK.value(), "Fetched price history", response);
+    }
+
 }

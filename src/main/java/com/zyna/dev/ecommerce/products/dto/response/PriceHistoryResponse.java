@@ -1,0 +1,16 @@
+package com.zyna.dev.ecommerce.products.dto.response;
+
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PriceHistoryResponse {
+    private BigDecimal oldPrice;
+    private BigDecimal newPrice;
+    private LocalDateTime changedAt;
+}

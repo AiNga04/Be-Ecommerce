@@ -4,7 +4,6 @@ import com.zyna.dev.ecommerce.users.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -21,7 +20,6 @@ public class PriceHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Quan hệ với Product
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
@@ -32,7 +30,6 @@ public class PriceHistory {
     @Column(precision = 10, scale = 2)
     private BigDecimal newPrice;
 
-    // Ai thay đổi giá
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "changed_by_user_id")
     private User changedBy;

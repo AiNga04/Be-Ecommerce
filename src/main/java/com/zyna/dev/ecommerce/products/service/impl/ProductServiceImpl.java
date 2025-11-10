@@ -5,6 +5,7 @@ import com.zyna.dev.ecommerce.common.utils.FileUploadUtil;
 import com.zyna.dev.ecommerce.products.*;
 import com.zyna.dev.ecommerce.products.criteria.ProductCriteria;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
+import com.zyna.dev.ecommerce.products.repository.PriceHistoryRepository;
 import com.zyna.dev.ecommerce.products.repository.ProductImageRepository;
 import com.zyna.dev.ecommerce.products.repository.ProductRepository;
 import com.zyna.dev.ecommerce.products.service.interfaces.ProductService;
@@ -29,6 +30,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final ProductImageRepository productImageRepository;
+    private final PriceHistoryRepository priceHistoryRepository;
 
     /**
      * ✅ CREATE PRODUCT (multipart/form-data)
@@ -118,10 +120,26 @@ public class ProductServiceImpl implements ProductService {
             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Product is inactive. Restore before updating!");
         }
 
-        // ✅ Nếu có ảnh mới → xóa ảnh cũ và lưu ảnh mới
+        // 🖼️ Nếu có ảnh mới → thay ảnh
         if (image != null && !image.isEmpty()) {
             String newImageUrl = FileUploadUtil.replaceImage(product.getImageUrl(), image);
             product.setImageUrl(newImageUrl);
+        }
+
+        // 💰 Kiểm tra nếu giá thay đổi → lưu vào lịch sử giá
+        if (price != null && product.getPrice() != null &&
+                product.getPrice().compareTo(BigDecimal.valueOf(price)) != 0) {
+
+            PriceHistory history = PriceHistory.builder()
+                    .product(product)
+                    .oldPrice(product.getPrice())
+                    .newPrice(BigDecimal.valueOf(price))
+                    // có thể lấy user hiện tại từ SecurityContextHolder (để audit)
+                    .changedBy(null)
+                    .build();
+
+            priceHistoryRepository.save(history);
+            log.info("💰 Price changed for product id={}, {} → {}", id, product.getPrice(), price);
         }
 
         if (name != null) product.setName(name);
