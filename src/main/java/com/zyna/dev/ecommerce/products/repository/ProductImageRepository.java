@@ -1,6 +1,6 @@
 package com.zyna.dev.ecommerce.products.repository;
 
-import com.zyna.dev.ecommerce.products.ProductImage;
+import com.zyna.dev.ecommerce.products.models.ProductImage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.products;
+package com.zyna.dev.ecommerce.products.models;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -38,9 +38,11 @@ public class Product {
     @Column(nullable = false)
     private Integer stock = 0;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "product",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     private List<ProductImage> gallery = new ArrayList<>();
-
 
     @Column(nullable = false)
     private Boolean isActive = true;

@@ -29,6 +29,4 @@ public interface ProductService {
     List<String> addGalleryImages(Long productId, List<MultipartFile> images);
     void deleteGalleryImage(Long productId, Long imageId);
     int deleteAllGalleryImages(Long productId);
-
-
 }

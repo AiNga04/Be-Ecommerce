@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.products;
+package com.zyna.dev.ecommerce.products.models;
 
 import com.zyna.dev.ecommerce.users.User;
 import jakarta.persistence.*;
@@ -37,3 +37,4 @@ public class PriceHistory {
     @CreationTimestamp
     private LocalDateTime changedAt;
 }
+

@@ -3,11 +3,12 @@ package com.zyna.dev.ecommerce.products;
 import com.zyna.dev.ecommerce.products.dto.request.ProductCreateRequest;
 import com.zyna.dev.ecommerce.products.dto.request.ProductUpdateRequest;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
+import com.zyna.dev.ecommerce.products.models.Product;
+import com.zyna.dev.ecommerce.products.models.ProductImage;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.stream.Collectors;
 
 @Component
 public class ProductMapper {

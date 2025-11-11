@@ -1,6 +1,6 @@
 package com.zyna.dev.ecommerce.products.repository;
 
-import com.zyna.dev.ecommerce.products.PriceHistory;
+import com.zyna.dev.ecommerce.products.models.PriceHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

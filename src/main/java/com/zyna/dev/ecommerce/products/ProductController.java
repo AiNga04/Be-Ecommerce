@@ -2,9 +2,9 @@ package com.zyna.dev.ecommerce.products;
 
 import com.zyna.dev.ecommerce.common.ApiResponse;
 import com.zyna.dev.ecommerce.products.criteria.ProductCriteria;
-import com.zyna.dev.ecommerce.products.dto.request.*;
 import com.zyna.dev.ecommerce.products.dto.response.PriceHistoryResponse;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
+import com.zyna.dev.ecommerce.products.models.PriceHistory;
 import com.zyna.dev.ecommerce.products.repository.PriceHistoryRepository;
 import com.zyna.dev.ecommerce.products.service.interfaces.ProductService;
 import jakarta.validation.Valid;
@@ -23,6 +23,7 @@ public class ProductController {
     private final ProductService productService;
     private final PriceHistoryRepository priceHistoryRepository;
 
+    // CREATE
     @PostMapping(consumes = {"multipart/form-data"})
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<ProductResponse> createProduct(
@@ -40,11 +41,14 @@ public class ProductController {
                 response
         );
     }
+
+    // GET BY ID
     @GetMapping("/{id}")
     public ApiResponse<ProductResponse> get(@PathVariable Long id) {
         return ApiResponse.successfulResponse("Fetched product successfully!", productService.getProductById(id));
     }
 
+    //GET ALL PRODUCTS
     @GetMapping
     public ApiResponse<Page<ProductResponse>> search(@Valid ProductCriteria criteria,
                                                      @RequestParam(defaultValue = "0") int page,
@@ -52,7 +56,7 @@ public class ProductController {
         return ApiResponse.successfulResponse("Fetched product list!", productService.searchProducts(criteria, page, size));
     }
 
-    // ✅ UPDATE
+    // UPDATE
     @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
     @ResponseStatus(HttpStatus.OK)
     public ApiResponse<ProductResponse> updateProduct(
@@ -72,46 +76,52 @@ public class ProductController {
         );
     }
 
+    // SOFT DELETE 1 PRODUCT
     @DeleteMapping("/{id}")
     public ApiResponse<Void> softDelete(@PathVariable Long id) {
         productService.softDeleteProduct(id);
         return ApiResponse.successfulResponse(HttpStatus.OK.value(), "Product soft deleted successfully!");
     }
 
+    // RESTORE 1 PRODUCT
     @PutMapping("/{id}/restore")
     public ApiResponse<Void> restore(@PathVariable Long id) {
         productService.restoreProduct(id);
         return ApiResponse.successfulResponse(HttpStatus.OK.value(), "Product restored successfully!");
     }
 
+    // HARD DELETE 1 PRODUCT
     @DeleteMapping("/{id}/hard")
     public ApiResponse<Void> hardDelete(@PathVariable Long id) {
         productService.hardDeleteProduct(id);
         return ApiResponse.successfulResponse(HttpStatus.OK.value(), "Product hard deleted successfully!");
     }
 
+    // SOFT DELETE / RESTORE / HARD DELETE MANY PRODUCTS
     @PostMapping("/delete-many")
     public ApiResponse<List<Long>> softDeleteMany(@RequestBody List<Long> ids) {
-        return ApiResponse.successfulResponse("Soft deleted products", productService.softDeleteProducts(ids));
+        return ApiResponse.successfulResponse("Soft deleted products!", productService.softDeleteProducts(ids));
     }
 
     @PostMapping("/restore-many")
     public ApiResponse<List<Long>> restoreMany(@RequestBody List<Long> ids) {
-        return ApiResponse.successfulResponse("Restored products", productService.restoreProducts(ids));
+        return ApiResponse.successfulResponse("Restored products!", productService.restoreProducts(ids));
     }
 
     @PostMapping("/hard-delete-many")
     public ApiResponse<List<Long>> hardDeleteMany(@RequestBody List<Long> ids) {
-        return ApiResponse.successfulResponse("Hard deleted products", productService.hardDeleteProducts(ids));
+        return ApiResponse.successfulResponse("Hard deleted products!", productService.hardDeleteProducts(ids));
     }
 
+    // GET LIST SOFT DELETE PRODUCTS
     @GetMapping("/deleted")
     public ApiResponse<Page<ProductResponse>> getDeleted(@Valid ProductCriteria criteria,
                                                          @RequestParam(defaultValue = "0") int page,
                                                          @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.successfulResponse("Fetched deleted products", productService.getDeletedProducts(criteria, page, size));
+        return ApiResponse.successfulResponse("Fetched deleted products!", productService.getDeletedProducts(criteria, page, size));
     }
 
+    // UPLOAD GALLERY
     @PostMapping("/{productId}/gallery")
     @ResponseStatus(HttpStatus.OK)
     public ApiResponse<List<String>> uploadGallery(
@@ -121,7 +131,7 @@ public class ProductController {
         List<String> urls = productService.addGalleryImages(productId, images);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Gallery uploaded successfully",
+                "Gallery uploaded successfully!",
                 urls
         );
     }
@@ -154,6 +164,7 @@ public class ProductController {
         );
     }
 
+    // GET HISTORY PRICE PRODUCT
     @GetMapping("/{id}/price-history")
     @ResponseStatus(HttpStatus.OK)
     public ApiResponse<List<PriceHistoryResponse>> getPriceHistory(@PathVariable Long id) {
@@ -166,7 +177,7 @@ public class ProductController {
                         .build())
                 .toList();
 
-        return ApiResponse.successfulResponse(HttpStatus.OK.value(), "Fetched price history", response);
+        return ApiResponse.successfulResponse(HttpStatus.OK.value(), "Fetched price history!", response);
     }
 
 }

@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.products;
+package com.zyna.dev.ecommerce.products.models;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,3 +25,4 @@ public class ProductImage {
 
     private LocalDateTime uploadedAt;
 }
+

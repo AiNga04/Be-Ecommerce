@@ -1,6 +1,6 @@
 package com.zyna.dev.ecommerce.products.repository;
 
-import com.zyna.dev.ecommerce.products.Product;
+import com.zyna.dev.ecommerce.products.models.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

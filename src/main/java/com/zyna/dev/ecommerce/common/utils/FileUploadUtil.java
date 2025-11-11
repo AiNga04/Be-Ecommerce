@@ -15,7 +15,7 @@ public class FileUploadUtil {
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     private static final List<String> ALLOWED_EXTENSIONS = List.of("jpg", "jpeg", "png", "webp");
 
-    /** ✅ Lưu 1 ảnh, trả về URL /uploads/xxx */
+    /** Lưu 1 ảnh, trả về URL /uploads/xxx */
     public static String saveImage(MultipartFile image) {
         if (image == null || image.isEmpty()) {
             return null;
@@ -34,13 +34,13 @@ public class FileUploadUtil {
         try {
             Files.write(filePath, image.getBytes());
         } catch (IOException e) {
-            throw new ApplicationException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving image file");
+            throw new ApplicationException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving image file!");
         }
 
         return "/uploads/" + fileName;
     }
 
-    /** ✅ Xóa file ảnh trên disk (nếu tồn tại) */
+    /** Xóa file ảnh trên disk (nếu tồn tại) */
     public static void deleteImage(String imageUrl) {
         if (imageUrl == null || !imageUrl.startsWith("/uploads/")) {
             return; // không phải ảnh hợp lệ của hệ thống -> bỏ qua
@@ -52,22 +52,21 @@ public class FileUploadUtil {
         try {
             Files.deleteIfExists(path);
         } catch (IOException e) {
-            // không ném exception ra ngoài để tránh fail cả request chỉ vì xóa file lỗi
-            System.err.println("⚠️ Failed to delete image file: " + e.getMessage());
+            System.err.println("Failed to delete image file: " + e.getMessage());
         }
     }
 
-    /** ✅ Thay ảnh: xóa ảnh cũ (nếu có) rồi lưu ảnh mới */
+    /** Thay ảnh: xóa ảnh cũ (nếu có) rồi lưu ảnh mới */
     public static String replaceImage(String oldImageUrl, MultipartFile newImage) {
         if (newImage == null || newImage.isEmpty()) {
             return oldImageUrl;
         }
 
-        deleteImage(oldImageUrl);          // xóa file cũ
-        return saveImage(newImage);        // lưu file mới
+        deleteImage(oldImageUrl);
+        return saveImage(newImage);
     }
 
-    /** ✅ Lưu nhiều ảnh gallery */
+    /** Lưu nhiều ảnh gallery */
     public static List<String> saveImages(List<MultipartFile> images) {
         if (images == null || images.isEmpty()) {
             return Collections.emptyList();
@@ -86,17 +85,17 @@ public class FileUploadUtil {
 
     private static void validateImage(MultipartFile file) {
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "File size exceeds 5MB limit");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "File size exceeds 5MB limit!");
         }
 
         String originalName = file.getOriginalFilename();
         if (originalName == null || !originalName.contains(".")) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Invalid file name");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Invalid file name!");
         }
 
         String ext = originalName.substring(originalName.lastIndexOf('.') + 1).toLowerCase();
         if (!ALLOWED_EXTENSIONS.contains(ext)) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Only JPG, JPEG, PNG, WEBP files are allowed");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Only JPG, JPEG, PNG, WEBP files are allowed!");
         }
     }
 
