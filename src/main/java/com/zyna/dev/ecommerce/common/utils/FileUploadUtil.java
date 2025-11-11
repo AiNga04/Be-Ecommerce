@@ -37,12 +37,12 @@ public class FileUploadUtil {
             throw new ApplicationException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving image file!");
         }
 
-        return "/uploads/" + fileName;
+        return "/api/uploads/" + fileName;
     }
 
     /** Xóa file ảnh trên disk (nếu tồn tại) */
     public static void deleteImage(String imageUrl) {
-        if (imageUrl == null || !imageUrl.startsWith("/uploads/")) {
+        if (imageUrl == null || !imageUrl.startsWith("/api/uploads/")) {
             return; // không phải ảnh hợp lệ của hệ thống -> bỏ qua
         }
 
