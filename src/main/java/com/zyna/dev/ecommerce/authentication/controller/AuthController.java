@@ -1,11 +1,11 @@
-package com.zyna.dev.ecommerce.auth;
+package com.zyna.dev.ecommerce.authentication.controller;
 
-import com.zyna.dev.ecommerce.auth.dto.request.IntrospectRequest;
-import com.zyna.dev.ecommerce.auth.dto.request.LoginRequest;
-import com.zyna.dev.ecommerce.auth.dto.request.RegisterRequest;
-import com.zyna.dev.ecommerce.auth.dto.response.IntrospectResponse;
-import com.zyna.dev.ecommerce.auth.dto.response.LoginResponse;
-import com.zyna.dev.ecommerce.auth.service.interfaces.AuthService;
+import com.zyna.dev.ecommerce.authentication.dto.request.IntrospectRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.LoginRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
+import com.zyna.dev.ecommerce.authentication.dto.response.IntrospectResponse;
+import com.zyna.dev.ecommerce.authentication.dto.response.LoginResponse;
+import com.zyna.dev.ecommerce.authentication.service.interfaces.AuthService;
 import com.zyna.dev.ecommerce.common.ApiResponse;
 import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
 import jakarta.validation.Valid;

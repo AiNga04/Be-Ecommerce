@@ -1,9 +1,11 @@
-package com.zyna.dev.ecommerce.auth;
+package com.zyna.dev.ecommerce.authentication;
 
-import com.zyna.dev.ecommerce.auth.dto.request.RegisterRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
 import com.zyna.dev.ecommerce.users.User;
 import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
 import org.springframework.stereotype.Component;
+
+import java.util.stream.Collectors;
 
 @Component
 public class AuthMapper {
@@ -15,7 +17,6 @@ public class AuthMapper {
                 .email(dto.getEmail())
                 .dateOfBirth(dto.getDateOfBirth())
                 .gender(dto.getGender())
-                .password(dto.getPassword())
                 .phone(dto.getPhone())
                 .address(dto.getAddress())
                 .city(dto.getCity())
@@ -30,7 +31,12 @@ public class AuthMapper {
                 .email(entity.getEmail())
                 .dateOfBirth(entity.getDateOfBirth())
                 .gender(entity.getGender())
-                .role(entity.getRole())
+                .roles(
+                        entity.getRoles() == null ? null :
+                                entity.getRoles().stream()
+                                        .map(r -> r.getCode())
+                                        .collect(Collectors.toSet())
+                )
                 .phone(entity.getPhone())
                 .address(entity.getAddress())
                 .city(entity.getCity())

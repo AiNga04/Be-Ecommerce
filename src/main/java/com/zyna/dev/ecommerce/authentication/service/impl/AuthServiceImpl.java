@@ -1,14 +1,15 @@
-package com.zyna.dev.ecommerce.auth.service.impl;
+package com.zyna.dev.ecommerce.authentication.service.impl;
 
-import com.zyna.dev.ecommerce.auth.AuthMapper;
-import com.zyna.dev.ecommerce.auth.AuthRepository;
-import com.zyna.dev.ecommerce.auth.LoginRateLimiter;
-import com.zyna.dev.ecommerce.auth.dto.request.IntrospectRequest;
-import com.zyna.dev.ecommerce.auth.dto.request.LoginRequest;
-import com.zyna.dev.ecommerce.auth.dto.request.RegisterRequest;
-import com.zyna.dev.ecommerce.auth.dto.response.IntrospectResponse;
-import com.zyna.dev.ecommerce.auth.dto.response.LoginResponse;
-import com.zyna.dev.ecommerce.auth.service.interfaces.AuthService;
+import com.zyna.dev.ecommerce.authentication.AuthMapper;
+import com.zyna.dev.ecommerce.authentication.repository.AppRoleRepository;
+import com.zyna.dev.ecommerce.authentication.repository.AuthRepository;
+import com.zyna.dev.ecommerce.authentication.LoginRateLimiter;
+import com.zyna.dev.ecommerce.authentication.dto.request.IntrospectRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.LoginRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
+import com.zyna.dev.ecommerce.authentication.dto.response.IntrospectResponse;
+import com.zyna.dev.ecommerce.authentication.dto.response.LoginResponse;
+import com.zyna.dev.ecommerce.authentication.service.interfaces.AuthService;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.security.JwtUtil;
@@ -28,6 +29,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
     private final AuthMapper authMapper;
     private final LoginRateLimiter rateLimiter;
+    private final AppRoleRepository appRoleRepository;
 
     @Override
     public LoginResponse login(LoginRequest loginRequest) {
@@ -83,7 +85,12 @@ public class AuthServiceImpl implements AuthService {
         User user = authMapper.toUser(registerRequest);
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
 
-        user.setRole(com.zyna.dev.ecommerce.common.enums.Role.USER);
+        var userRole = appRoleRepository.findByCode("USER")
+                .orElseThrow(() -> new ApplicationException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Default role USER is not configured!"
+                ));
+        user.getRoles().add(userRole);
 
         if (user.getStatus() == null) {
             user.setStatus(Status.ACTIVE);

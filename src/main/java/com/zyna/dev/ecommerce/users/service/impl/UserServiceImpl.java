@@ -1,5 +1,6 @@
 package com.zyna.dev.ecommerce.users.service.impl;
 
+import com.zyna.dev.ecommerce.authentication.repository.AppRoleRepository;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.users.User;
@@ -35,6 +36,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final AppRoleRepository appRoleRepository;
 
     @Override
     public UserResponse createUser(UserCreateRequest createRequest) {
@@ -47,15 +49,24 @@ public class UserServiceImpl implements UserService {
             );
         }
         User user = userMapper.createToUser(createRequest);
+
         if (user.getStatus() == null) {
             user.setStatus(Status.PENDING);
         }
 
         user.setPassword(passwordEncoder.encode(createRequest.getPassword()));
 
+        var userRole = appRoleRepository.findByCode("USER")
+                .orElseThrow(() -> new ApplicationException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Default role USER is not configured!"
+                ));
+        user.getRoles().add(userRole);
+
         User saved = userRepository.save(user);
         return userMapper.toUserResponse(saved);
     }
+
 
     @Override
     public UserResponse getUserById(Long id) {
@@ -77,8 +88,14 @@ public class UserServiceImpl implements UserService {
             if (criteria.getLastName() != null &&
                     !u.getLastName().toLowerCase().contains(criteria.getLastName().toLowerCase())) return false;
 
-            if (criteria.getRole() != null &&
-                    !u.getRole().name().equalsIgnoreCase(criteria.getRole())) return false;
+            if (criteria.getRole() != null) {
+                String roleCode = criteria.getRole();
+                if (u.getRoles() == null ||
+                        u.getRoles().stream().noneMatch(r -> r.getCode().equalsIgnoreCase(roleCode))) {
+                    return false;
+                }
+            }
+
 
             if (criteria.getPhone() != null &&
                     (u.getPhone() == null || !u.getPhone().contains(criteria.getPhone()))) return false;
@@ -124,7 +141,9 @@ public class UserServiceImpl implements UserService {
 
         userMapper.applyUpdate(user, updateRequest);
 
-        user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
+        if (updateRequest.getPassword() != null && !updateRequest.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
+        }
 
         User saved = userRepository.save(user);
 
@@ -258,8 +277,14 @@ public class UserServiceImpl implements UserService {
                 return false;
             if (criteria.getLastName() != null && !u.getLastName().toLowerCase().contains(criteria.getLastName().toLowerCase()))
                 return false;
-            if (criteria.getRole() != null && !u.getRole().name().equalsIgnoreCase(criteria.getRole()))
-                return false;
+            if (criteria.getRole() != null) {
+                String roleCode = criteria.getRole();
+                if (u.getRoles() == null ||
+                        u.getRoles().stream()
+                                .noneMatch(r -> r.getCode().equalsIgnoreCase(roleCode))) {
+                    return false;
+                }
+            }
             if (criteria.getPhone() != null && (u.getPhone() == null || !u.getPhone().contains(criteria.getPhone())))
                 return false;
             if (criteria.getDateOfBirth() != null && (u.getDateOfBirth() == null || !u.getDateOfBirth().isEqual(criteria.getDateOfBirth())))

@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.auth;
+package com.zyna.dev.ecommerce.authentication.repository;
 
 import com.zyna.dev.ecommerce.users.User;
 import org.springframework.data.jpa.repository.JpaRepository;

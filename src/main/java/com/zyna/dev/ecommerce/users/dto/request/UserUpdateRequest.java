@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -31,7 +32,7 @@ public class UserUpdateRequest {
     @Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
     private String password; // optional
 
-    private Role role;
+    private Set<String> roles;
 
     @Pattern(regexp = "^\\+?[0-9]{9,15}$", message = "Invalid phone number format")
     private String phone; // optional

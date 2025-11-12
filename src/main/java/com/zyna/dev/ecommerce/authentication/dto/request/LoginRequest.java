@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.auth.dto.request;
+package com.zyna.dev.ecommerce.authentication.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

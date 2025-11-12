@@ -1,8 +1,7 @@
-package com.zyna.dev.ecommerce.auth.dto.request;
+package com.zyna.dev.ecommerce.authentication.dto.request;
 
 import com.zyna.dev.ecommerce.common.enums.City;
 import com.zyna.dev.ecommerce.common.enums.Gender;
-import com.zyna.dev.ecommerce.common.enums.Role;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

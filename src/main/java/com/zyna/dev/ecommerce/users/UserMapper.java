@@ -5,6 +5,8 @@ import com.zyna.dev.ecommerce.users.dto.request.UserCreateRequest;
 import com.zyna.dev.ecommerce.users.dto.request.UserUpdateRequest;
 import org.springframework.stereotype.Component;
 
+import java.util.stream.Collectors;
+
 @Component
 public class UserMapper {
 
@@ -15,42 +17,21 @@ public class UserMapper {
                 .email(dto.getEmail())
                 .dateOfBirth(dto.getDateOfBirth())
                 .gender(dto.getGender())
-                .password(dto.getPassword())
-                .role(dto.getRole())
                 .phone(dto.getPhone())
                 .address(dto.getAddress())
                 .city(dto.getCity())
                 .build();
     }
 
+
     public void applyUpdate(User target, UserUpdateRequest dto) {
-        if (dto.getFirstName() != null) {
-            target.setFirstName(dto.getFirstName());
-        }
-        if (dto.getLastName() != null) {
-            target.setLastName(dto.getLastName());
-        }
-        if (dto.getDateOfBirth() != null) {
-            target.setDateOfBirth(dto.getDateOfBirth());
-        }
-        if (dto.getGender() != null) {
-            target.setGender(dto.getGender());
-        }
-        if (dto.getPassword() != null) {
-            target.setPassword(dto.getPassword());
-        }
-        if (dto.getRole() != null) {
-            target.setRole(dto.getRole());
-        }
-        if (dto.getPhone() != null) {
-            target.setPhone(dto.getPhone());
-        }
-        if (dto.getAddress() != null) {
-            target.setAddress(dto.getAddress());
-        }
-        if (dto.getCity() != null) {
-            target.setCity(dto.getCity());
-        }
+        if (dto.getFirstName() != null) target.setFirstName(dto.getFirstName());
+        if (dto.getLastName() != null) target.setLastName(dto.getLastName());
+        if (dto.getDateOfBirth() != null) target.setDateOfBirth(dto.getDateOfBirth());
+        if (dto.getGender() != null) target.setGender(dto.getGender());
+        if (dto.getPhone() != null) target.setPhone(dto.getPhone());
+        if (dto.getAddress() != null) target.setAddress(dto.getAddress());
+        if (dto.getCity() != null) target.setCity(dto.getCity());
     }
 
     public UserResponse toUserResponse(User entity) {
@@ -61,7 +42,12 @@ public class UserMapper {
                 .email(entity.getEmail())
                 .dateOfBirth(entity.getDateOfBirth())
                 .gender(entity.getGender())
-                .role(entity.getRole())
+                .roles(
+                        entity.getRoles() == null ? null :
+                                entity.getRoles().stream()
+                                        .map(r -> r.getCode())
+                                        .collect(Collectors.toSet())
+                )
                 .phone(entity.getPhone())
                 .address(entity.getAddress())
                 .city(entity.getCity())

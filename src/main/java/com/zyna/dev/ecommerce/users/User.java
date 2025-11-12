@@ -1,9 +1,9 @@
 package com.zyna.dev.ecommerce.users;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.zyna.dev.ecommerce.authentication.models.AppRole;
 import com.zyna.dev.ecommerce.common.enums.City;
 import com.zyna.dev.ecommerce.common.enums.Gender;
-import com.zyna.dev.ecommerce.common.enums.Role;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,6 +12,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -48,9 +50,14 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Role role = Role.USER;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    @Builder.Default
+    private Set<AppRole> roles = new HashSet<>();
 
     // ---- Contact Info ----
     @Column(length = 15)

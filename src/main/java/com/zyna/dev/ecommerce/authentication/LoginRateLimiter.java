@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.auth;
+package com.zyna.dev.ecommerce.authentication;
 
 import org.springframework.stereotype.Component;
 

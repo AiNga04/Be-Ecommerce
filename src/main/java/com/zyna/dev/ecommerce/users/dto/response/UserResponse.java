@@ -8,6 +8,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -21,7 +22,7 @@ public class UserResponse {
     private String email;
     private LocalDate dateOfBirth;
     private Gender gender;
-    private Role role;
+    private Set<String> roles;
     private String phone;
     private String address;
     private City city;

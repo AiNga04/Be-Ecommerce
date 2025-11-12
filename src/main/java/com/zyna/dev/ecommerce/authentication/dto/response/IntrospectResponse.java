@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.auth.dto.request;
+package com.zyna.dev.ecommerce.authentication.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class IntrospectRequest {
-    private String token;
-    private boolean authenticated;
+public class IntrospectResponse {
+    private boolean valid;
+    private String email;
 }

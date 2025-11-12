@@ -21,7 +21,10 @@ public class UserCriteria {
     @Size(max = 50, message = "Last name must not exceed 50 characters")
     private String lastName;
 
-    @Pattern(regexp = "^(USER|ADMIN)$", message = "Role must be either USER or ADMIN")
+    @Pattern(
+            regexp = "^[A-Z_]{3,50}$",
+            message = "Role must be uppercase code, e.g. USER, ADMIN"
+    )
     private String role;
 
     @Pattern(regexp = "^[0-9]{9,15}$", message = "Phone number must be 9 to 15 digits")
