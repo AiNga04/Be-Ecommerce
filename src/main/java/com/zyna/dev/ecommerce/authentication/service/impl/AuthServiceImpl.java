@@ -1,6 +1,6 @@
 package com.zyna.dev.ecommerce.authentication.service.impl;
 
-import com.zyna.dev.ecommerce.authentication.AuthMapper;
+import com.zyna.dev.ecommerce.authentication.mapper.AuthMapper;
 import com.zyna.dev.ecommerce.authentication.repository.AppRoleRepository;
 import com.zyna.dev.ecommerce.authentication.repository.AuthRepository;
 import com.zyna.dev.ecommerce.authentication.LoginRateLimiter;

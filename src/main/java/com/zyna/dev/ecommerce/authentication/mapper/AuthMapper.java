@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.authentication;
+package com.zyna.dev.ecommerce.authentication.mapper;
 
 import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
 import com.zyna.dev.ecommerce.users.User;
