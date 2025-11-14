@@ -13,7 +13,7 @@ public class FileUploadUtil {
 
     private static final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads";
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-    private static final List<String> ALLOWED_EXTENSIONS = List.of("jpg", "jpeg", "png", "webp");
+    private static final List<String> ALLOWED_EXTENSIONS = List.of("jpg", "jpeg", "png", "webp", "avif");
 
     /** Lưu 1 ảnh, trả về URL /uploads/xxx */
     public static String saveImage(MultipartFile image) {

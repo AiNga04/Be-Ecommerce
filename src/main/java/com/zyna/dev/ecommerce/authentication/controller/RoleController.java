@@ -8,6 +8,7 @@ import com.zyna.dev.ecommerce.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class RoleController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     public ApiResponse<RoleResponse> create(@Valid @RequestBody RoleRequest request) {
         RoleResponse result = roleService.create(request);
         return ApiResponse.successfulResponse(
@@ -31,6 +33,7 @@ public class RoleController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     public ApiResponse<RoleResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody RoleRequest request
@@ -44,6 +47,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         roleService.delete(id);
         return ApiResponse.successfulResponse(
@@ -53,6 +57,7 @@ public class RoleController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     public ApiResponse<RoleResponse> get(@PathVariable Long id) {
         return ApiResponse.successfulResponse(
                 "Fetched role successfully!",
@@ -61,6 +66,7 @@ public class RoleController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     public ApiResponse<List<RoleResponse>> getAll() {
         return ApiResponse.successfulResponse(
                 "Fetched role list!",
@@ -69,6 +75,7 @@ public class RoleController {
     }
 
     @PostMapping("/{id}/permissions")
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     public ApiResponse<RoleResponse> assignPermissions(
             @PathVariable Long id,
             @Valid @RequestBody RoleAssignPermissionRequest request
@@ -81,4 +88,3 @@ public class RoleController {
         );
     }
 }
-

@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -27,6 +28,7 @@ public class UserController {
     // CREATE
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('USER_WRITE')")
     public ApiResponse<UserResponse> createUser(
             @Valid @RequestBody UserCreateRequest userRequest
     ) {
@@ -41,6 +43,7 @@ public class UserController {
     // READ DETAIL
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('USER_READ')")
     public ApiResponse<UserResponse> getUserById(@PathVariable Long id) {
         UserResponse userResponse = userService.getUserById(id);
         return ApiResponse.successfulResponse(
@@ -51,9 +54,9 @@ public class UserController {
     }
 
     // SEARCH (filter + pagination)
-    // GET /users?page=0&size=10&firstName=na&role=ADMIN&city=HO_CHI_MINH
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('USER_READ')")
     public ApiResponse<Page<UserResponse>> searchUsers(
             @Valid UserCriteria criteria,
             @RequestParam(defaultValue = "0") int page,
@@ -70,6 +73,7 @@ public class UserController {
     // UPDATE
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('USER_WRITE')")
     public ApiResponse<UserResponse> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest userRequest
@@ -85,6 +89,7 @@ public class UserController {
     // SOFT DELETE
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('USER_WRITE')")
     public ApiResponse<String> softDeleteUser(@PathVariable Long id) {
         userService.softDeleteUser(id);
         return ApiResponse.successfulResponse(
@@ -97,6 +102,7 @@ public class UserController {
     // RESTORE
     @PatchMapping("/{id}/restore")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('USER_WRITE')")
     public ApiResponse<String> restoreUser(@PathVariable Long id) {
         userService.restoreUser(id);
         return ApiResponse.successfulResponse(
@@ -109,6 +115,7 @@ public class UserController {
     // HARD DELETE
     @DeleteMapping("/{id}/hard")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('USER_WRITE')")
     public ApiResponse<String> hardDeleteUser(@PathVariable Long id) {
         userService.hardDeleteUser(id);
         return ApiResponse.successfulResponse(
@@ -121,6 +128,7 @@ public class UserController {
     // SOFT DELETE NHIỀU
     @DeleteMapping("/batch")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('USER_WRITE')")
     public ApiResponse<Map<String, Object>> softDeleteUsers(@RequestBody List<Long> ids) {
         var deletedIds = userService.softDeleteUsers(ids);
 
@@ -139,6 +147,7 @@ public class UserController {
     // RESTORE NHIỀU
     @PatchMapping("/batch/restore")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('USER_WRITE')")
     public ApiResponse<Map<String, Object>> restoreUsers(@RequestBody List<Long> ids) {
         var restoredIds = userService.restoreUsers(ids);
 
@@ -157,6 +166,7 @@ public class UserController {
     // HARD DELETE NHIỀU
     @DeleteMapping("/batch/hard")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('USER_WRITE')")
     public ApiResponse<Map<String, Object>> hardDeleteUsers(@RequestBody List<Long> ids) {
         var deletedIds = userService.hardDeleteUsers(ids);
 
@@ -175,6 +185,7 @@ public class UserController {
     // GET DELETED
     @GetMapping("/deleted")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('USER_READ')")
     public ApiResponse<Page<UserResponse>> getDeletedUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -192,6 +203,7 @@ public class UserController {
 
     @PostMapping("/batch-create")
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('USER_WRITE')")
     public ApiResponse<UserBatchCreateResponse> createUsers(
             @Valid @RequestBody com.zyna.dev.ecommerce.users.dto.request.UserBatchCreateRequest request
     ) {

@@ -7,6 +7,7 @@ import com.zyna.dev.ecommerce.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class PermissionController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
     public ApiResponse<PermissionResponse> create(@Valid @RequestBody PermissionRequest request) {
         PermissionResponse result = permissionService.create(request);
         return ApiResponse.successfulResponse(
@@ -30,6 +32,7 @@ public class PermissionController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
     public ApiResponse<PermissionResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody PermissionRequest request
@@ -43,6 +46,7 @@ public class PermissionController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         permissionService.delete(id);
         return ApiResponse.successfulResponse(
@@ -52,6 +56,7 @@ public class PermissionController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
     public ApiResponse<PermissionResponse> get(@PathVariable Long id) {
         return ApiResponse.successfulResponse(
                 "Fetched permission successfully!",
@@ -60,6 +65,7 @@ public class PermissionController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
     public ApiResponse<List<PermissionResponse>> getAll() {
         return ApiResponse.successfulResponse(
                 "Fetched permission list!",
