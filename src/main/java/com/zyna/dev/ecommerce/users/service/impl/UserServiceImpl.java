@@ -1,5 +1,6 @@
 package com.zyna.dev.ecommerce.users.service.impl;
 
+import com.zyna.dev.ecommerce.authentication.models.AppRole;
 import com.zyna.dev.ecommerce.authentication.repository.AppRoleRepository;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -48,6 +50,7 @@ public class UserServiceImpl implements UserService {
                     "Email already in use!"
             );
         }
+
         User user = userMapper.createToUser(createRequest);
 
         if (user.getStatus() == null) {
@@ -56,16 +59,35 @@ public class UserServiceImpl implements UserService {
 
         user.setPassword(passwordEncoder.encode(createRequest.getPassword()));
 
-        var userRole = appRoleRepository.findByCode("USER")
-                .orElseThrow(() -> new ApplicationException(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Default role USER is not configured!"
-                ));
-        user.getRoles().add(userRole);
+        // Gán ROLE
+        if (createRequest.getRoles() != null && !createRequest.getRoles().isEmpty()) {
+            var roles = appRoleRepository.findAllByCodeIn(createRequest.getRoles());
+
+            if (roles.size() != createRequest.getRoles().size()) {
+                throw new ApplicationException(
+                        HttpStatus.BAD_REQUEST,
+                        "Some roles are invalid!"
+                );
+            }
+
+            user.setRoles(new HashSet<>(roles));
+        } else {
+            // fallback: ROLE USER mặc định
+            var userRole = appRoleRepository.findByCode("USER")
+                    .orElseThrow(() -> new ApplicationException(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Default role USER is not configured!"
+                    ));
+            if (user.getRoles() == null) {
+                user.setRoles(new HashSet<>());
+            }
+            user.getRoles().add(userRole);
+        }
 
         User saved = userRepository.save(user);
         return userMapper.toUserResponse(saved);
     }
+
 
 
     @Override
@@ -139,17 +161,43 @@ public class UserServiceImpl implements UserService {
             );
         }
 
+        // map các field cơ bản
         userMapper.applyUpdate(user, updateRequest);
 
+        // update password nếu có
         if (updateRequest.getPassword() != null && !updateRequest.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
         }
 
+        // UPDATE ROLES (nếu FE gửi lên)
+        if (updateRequest.getRoles() != null && !updateRequest.getRoles().isEmpty()) {
+
+            var roles = appRoleRepository.findAllByCodeIn(updateRequest.getRoles());
+
+            if (roles.size() != updateRequest.getRoles().size()) {
+                throw new ApplicationException(
+                        HttpStatus.BAD_REQUEST,
+                        "Some roles are invalid!"
+                );
+            }
+
+            // Quan trọng: thao tác trên collection đã được Hibernate quản lý
+            if (user.getRoles() == null) {
+                user.setRoles(new HashSet<>());
+            } else {
+                user.getRoles().clear();
+            }
+            user.getRoles().addAll(roles);
+        }
+
         User saved = userRepository.save(user);
 
-        log.info("User updated id={}", saved.getId());
+        log.info("User updated id={}, rolesUpdated={}",
+                saved.getId(), updateRequest.getRoles() != null);
+
         return userMapper.toUserResponse(saved);
     }
+
 
     @Override
     public void softDeleteUser(Long id) {
