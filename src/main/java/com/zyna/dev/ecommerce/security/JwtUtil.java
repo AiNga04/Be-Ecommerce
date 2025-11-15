@@ -111,6 +111,10 @@ public class JwtUtil {
         return extractAllClaims(token).getSubject();
     }
 
+    public Date extractExpiration(String token) {
+        return extractAllClaims(token).getExpiration();
+    }
+
     // Lấy authorities (permissions) từ claim "permissions"
     public Collection<? extends GrantedAuthority> extractAuthorities(String token) {
         Claims claims = extractAllClaims(token);

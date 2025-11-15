@@ -8,6 +8,7 @@ import com.zyna.dev.ecommerce.authentication.dto.response.LoginResponse;
 import com.zyna.dev.ecommerce.authentication.service.interfaces.AuthService;
 import com.zyna.dev.ecommerce.common.ApiResponse;
 import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -51,6 +52,22 @@ public class AuthController {
                 HttpStatus.OK.value(),
                 "Token introspection successful!",
                 introspectResponse
+        );
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Void> logout(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            authService.logout(token);
+        }
+
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Logout successfully!"
         );
     }
 }

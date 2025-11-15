@@ -13,6 +13,7 @@ import com.zyna.dev.ecommerce.authentication.service.interfaces.AuthService;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.security.JwtUtil;
+import com.zyna.dev.ecommerce.security.TokenBlacklistService;
 import com.zyna.dev.ecommerce.users.User;
 import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,8 @@ public class AuthServiceImpl implements AuthService {
     private final AuthMapper authMapper;
     private final LoginRateLimiter rateLimiter;
     private final AppRoleRepository appRoleRepository;
+    private final TokenBlacklistService tokenBlacklistService;
+
 
     @Override
     public LoginResponse login(LoginRequest loginRequest) {
@@ -47,21 +50,21 @@ public class AuthServiceImpl implements AuthService {
         User user = authRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> {
                     rateLimiter.recordFailedAttempt(email);
-                    return new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+                    return new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password!");
                 });
 
         // 2. kiểm tra mật khẩu
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             rateLimiter.recordFailedAttempt(email);
-            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password!");
         }
 
         // 3. kiểm tra trạng thái user
         if (user.getStatus() != null && user.getStatus() != Status.ACTIVE) {
-            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Account is not active");
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Account is not active!");
         }
 
-        // ✅ Reset đếm lỗi khi login thành công
+        // Reset đếm lỗi khi login thành công
         rateLimiter.resetAttempts(email);
 
         // 4. sinh JWT
@@ -115,5 +118,19 @@ public class AuthServiceImpl implements AuthService {
         return new IntrospectResponse(isValid, email);
     }
 
+    @Override
+    public void logout(String token) {
+        if (!jwtUtil.validateToken(token)) {
+            // token đã hết hạn hoặc invalid thì khỏi blacklist
+            return;
+        }
+
+        // Lấy thời gian hết hạn của token
+        var expiration = jwtUtil.extractExpiration(token); // Date
+        long now = System.currentTimeMillis();
+        long ttl = expiration.getTime() - now;
+
+        tokenBlacklistService.blacklist(token, ttl);
+    }
 
 }

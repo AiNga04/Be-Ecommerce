@@ -13,4 +13,6 @@ public interface AuthService {
     UserResponse register(RegisterRequest registerRequest);
 
     IntrospectResponse introspect(IntrospectRequest introspectRequest);
+
+    void logout(String token);
 }
