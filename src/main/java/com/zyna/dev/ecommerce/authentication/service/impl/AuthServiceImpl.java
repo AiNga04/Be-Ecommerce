@@ -1,6 +1,9 @@
 package com.zyna.dev.ecommerce.authentication.service.impl;
 
+import com.zyna.dev.ecommerce.authentication.dto.request.RefreshTokenRequest;
+import com.zyna.dev.ecommerce.authentication.dto.response.RefreshTokenResponse;
 import com.zyna.dev.ecommerce.authentication.mapper.AuthMapper;
+import com.zyna.dev.ecommerce.authentication.models.RefreshToken;
 import com.zyna.dev.ecommerce.authentication.repository.AppRoleRepository;
 import com.zyna.dev.ecommerce.authentication.repository.AuthRepository;
 import com.zyna.dev.ecommerce.authentication.LoginRateLimiter;
@@ -9,6 +12,7 @@ import com.zyna.dev.ecommerce.authentication.dto.request.LoginRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
 import com.zyna.dev.ecommerce.authentication.dto.response.IntrospectResponse;
 import com.zyna.dev.ecommerce.authentication.dto.response.LoginResponse;
+import com.zyna.dev.ecommerce.authentication.repository.RefreshTokenRepository;
 import com.zyna.dev.ecommerce.authentication.service.interfaces.AuthService;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
@@ -20,6 +24,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,13 +41,13 @@ public class AuthServiceImpl implements AuthService {
     private final LoginRateLimiter rateLimiter;
     private final AppRoleRepository appRoleRepository;
     private final TokenBlacklistService tokenBlacklistService;
+    private final RefreshTokenRepository  refreshTokenRepository;
 
 
     @Override
     public LoginResponse login(LoginRequest loginRequest) {
         String email = loginRequest.getEmail();
 
-        // 0. Kiểm tra nếu user đang bị block
         if (rateLimiter.isBlocked(email)) {
             throw new ApplicationException(
                     HttpStatus.TOO_MANY_REQUESTS,
@@ -46,35 +55,45 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-        // 1. tìm user theo email (chỉ user chưa bị xóa mềm)
         User user = authRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> {
                     rateLimiter.recordFailedAttempt(email);
-                    return new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password!");
+                    return new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
                 });
 
-        // 2. kiểm tra mật khẩu
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             rateLimiter.recordFailedAttempt(email);
-            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password!");
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
-        // 3. kiểm tra trạng thái user
         if (user.getStatus() != null && user.getStatus() != Status.ACTIVE) {
-            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Account is not active!");
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Account is not active");
         }
 
-        // Reset đếm lỗi khi login thành công
         rateLimiter.resetAttempts(email);
 
-        // 4. sinh JWT
-        String token = jwtUtil.generateToken(user);
+        // 4. sinh Access Token (như cũ)
+        String accessToken = jwtUtil.generateToken(user);
 
-        // 5. map sang response (ẩn password)
+        // 5. sinh Refresh Token (random string)
+        String refreshToken = UUID.randomUUID().toString(); // có thể dùng secureRandom, nhưng tạm ổn
+
+        // 6. lưu refresh token vào DB
+        LocalDateTime refreshExpiresAt = LocalDateTime.now().plusDays(7); // ví dụ 7 ngày
+        RefreshToken rt = RefreshToken.builder()
+                .user(user)
+                .token(refreshToken)
+                .expiresAt(refreshExpiresAt)
+//                .createdByIp(loginRequest.getIp())      // nếu có field này
+//                .userAgent(loginRequest.getUserAgent()) // nếu có
+                .build();
+        refreshTokenRepository.save(rt);
+
         UserResponse userResponse = authMapper.toUserResponse(user);
 
         return LoginResponse.builder()
-                .token(token)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .user(userResponse)
                 .build();
     }
@@ -119,18 +138,67 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout(String token) {
-        if (!jwtUtil.validateToken(token)) {
-            // token đã hết hạn hoặc invalid thì khỏi blacklist
-            return;
+    @Transactional
+    public RefreshTokenResponse refreshToken(RefreshTokenRequest request) {
+        String refreshTokenStr = request.getRefreshToken();
+
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenStr)
+                .orElseThrow(() -> new ApplicationException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Invalid refresh token"
+                ));
+
+        if (refreshToken.isRevoked() || refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Refresh token is expired or revoked");
         }
 
-        // Lấy thời gian hết hạn của token
-        var expiration = jwtUtil.extractExpiration(token); // Date
-        long now = System.currentTimeMillis();
-        long ttl = expiration.getTime() - now;
+        User user = refreshToken.getUser();  // 👈 lúc này session còn mở
 
-        tokenBlacklistService.blacklist(token, ttl);
+        // 👉 Ở đây gọi generateToken sẽ an toàn, vì user.getRoles() lazy load được
+        String newAccessToken = jwtUtil.generateToken(user);
+
+        // rotation (nếu bạn làm):
+        String newRefreshToken = UUID.randomUUID().toString();
+        LocalDateTime newExpiresAt = LocalDateTime.now().plusDays(7);
+
+        refreshToken.setRevoked(true);
+        refreshToken.setRevokedAt(LocalDateTime.now());
+
+        RefreshToken newRt = RefreshToken.builder()
+                .user(user)
+                .token(newRefreshToken)
+                .expiresAt(newExpiresAt)
+                .build();
+
+        refreshTokenRepository.save(refreshToken);
+        refreshTokenRepository.save(newRt);
+
+        return RefreshTokenResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .build();
     }
+
+
+    @Override
+    public void logout(String accessToken, String refreshTokenStr) {
+        // 1. blacklist access token như bạn đã làm
+        if (jwtUtil.validateToken(accessToken)) {
+            Date expiration = jwtUtil.extractExpiration(accessToken);
+            long now = System.currentTimeMillis();
+            long ttl = expiration.getTime() - now;
+            tokenBlacklistService.blacklist(accessToken, ttl);
+        }
+
+        // 2. revoke refresh token trong DB (nếu có)
+        if (refreshTokenStr != null) {
+            refreshTokenRepository.findByToken(refreshTokenStr).ifPresent(rt -> {
+                rt.setRevoked(true);
+                rt.setRevokedAt(LocalDateTime.now());
+                refreshTokenRepository.save(rt);
+            });
+        }
+    }
+
 
 }

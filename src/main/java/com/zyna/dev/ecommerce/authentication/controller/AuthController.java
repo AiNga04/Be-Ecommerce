@@ -2,9 +2,11 @@ package com.zyna.dev.ecommerce.authentication.controller;
 
 import com.zyna.dev.ecommerce.authentication.dto.request.IntrospectRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.LoginRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.RefreshTokenRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
 import com.zyna.dev.ecommerce.authentication.dto.response.IntrospectResponse;
 import com.zyna.dev.ecommerce.authentication.dto.response.LoginResponse;
+import com.zyna.dev.ecommerce.authentication.dto.response.RefreshTokenResponse;
 import com.zyna.dev.ecommerce.authentication.service.interfaces.AuthService;
 import com.zyna.dev.ecommerce.common.ApiResponse;
 import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
@@ -55,14 +57,29 @@ public class AuthController {
         );
     }
 
+    @PostMapping("/refresh")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<RefreshTokenResponse> refresh(@RequestBody @Valid RefreshTokenRequest request) {
+        RefreshTokenResponse response = authService.refreshToken(request);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Token refreshed successfully!",
+                response
+        );
+    }
+
+
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<Void> logout(HttpServletRequest request) {
+    public ApiResponse<Void> logout(
+            HttpServletRequest request,
+            @RequestBody(required = false) RefreshTokenRequest refreshReq
+    ) {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            authService.logout(token);
+            authService.logout(token, refreshReq != null ? refreshReq.getRefreshToken() : null);
         }
 
         return ApiResponse.successfulResponse(
@@ -70,4 +87,5 @@ public class AuthController {
                 "Logout successfully!"
         );
     }
+
 }

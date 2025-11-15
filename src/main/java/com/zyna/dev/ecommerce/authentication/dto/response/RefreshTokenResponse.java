@@ -1,6 +1,5 @@
 package com.zyna.dev.ecommerce.authentication.dto.response;
 
-import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
 import lombok.*;
 
 @Getter
@@ -8,8 +7,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginResponse {
+public class RefreshTokenResponse {
     private String accessToken;
     private String refreshToken;
-    private UserResponse user;
 }

@@ -43,7 +43,10 @@ public class SecurityConfig {
                         // public endpoints
                         .requestMatchers(
                                 "/auth/**",
-                                "/uploads/**"
+                                "/uploads/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
                         ).permitAll()
 
                         // mọi request khác cần login
