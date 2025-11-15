@@ -31,14 +31,14 @@ public class RolePermissionSeeder implements CommandLineRunner {
             return; // chưa có role thì thôi, tránh crash
         }
 
-        // 🔹 Gán FULL permissions cho ADMIN
+        // Gán FULL permissions cho ADMIN
         List<Permission> allPerms = permissionRepository.findAll();
         if (!allPerms.isEmpty()) {
             admin.setPermissions(new HashSet<>(allPerms));
             roleRepository.save(admin);
         }
 
-        // 🔹 Gán PRODUCT_READ cho USER (quyền xem product)
+        // Gán PRODUCT_READ cho USER (quyền xem product)
         permissionRepository.findByName("PRODUCT_READ").ifPresent(p -> {
             if (user.getPermissions() == null) {
                 user.setPermissions(new HashSet<>());

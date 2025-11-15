@@ -20,7 +20,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final AuthRepository authRepository; // có findByEmailAndIsDeletedFalse(...)
+    private final AuthRepository authRepository;
 
     @Override
     protected void doFilterInternal(
@@ -59,7 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );
 
-                // ✅ SecurityContext giờ đã có list authorities = permissions
+                // SecurityContext giờ đã có list authorities = permissions
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }

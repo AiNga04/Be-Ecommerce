@@ -29,7 +29,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
         ApiResponse<?> api = ApiResponse.failedResponse(
                 HttpStatus.FORBIDDEN.value(),
-                "Access Denied! You don't have permission to perform this action."
+                "Access Denied! You don't have permission to perform this action!"
         );
 
         response.getWriter().write(mapper.writeValueAsString(api));

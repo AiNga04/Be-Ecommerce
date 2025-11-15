@@ -40,7 +40,7 @@ public class JwtUtil {
         }
     }
 
-    // ✅ Build permissions từ roles + permissions trong DB
+    // Build permissions từ roles + permissions trong DB
     private Set<String> buildPermissions(User user) {
         Set<String> perms = new HashSet<>();
 
@@ -72,7 +72,7 @@ public class JwtUtil {
         return perms;
     }
 
-    // ✅ Generate JWT chứa list permissions
+    // Generate JWT chứa list permissions
     public String generateToken(User user) {
         long now = System.currentTimeMillis();
 
@@ -84,7 +84,7 @@ public class JwtUtil {
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + expirationMs))
                 .claim("id", user.getId())
-                .claim("permissions", permissions) // 👈 nhét list permission / role-code vào token
+                .claim("permissions", permissions) // nhét list permission / role-code vào token
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -111,7 +111,7 @@ public class JwtUtil {
         return extractAllClaims(token).getSubject();
     }
 
-    // ✅ Lấy authorities (permissions) từ claim "permissions"
+    // Lấy authorities (permissions) từ claim "permissions"
     public Collection<? extends GrantedAuthority> extractAuthorities(String token) {
         Claims claims = extractAllClaims(token);
         List<String> permissions = claims.get("permissions", List.class);

@@ -2,6 +2,7 @@ package com.zyna.dev.ecommerce.users.dto.request;
 
 import com.zyna.dev.ecommerce.common.enums.City;
 import com.zyna.dev.ecommerce.common.enums.Gender;
+import com.zyna.dev.ecommerce.common.validator.DateOfBirthConstraint;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,7 +31,8 @@ public class UserCreateRequest {
     @Size(max = 100, message = "Email must be less than 100 characters")
     private String email;
 
-    @Past(message = "Date of birth must be in the past")
+    @NotNull(message = "Date of birth is required")
+    @DateOfBirthConstraint(min = 12, max = 100)
     private LocalDate dateOfBirth;
 
     @NotNull(message = "Gender is required")
