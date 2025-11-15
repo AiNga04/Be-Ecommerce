@@ -12,6 +12,10 @@ import com.zyna.dev.ecommerce.products.repository.PriceHistoryRepository;
 import com.zyna.dev.ecommerce.products.repository.ProductImageRepository;
 import com.zyna.dev.ecommerce.products.repository.ProductRepository;
 import com.zyna.dev.ecommerce.products.service.interfaces.ProductService;
+import com.zyna.dev.ecommerce.security.JwtUtil;
+import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
@@ -35,6 +39,9 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final ProductImageRepository productImageRepository;
     private final PriceHistoryRepository priceHistoryRepository;
+    private final JwtUtil jwtUtil;
+    private final HttpServletRequest request;
+    private final UserRepository userRepository;
 
     // CREATE PRODUCT (multipart/form-data)
     @Override
@@ -119,6 +126,16 @@ public class ProductServiceImpl implements ProductService {
             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Product is inactive. Restore before updating!");
         }
 
+        // Lấy email từ JWT (user đang login)
+        String email = getCurrentUserEmail();
+
+        // Từ email → User entity (để gán vào changedBy)
+        User changedByUser = null;
+        if (email != null) {
+            changedByUser = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found!"));
+        }
+
         // Nếu có ảnh mới → thay ảnh
         if (image != null && !image.isEmpty()) {
             String newImageUrl = FileUploadUtil.replaceImage(product.getImageUrl(), image);
@@ -134,7 +151,7 @@ public class ProductServiceImpl implements ProductService {
                     .oldPrice(product.getPrice())
                     .newPrice(BigDecimal.valueOf(price))
                     // có thể lấy user hiện tại từ SecurityContextHolder (để audit)
-                    .changedBy(null)
+                    .changedBy(changedByUser)
                     .build();
 
             priceHistoryRepository.save(history);
@@ -152,6 +169,22 @@ public class ProductServiceImpl implements ProductService {
 
         log.info("Product updated id={}, image replaced={}", id, (image != null && !image.isEmpty()));
         return productMapper.toProductResponse(saved);
+    }
+
+    private String getCurrentUserEmail() {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+
+        String token = authHeader.substring(7);
+
+        if (!jwtUtil.validateToken(token)) {
+            return null;
+        }
+
+        // subject trong token = email
+        return jwtUtil.extractUsername(token);
     }
 
     // SOFT DELETE PRODUCT

@@ -194,5 +194,4 @@ public class ProductController {
 
         return ApiResponse.successfulResponse(HttpStatus.OK.value(), "Fetched price history!", response);
     }
-
 }
