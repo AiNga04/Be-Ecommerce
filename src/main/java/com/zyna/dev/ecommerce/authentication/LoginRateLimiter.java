@@ -1,67 +1,72 @@
 package com.zyna.dev.ecommerce.authentication;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 @Component
+@RequiredArgsConstructor
 public class LoginRateLimiter {
 
     private static final int MAX_ATTEMPTS = 5;       // số lần đăng nhập sai tối đa
     private static final long WINDOW_MINUTES = 10;   // khoảng thời gian tính (phút)
     private static final long BLOCK_MINUTES = 15;    // thời gian khóa (phút)
 
-    private final Map<String, AttemptInfo> attempts = new ConcurrentHashMap<>();
+    private final StringRedisTemplate redisTemplate;
 
+    private String attemptsKey(String email) {
+        return "login:attempts:" + email;
+    }
+
+    private String blockKey(String email) {
+        return "login:block:" + email;
+    }
+
+    /**
+     * Kiểm tra user có đang bị block không
+     */
     public boolean isBlocked(String email) {
-        AttemptInfo info = attempts.get(email);
-        if (info == null) return false;
-
-        // Nếu user đang bị block và chưa hết hạn block
-        if (info.isBlocked && Instant.now().isBefore(info.blockedUntil)) {
-            return true;
-        }
-
-        // Nếu hết thời gian block → reset
-        if (info.isBlocked && Instant.now().isAfter(info.blockedUntil)) {
-            attempts.remove(email);
-            return false;
-        }
-
-        return false;
+        Boolean exists = redisTemplate.hasKey(blockKey(email));
+        return Boolean.TRUE.equals(exists);
     }
 
+    /**
+     * Ghi nhận một lần login sai
+     */
     public void recordFailedAttempt(String email) {
-        AttemptInfo info = attempts.getOrDefault(email, new AttemptInfo());
-        long now = Instant.now().toEpochMilli();
+        String attemptsKey = attemptsKey(email);
 
-        // nếu lần đầu tiên hoặc quá cửa sổ 10 phút → reset
-        if (info.firstAttemptTime == 0 || (now - info.firstAttemptTime) > WINDOW_MINUTES * 60 * 1000) {
-            info.firstAttemptTime = now;
-            info.attempts = 1;
-        } else {
-            info.attempts++;
+        // Tăng số lần login sai
+        Long attempts = redisTemplate.opsForValue().increment(attemptsKey);
+
+        // Nếu vừa tạo key mới (attempts == 1) → set TTL cho cửa sổ 10 phút
+        if (attempts != null && attempts == 1L) {
+            redisTemplate.expire(attemptsKey, WINDOW_MINUTES, TimeUnit.MINUTES);
         }
 
-        // nếu vượt quá số lần cho phép → block
-        if (info.attempts >= MAX_ATTEMPTS) {
-            info.isBlocked = true;
-            info.blockedUntil = Instant.now().plusSeconds(BLOCK_MINUTES * 60);
-        }
+        // Nếu vượt quá số lần cho phép → block user
+        if (attempts != null && attempts >= MAX_ATTEMPTS) {
+            String blockKey = blockKey(email);
+            redisTemplate.opsForValue().set(
+                    blockKey,
+                    "1",
+                    BLOCK_MINUTES,
+                    TimeUnit.MINUTES
+            );
 
-        attempts.put(email, info);
+            // Có thể xóa luôn attempts để tránh rác (optional)
+            redisTemplate.delete(attemptsKey);
+        }
     }
 
+    /**
+     * Reset lại count & block khi login thành công
+     */
     public void resetAttempts(String email) {
-        attempts.remove(email);
-    }
-
-    private static class AttemptInfo {
-        int attempts = 0;
-        long firstAttemptTime = 0;
-        boolean isBlocked = false;
-        Instant blockedUntil;
+        redisTemplate.delete(attemptsKey(email));
+        redisTemplate.delete(blockKey(email));
     }
 }
