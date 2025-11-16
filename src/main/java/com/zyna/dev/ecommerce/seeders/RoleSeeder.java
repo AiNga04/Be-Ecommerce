@@ -16,11 +16,12 @@ public class RoleSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        createRoleIfNotExists("USER", "Default role for normal users");
-        createRoleIfNotExists("ADMIN", "Administrator with full permissions");
+        createRole("USER", "Default role for normal users");
+        createRole("STAFF", "Staff role for handling orders and inventory");
+        createRole("ADMIN", "Administrator with full permissions");
     }
 
-    private void createRoleIfNotExists(String code, String description) {
+    private void createRole(String code, String description) {
         roleRepository.findByCode(code).orElseGet(() -> {
             AppRole role = AppRole.builder()
                     .code(code)

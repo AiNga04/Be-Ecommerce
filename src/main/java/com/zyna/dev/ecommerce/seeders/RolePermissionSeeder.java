@@ -23,28 +23,42 @@ public class RolePermissionSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        // Lấy ROLE ADMIN & USER
         AppRole admin = roleRepository.findByCode("ADMIN").orElse(null);
+        AppRole staff = roleRepository.findByCode("STAFF").orElse(null);
         AppRole user = roleRepository.findByCode("USER").orElse(null);
 
-        if (admin == null || user == null) {
-            return; // chưa có role thì thôi, tránh crash
-        }
+        if (admin == null || staff == null || user == null) return;
 
-        // Gán FULL permissions cho ADMIN
+        // ======== ADMIN ========
         List<Permission> allPerms = permissionRepository.findAll();
-        if (!allPerms.isEmpty()) {
-            admin.setPermissions(new HashSet<>(allPerms));
-            roleRepository.save(admin);
-        }
+        admin.setPermissions(new HashSet<>(allPerms));
+        roleRepository.save(admin);
 
-        // Gán PRODUCT_READ cho USER (quyền xem product)
-        permissionRepository.findByName("PRODUCT_READ").ifPresent(p -> {
-            if (user.getPermissions() == null) {
-                user.setPermissions(new HashSet<>());
-            }
-            user.getPermissions().add(p);
-            roleRepository.save(user);
+        // ======== STAFF ========
+        staff.setPermissions(new HashSet<>());
+
+        addPerm(staff, "PRODUCT_READ");
+        addPerm(staff, "INVENTORY_READ");
+        addPerm(staff, "INVENTORY_WRITE");
+        addPerm(staff, "ORDER_READ");
+        addPerm(staff, "ORDER_MANAGE");
+
+        roleRepository.save(staff);
+
+        // ======== USER ========
+        user.setPermissions(new HashSet<>());
+
+        addPerm(user, "PRODUCT_READ");
+        addPerm(user, "ORDER_READ"); // chỉ xem đơn của chính mình
+
+        roleRepository.save(user);
+
+        System.out.println(">>> Permissions assigned successfully.");
+    }
+
+    private void addPerm(AppRole role, String permName) {
+        permissionRepository.findByName(permName).ifPresent(p -> {
+            role.getPermissions().add(p);
         });
     }
 }

@@ -16,14 +16,26 @@ public class PermissionSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+
+        // PRODUCT
         create("PRODUCT_READ", "Can view products");
         create("PRODUCT_WRITE", "Can create/update/delete products");
 
+        // USER
         create("USER_READ", "Can view users");
         create("USER_WRITE", "Can create/update/delete users");
 
+        // ROLE & PERMISSION
         create("ROLE_MANAGE", "Can manage roles");
         create("PERMISSION_MANAGE", "Can manage permissions");
+
+        // INVENTORY
+        create("INVENTORY_READ", "Can view stock and inventory logs");
+        create("INVENTORY_WRITE", "Can adjust stock");
+
+        // ORDERS
+        create("ORDER_READ", "Can view all orders");
+        create("ORDER_WRITE", "Can update order status");
     }
 
     private void create(String name, String desc) {
