@@ -31,7 +31,7 @@ public class OrderController {
     // USER CHECKOUT TỪ LIST ITEM (không qua giỏ cũng được)
     @PostMapping("/checkout")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('ORDER_WRITE')") // chỉ user (shopper)
+    @PreAuthorize("hasAuthority('ORDER_WRITE')")
     public ApiResponse<OrderResponse> checkout(
             Authentication authentication,
             @Valid @RequestBody CheckoutRequest request
@@ -48,7 +48,7 @@ public class OrderController {
     // USER CHECKOUT TỪ GIỎ HÀNG
     @PostMapping("/checkout/cart")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('ORDER_WRITE')") // chỉ user (shopper)
+    @PreAuthorize("hasAuthority('ORDER_WRITE')")
     public ApiResponse<OrderResponse> checkoutFromCart(
             Authentication authentication,
             @Valid @RequestBody CheckoutFromCartRequest request

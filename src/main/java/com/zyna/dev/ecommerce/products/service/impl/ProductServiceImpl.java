@@ -2,13 +2,15 @@ package com.zyna.dev.ecommerce.products.service.impl;
 
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.common.utils.FileUploadUtil;
-import com.zyna.dev.ecommerce.products.*;
 import com.zyna.dev.ecommerce.products.criteria.ProductCriteria;
 import com.zyna.dev.ecommerce.products.dto.response.PriceHistoryResponse;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
+import com.zyna.dev.ecommerce.products.mappers.ProductMapper;
+import com.zyna.dev.ecommerce.products.models.Category;
 import com.zyna.dev.ecommerce.products.models.PriceHistory;
 import com.zyna.dev.ecommerce.products.models.Product;
 import com.zyna.dev.ecommerce.products.models.ProductImage;
+import com.zyna.dev.ecommerce.products.repository.CategoryRepository;
 import com.zyna.dev.ecommerce.products.repository.PriceHistoryRepository;
 import com.zyna.dev.ecommerce.products.repository.ProductImageRepository;
 import com.zyna.dev.ecommerce.products.repository.ProductRepository;
@@ -43,9 +45,11 @@ public class ProductServiceImpl implements ProductService {
     private final JwtUtil jwtUtil;
     private final HttpServletRequest request;
     private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
 
     // CREATE PRODUCT (multipart/form-data)
     @Override
+    @Transactional
     public ProductResponse createProduct(String name, String description, Double price,
                                          String category, Integer stock, MultipartFile image) {
 
@@ -55,12 +59,22 @@ public class ProductServiceImpl implements ProductService {
 
         String imageUrl = FileUploadUtil.saveImage(image);
 
+        // category param từ controller mình coi như categoryCode
+        Category categoryEntity = null;
+        if (category != null && !category.isBlank()) {
+            categoryEntity = categoryRepository.findByCodeAndIsActiveTrue(category)
+                    .orElseThrow(() -> new ApplicationException(
+                            HttpStatus.BAD_REQUEST,
+                            "Category code is invalid or inactive!"
+                    ));
+        }
+
         Product product = Product.builder()
                 .name(name)
                 .description(description)
                 .price(price != null ? BigDecimal.valueOf(price) : BigDecimal.ZERO)
                 .imageUrl(imageUrl)
-                .category(category)
+                .category(categoryEntity)  // ✅
                 .stock(stock != null ? stock : 0)
                 .isActive(true)
                 .createdAt(LocalDateTime.now())
@@ -110,8 +124,13 @@ public class ProductServiceImpl implements ProductService {
         Predicate<Product> matches = p -> {
             if (criteria.getName() != null &&
                     !p.getName().toLowerCase().contains(criteria.getName().toLowerCase())) return false;
-            if (criteria.getCategory() != null &&
-                    (p.getCategory() == null || !p.getCategory().equalsIgnoreCase(criteria.getCategory()))) return false;
+            if (criteria.getCategory() != null) {
+                if (p.getCategory() == null ||
+                        p.getCategory().getCode() == null ||
+                        !p.getCategory().getCode().equalsIgnoreCase(criteria.getCategory())) {
+                    return false;
+                }
+            }
             if (criteria.getMinPrice() != null &&
                     (p.getPrice() == null || p.getPrice().compareTo(criteria.getMinPrice()) < 0)) return false;
             if (criteria.getMaxPrice() != null &&
@@ -131,6 +150,7 @@ public class ProductServiceImpl implements ProductService {
 
     // UPDATE PRODUCT (multipart/form-data)
     @Override
+    @Transactional
     public ProductResponse updateProduct(Long id, String name, String description, Double price,
                                          String category, Integer stock, MultipartFile image) {
 
@@ -176,7 +196,15 @@ public class ProductServiceImpl implements ProductService {
         if (name != null) product.setName(name);
         if (description != null) product.setDescription(description);
         if (price != null) product.setPrice(BigDecimal.valueOf(price));
-        if (category != null) product.setCategory(category);
+        if (category != null && !category.isBlank()) {
+            Category categoryEntity = categoryRepository.findByCodeAndIsActiveTrue(category)
+                    .orElseThrow(() -> new ApplicationException(
+                            HttpStatus.BAD_REQUEST,
+                            "Category code is invalid or inactive!"
+                    ));
+            product.setCategory(categoryEntity);
+        }
+
         if (stock != null) product.setStock(stock);
 
         product.setUpdatedAt(LocalDateTime.now());
@@ -307,9 +335,19 @@ public class ProductServiceImpl implements ProductService {
 
         Predicate<Product> matches = p -> {
             if (criteria.getName() != null &&
-                    !p.getName().toLowerCase().contains(criteria.getName().toLowerCase())) return false;
-            if (criteria.getCategory() != null &&
-                    (p.getCategory() == null || !p.getCategory().equalsIgnoreCase(criteria.getCategory()))) return false;
+                    !p.getName().toLowerCase().contains(criteria.getName().toLowerCase())) {
+                return false;
+            }
+
+            if (criteria.getCategory() != null) {
+                // p.getCategory() là Category, so sánh theo code
+                if (p.getCategory() == null ||
+                        p.getCategory().getCode() == null ||
+                        !p.getCategory().getCode().equalsIgnoreCase(criteria.getCategory())) {
+                    return false;
+                }
+            }
+
             return true;
         };
 

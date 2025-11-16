@@ -1,8 +1,9 @@
-package com.zyna.dev.ecommerce.products;
+package com.zyna.dev.ecommerce.products.mappers;
 
 import com.zyna.dev.ecommerce.products.dto.request.ProductCreateRequest;
 import com.zyna.dev.ecommerce.products.dto.request.ProductUpdateRequest;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
+import com.zyna.dev.ecommerce.products.models.Category;
 import com.zyna.dev.ecommerce.products.models.Product;
 import com.zyna.dev.ecommerce.products.models.ProductImage;
 import org.springframework.stereotype.Component;
@@ -13,22 +14,22 @@ import java.util.Collections;
 @Component
 public class ProductMapper {
 
-    // Tạo Product từ DTO tạo mới
-    public Product createToProduct(ProductCreateRequest dto) {
+    // Tạo Product từ DTO tạo mới + Category đã resolve sẵn
+    public Product createToProduct(ProductCreateRequest dto, Category category) {
         return Product.builder()
                 .name(dto.getName())
                 .description(dto.getDescription())
                 .price(dto.getPrice())
                 .imageUrl(dto.getImageUrl())
-                .category(dto.getCategory())
+                .category(category)         // ✅
                 .stock(dto.getStock())
                 .isActive(true)
                 .createdAt(LocalDateTime.now())
                 .build();
     }
 
-    // Cập nhật các trường không null từ DTO
-    public void applyUpdate(Product target, ProductUpdateRequest dto) {
+    // Cập nhật các trường không null từ DTO, cho phép đổi category
+    public void applyUpdate(Product target, ProductUpdateRequest dto, Category category) {
         if (dto.getName() != null) {
             target.setName(dto.getName());
         }
@@ -41,8 +42,8 @@ public class ProductMapper {
         if (dto.getImageUrl() != null) {
             target.setImageUrl(dto.getImageUrl());
         }
-        if (dto.getCategory() != null) {
-            target.setCategory(dto.getCategory());
+        if (category != null) {
+            target.setCategory(category);
         }
         if (dto.getStock() != null) {
             target.setStock(dto.getStock());
@@ -59,13 +60,18 @@ public class ProductMapper {
 
     // Chuyển entity sang response DTO
     public ProductResponse toProductResponse(Product entity) {
+        String categoryName = null;
+        if (entity.getCategory() != null) {
+            categoryName = entity.getCategory().getName(); // hoặc getCode()
+        }
+
         return ProductResponse.builder()
                 .id(entity.getId())
                 .name(entity.getName())
                 .description(entity.getDescription())
                 .price(entity.getPrice())
                 .imageUrl(entity.getImageUrl())
-                .category(entity.getCategory())
+                .category(categoryName)   // ✅ giờ là name/code từ Category
                 .stock(entity.getStock())
                 .isActive(entity.getIsActive())
                 .createdAt(entity.getCreatedAt())

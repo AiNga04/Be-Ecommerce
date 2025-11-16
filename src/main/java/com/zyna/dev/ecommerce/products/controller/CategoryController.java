@@ -1,0 +1,88 @@
+package com.zyna.dev.ecommerce.products.controller;
+
+import com.zyna.dev.ecommerce.common.ApiResponse;
+import com.zyna.dev.ecommerce.products.dto.request.CategoryCreateRequest;
+import com.zyna.dev.ecommerce.products.dto.request.CategoryUpdateRequest;
+import com.zyna.dev.ecommerce.products.dto.response.CategoryResponse;
+import com.zyna.dev.ecommerce.products.service.interfaces.CategoryService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/categories")
+@RequiredArgsConstructor
+public class CategoryController {
+
+    private final CategoryService categoryService;
+
+    // PUBLIC: lấy danh sách category active để filter product
+    @GetMapping
+    public ApiResponse<Page<CategoryResponse>> list(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Page<CategoryResponse> data = categoryService.list(page, size);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Fetched categories successfully!",
+                data
+        );
+    }
+
+    // ADMIN: tạo category
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
+    public ApiResponse<CategoryResponse> create(
+            @Valid @RequestBody CategoryCreateRequest request
+    ) {
+        CategoryResponse data = categoryService.create(request);
+        return ApiResponse.successfulResponse(
+                HttpStatus.CREATED.value(),
+                "Category created successfully!",
+                data
+        );
+    }
+
+    // ADMIN: update category
+    @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
+    public ApiResponse<CategoryResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody CategoryUpdateRequest request
+    ) {
+        CategoryResponse data = categoryService.update(id, request);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Category updated successfully!",
+                data
+        );
+    }
+
+    // ADMIN: soft delete category
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
+    public ApiResponse<Void> delete(@PathVariable Long id) {
+        categoryService.delete(id);
+        return ApiResponse.successfulResponseNoData(
+                HttpStatus.OK.value(),
+                "Category deleted (inactive) successfully!"
+        );
+    }
+
+    // GET chi tiết 1 category
+    @GetMapping("/{id}")
+    public ApiResponse<CategoryResponse> getById(@PathVariable Long id) {
+        CategoryResponse data = categoryService.getById(id);
+        return ApiResponse.successfulResponse(
+                "Fetched category!",
+                data
+        );
+    }
+}

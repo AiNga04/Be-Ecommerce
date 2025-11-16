@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.products;
+package com.zyna.dev.ecommerce.products.controller;
 
 import com.zyna.dev.ecommerce.common.ApiResponse;
 import com.zyna.dev.ecommerce.products.criteria.ProductCriteria;
