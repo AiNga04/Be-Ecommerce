@@ -3,6 +3,7 @@ package com.zyna.dev.ecommerce.products.service.interfaces;
 import com.zyna.dev.ecommerce.products.criteria.ProductCriteria;
 import com.zyna.dev.ecommerce.products.dto.request.ProductCreateRequest;
 import com.zyna.dev.ecommerce.products.dto.request.ProductUpdateRequest;
+import com.zyna.dev.ecommerce.products.dto.response.PriceHistoryResponse;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,6 +16,7 @@ public interface ProductService {
     ProductResponse updateProduct(Long id, String name, String description, Double price,
                                   String category, Integer stock, MultipartFile image);
     ProductResponse getProductById(Long id);
+    List<PriceHistoryResponse> getPriceHistory(Long productId);
     Page<ProductResponse> searchProducts(ProductCriteria criteria, int page, int size);
     void softDeleteProduct(Long id);
     void restoreProduct(Long id);

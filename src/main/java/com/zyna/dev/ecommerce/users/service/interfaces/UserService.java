@@ -15,6 +15,8 @@ public interface UserService {
 
     UserResponse getUserById(Long id);
 
+    Long getUserIdByEmail(String email);
+
     Page<UserResponse> searchUsers(UserCriteria criteria, int page, int size);
 
     UserResponse updateUser(Long id, UserUpdateRequest request);

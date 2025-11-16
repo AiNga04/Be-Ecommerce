@@ -1,10 +1,12 @@
 package com.zyna.dev.ecommerce.orders;
 
 import com.zyna.dev.ecommerce.common.ApiResponse;
+import com.zyna.dev.ecommerce.orders.dto.request.CheckoutFromCartRequest;
 import com.zyna.dev.ecommerce.orders.dto.request.CheckoutRequest;
+import com.zyna.dev.ecommerce.orders.dto.request.UpdateOrderStatusRequest;
 import com.zyna.dev.ecommerce.orders.dto.response.OrderResponse;
 import com.zyna.dev.ecommerce.orders.service.interfaces.OrderService;
-import com.zyna.dev.ecommerce.users.UserRepository;
+import com.zyna.dev.ecommerce.users.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,19 +21,17 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
 
     private final OrderService orderService;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     private Long getCurrentUserId(Authentication authentication) {
         String email = (String) authentication.getPrincipal();
-        return userRepository.findByEmail(email)
-                .orElseThrow()
-                .getId();
+        return userService.getUserIdByEmail(email);
     }
 
-    // CHECKOUT
+    // USER CHECKOUT TỪ LIST ITEM (không qua giỏ cũng được)
     @PostMapping("/checkout")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('ORDER_WRITE')")
+    @PreAuthorize("hasAuthority('ORDER_WRITE')") // chỉ user (shopper)
     public ApiResponse<OrderResponse> checkout(
             Authentication authentication,
             @Valid @RequestBody CheckoutRequest request
@@ -45,7 +45,24 @@ public class OrderController {
         );
     }
 
-    // LỊCH SỬ ĐƠN HÀNG CỦA CHÍNH MÌNH
+    // USER CHECKOUT TỪ GIỎ HÀNG
+    @PostMapping("/checkout/cart")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('ORDER_WRITE')") // chỉ user (shopper)
+    public ApiResponse<OrderResponse> checkoutFromCart(
+            Authentication authentication,
+            @Valid @RequestBody CheckoutFromCartRequest request
+    ) {
+        Long userId = getCurrentUserId(authentication);
+        OrderResponse response = orderService.checkoutFromCart(userId, request);
+        return ApiResponse.successfulResponse(
+                HttpStatus.CREATED.value(),
+                "Checkout from cart successfully!",
+                response
+        );
+    }
+
+    // LỊCH SỬ ĐƠN HÀNG CỦA CHÍNH MÌNH (user)
     @GetMapping("/my")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('ORDER_READ')")
@@ -76,6 +93,55 @@ public class OrderController {
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
                 "Get order detail successfully!",
+                response
+        );
+    }
+
+    // ================== STAFF / ADMIN – QUẢN LÝ ĐƠN ==================
+
+    // LIST TẤT CẢ ĐƠN HÀNG (cho STAFF / ADMIN)
+    @GetMapping("/admin")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('ORDER_MANAGE')")
+    public ApiResponse<Page<OrderResponse>> getAllOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<OrderResponse> result = orderService.getAllOrders(page, size);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Get all orders successfully!",
+                result
+        );
+    }
+
+    // XEM CHI TIẾT BẤT KỲ ĐƠN HÀNG NÀO (cho STAFF / ADMIN)
+    @GetMapping("/admin/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('ORDER_MANAGE')")
+    public ApiResponse<OrderResponse> getOrderForAdmin(
+            @PathVariable Long id
+    ) {
+        OrderResponse response = orderService.getOrderByIdForAdmin(id);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Get order detail successfully!",
+                response
+        );
+    }
+
+    // STAFF / ADMIN ĐỔI TRẠNG THÁI ĐƠN HÀNG
+    @PatchMapping("/{id}/status")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('ORDER_MANAGE')") // chỉ STAFF / ADMIN
+    public ApiResponse<OrderResponse> updateOrderStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateOrderStatusRequest request
+    ) {
+        OrderResponse response = orderService.updateOrderStatus(id, request.getStatus());
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Update order status successfully!",
                 response
         );
     }

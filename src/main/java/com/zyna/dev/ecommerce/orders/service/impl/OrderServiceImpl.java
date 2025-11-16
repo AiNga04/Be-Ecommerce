@@ -1,12 +1,16 @@
 package com.zyna.dev.ecommerce.orders.service.impl;
 
+import com.zyna.dev.ecommerce.address.models.ShippingAddress;
+import com.zyna.dev.ecommerce.address.repository.ShippingAddressRepository;
+import com.zyna.dev.ecommerce.cart.models.CartItem;
+import com.zyna.dev.ecommerce.cart.repository.CartItemRepository;
 import com.zyna.dev.ecommerce.common.enums.OrderStatus;
 import com.zyna.dev.ecommerce.common.enums.PaymentStatus;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.orders.OrderMapper;
+import com.zyna.dev.ecommerce.orders.dto.request.CheckoutFromCartRequest;
 import com.zyna.dev.ecommerce.orders.dto.request.CheckoutItemRequest;
 import com.zyna.dev.ecommerce.orders.dto.request.CheckoutRequest;
-import com.zyna.dev.ecommerce.orders.dto.response.OrderItemResponse;
 import com.zyna.dev.ecommerce.orders.dto.response.OrderResponse;
 import com.zyna.dev.ecommerce.orders.models.Order;
 import com.zyna.dev.ecommerce.orders.models.OrderItem;
@@ -21,8 +25,10 @@ import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,13 +39,14 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
-    private  final OrderMapper  orderMapper;
+    private final OrderMapper orderMapper;
+    private final CartItemRepository cartItemRepository;
+    private final ShippingAddressRepository addressRepository;
 
     @Override
     @Transactional
     public OrderResponse checkout(Long userId, CheckoutRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+        User user = getUser(userId);
 
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Cart is empty");
@@ -61,7 +68,6 @@ public class OrderServiceImpl implements OrderService {
                 throw new ApplicationException(HttpStatus.BAD_REQUEST, "Quantity must be > 0");
             }
 
-            // kiểm tra stock
             if (product.getStock() == null || product.getStock() < requestedQty) {
                 throw new ApplicationException(
                         HttpStatus.BAD_REQUEST,
@@ -83,16 +89,52 @@ public class OrderServiceImpl implements OrderService {
             total = total.add(subtotal);
         }
 
-        // 2. Tạo Order
+        // 2. Xử lý địa chỉ: dùng addressId hoặc dùng 3 field tay
+        String shippingName;
+        String shippingPhone;
+        String shippingAddress;
+
+        if (request.getShippingAddressId() != null) {
+            // lấy địa chỉ từ address book
+            ShippingAddress addr = addressRepository.findById(request.getShippingAddressId())
+                    .orElseThrow(() ->
+                            new ApplicationException(HttpStatus.NOT_FOUND, "Address not found")
+                    );
+
+            // check địa chỉ có thuộc về user không
+            if (!addr.getUser().getId().equals(user.getId())) {
+                throw new ApplicationException(HttpStatus.FORBIDDEN, "You do not own this address");
+            }
+
+            shippingName = addr.getReceiverName();
+            shippingPhone = addr.getReceiverPhone();
+            shippingAddress = addr.getFullAddress();
+        } else {
+            // nhập tay thì bắt buộc phải đủ 3 field
+            if (!StringUtils.hasText(request.getShippingName())
+                    || !StringUtils.hasText(request.getShippingPhone())
+                    || !StringUtils.hasText(request.getShippingAddress())) {
+                throw new ApplicationException(
+                        HttpStatus.BAD_REQUEST,
+                        "Shipping information is required"
+                );
+            }
+
+            shippingName = request.getShippingName();
+            shippingPhone = request.getShippingPhone();
+            shippingAddress = request.getShippingAddress();
+        }
+
+        // 3. Tạo Order
         Order order = Order.builder()
                 .user(user)
                 .totalPrice(total)
                 .status(OrderStatus.PENDING)
                 .paymentMethod(request.getPaymentMethod())
                 .paymentStatus(PaymentStatus.UNPAID)
-                .shippingName(request.getShippingName())
-                .shippingPhone(request.getShippingPhone())
-                .shippingAddress(request.getShippingAddress())
+                .shippingName(shippingName)
+                .shippingPhone(shippingPhone)
+                .shippingAddress(shippingAddress)
                 .build();
 
         // set quan hệ 2 chiều
@@ -101,18 +143,145 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setItems(orderItems);
 
-        // 3. Giảm stock (vì checkout thành công)
+        // 4. Giảm stock
         for (OrderItem oi : orderItems) {
             Product p = oi.getProduct();
             int newStock = p.getStock() - oi.getQuantity();
             p.setStock(newStock);
-            // optional: lưu audit stock tự động nếu muốn
         }
 
-        // 4. Lưu order + items + cập nhật product stock trong cùng transaction
+        // 5. Lưu order
         order = orderRepository.save(order);
 
-        // 5. Map sang response
+        // 6. Map sang response
+        return orderMapper.toOrderResponse(order);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse updateOrderStatus(Long orderId, OrderStatus newStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        order.setStatus(newStatus);
+
+        LocalDateTime now = LocalDateTime.now();
+        switch (newStatus) {
+            case CONFIRMED -> order.setConfirmedAt(now);
+            case SHIPPED -> order.setShippedAt(now);
+            case DELIVERED -> order.setDeliveredAt(now);
+            case CANCELED -> order.setCanceledAt(now);
+            default -> {
+            }
+        }
+
+        // Ví dụ: khi giao thành công thì coi như đã thanh toán
+        // if (newStatus == OrderStatus.DELIVERED) {
+        //     order.setPaymentStatus(PaymentStatus.PAID);
+        // }
+
+        order = orderRepository.save(order);
+        return orderMapper.toOrderResponse(order);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse checkoutFromCart(Long userId, CheckoutFromCartRequest request) {
+        User user = getUser(userId);
+
+        List<CartItem> cartItems = cartItemRepository.findByUser(user);
+        if (cartItems == null || cartItems.isEmpty()) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Cart is empty");
+        }
+
+        // filter theo cartItemIds (nếu có)
+        List<CartItem> selectedItems = cartItems;
+        if (request.getCartItemIds() != null && !request.getCartItemIds().isEmpty()) {
+            selectedItems = cartItems.stream()
+                    .filter(ci -> request.getCartItemIds().contains(ci.getId()))
+                    .toList();
+        }
+
+        if (selectedItems.isEmpty()) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "No cart items selected to checkout");
+        }
+
+        List<OrderItem> orderItems = new ArrayList<>();
+        BigDecimal total = BigDecimal.ZERO;
+
+        // check tồn kho + build order items
+        for (CartItem cartItem : selectedItems) {
+            Product product = cartItem.getProduct();
+            int requestedQty = cartItem.getQuantity();
+
+            if (requestedQty <= 0) continue;
+
+            if (product.getStock() == null || product.getStock() < requestedQty) {
+                throw new ApplicationException(
+                        HttpStatus.BAD_REQUEST,
+                        "Not enough stock for product: " + product.getName()
+                );
+            }
+
+            BigDecimal unitPrice = product.getPrice();
+            BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(requestedQty));
+
+            OrderItem orderItem = OrderItem.builder()
+                    .product(product)
+                    .quantity(requestedQty)
+                    .unitPrice(unitPrice)
+                    .subtotal(subtotal)
+                    .build();
+
+            orderItems.add(orderItem);
+            total = total.add(subtotal);
+        }
+
+        if (orderItems.isEmpty()) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Cart is empty");
+        }
+
+        // Xử lý địa chỉ
+        String shippingName = request.getShippingName();
+        String shippingPhone = request.getShippingPhone();
+        String shippingAddress = request.getShippingAddress();
+
+        if (request.getShippingAddressId() != null) {
+            ShippingAddress addr = addressRepository.findByIdAndUser(request.getShippingAddressId(), user)
+                    .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Address not found"));
+
+            shippingName = addr.getReceiverName();
+            shippingPhone = addr.getReceiverPhone();
+            shippingAddress = addr.getFullAddress();
+        }
+
+        Order order = Order.builder()
+                .user(user)
+                .totalPrice(total)
+                .status(OrderStatus.PENDING)
+                .paymentMethod(request.getPaymentMethod())
+                .paymentStatus(PaymentStatus.UNPAID)
+                .shippingName(shippingName)
+                .shippingPhone(shippingPhone)
+                .shippingAddress(shippingAddress)
+                .build();
+
+        for (OrderItem oi : orderItems) {
+            oi.setOrder(order);
+        }
+        order.setItems(orderItems);
+
+        // trừ stock
+        for (OrderItem oi : orderItems) {
+            Product p = oi.getProduct();
+            p.setStock(p.getStock() - oi.getQuantity());
+        }
+
+        order = orderRepository.save(order);
+
+        // xoá chỉ các cart item đã checkout
+        cartItemRepository.deleteAll(selectedItems);
+
         return orderMapper.toOrderResponse(order);
     }
 
@@ -132,43 +301,36 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Page<OrderResponse> getMyOrders(Long userId, int page, int size) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+        User user = getUser(userId);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Order> orders = orderRepository.findByUserOrderByCreatedAtDesc(user, pageable);
 
-        return orders.map(this::toOrderResponse);
+        // dùng mapper, không tự map trong service nữa
+        return orders.map(orderMapper::toOrderResponse);
     }
 
-    private OrderResponse toOrderResponse(Order order) {
-        List<OrderItemResponse> itemResponses = order.getItems().stream()
-                .map(oi -> OrderItemResponse.builder()
-                        .productId(oi.getProduct().getId())
-                        .productName(oi.getProduct().getName())
-                        .quantity(oi.getQuantity())
-                        .unitPrice(oi.getUnitPrice())
-                        .subtotal(oi.getSubtotal())
-                        .build())
-                .toList();
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getAllOrders(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Order> orders = orderRepository.findAll(pageable);
+        return orders.map(orderMapper::toOrderResponse);
+    }
 
-        return OrderResponse.builder()
-                .id(order.getId())
-                .totalPrice(order.getTotalPrice())
-                .status(order.getStatus())
-                .paymentMethod(order.getPaymentMethod())
-                .paymentStatus(order.getPaymentStatus())
-                .shippingName(order.getShippingName())
-                .shippingPhone(order.getShippingPhone())
-                .shippingAddress(order.getShippingAddress())
-                .shippingTrackingCode(order.getShippingTrackingCode())
-                .shippingCarrier(order.getShippingCarrier())
-                .createdAt(order.getCreatedAt())
-                .confirmedAt(order.getConfirmedAt())
-                .shippedAt(order.getShippedAt())
-                .deliveredAt(order.getDeliveredAt())
-                .canceledAt(order.getCanceledAt())
-                .items(itemResponses)
-                .build();
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderByIdForAdmin(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Order not found"));
+        return orderMapper.toOrderResponse(order);
+    }
+
+
+    // ================== PRIVATE HELPER ==================
+
+    private User getUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
     }
 }

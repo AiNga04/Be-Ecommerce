@@ -4,6 +4,7 @@ import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.common.utils.FileUploadUtil;
 import com.zyna.dev.ecommerce.products.*;
 import com.zyna.dev.ecommerce.products.criteria.ProductCriteria;
+import com.zyna.dev.ecommerce.products.dto.response.PriceHistoryResponse;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
 import com.zyna.dev.ecommerce.products.models.PriceHistory;
 import com.zyna.dev.ecommerce.products.models.Product;
@@ -83,6 +84,20 @@ public class ProductServiceImpl implements ProductService {
         return productMapper.toProductResponse(product);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<PriceHistoryResponse> getPriceHistory(Long productId) {
+        List<PriceHistory> histories =
+                priceHistoryRepository.findByProductIdOrderByChangedAtDesc(productId);
+
+        return histories.stream()
+                .map(h -> PriceHistoryResponse.builder()
+                        .oldPrice(h.getOldPrice())
+                        .newPrice(h.getNewPrice())
+                        .changedAt(h.getChangedAt())
+                        .build())
+                .toList();
+    }
 
     // SEARCH PRODUCTS (filter, pagination, sorting)
     @Override

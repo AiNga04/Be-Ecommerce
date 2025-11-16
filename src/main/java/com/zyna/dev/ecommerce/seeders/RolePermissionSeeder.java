@@ -10,7 +10,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -30,8 +29,24 @@ public class RolePermissionSeeder implements CommandLineRunner {
         if (admin == null || staff == null || user == null) return;
 
         // ======== ADMIN ========
-        List<Permission> allPerms = permissionRepository.findAll();
-        admin.setPermissions(new HashSet<>(allPerms));
+        admin.setPermissions(new HashSet<>());
+
+        addPerm(admin, "PRODUCT_READ");
+        addPerm(admin, "PRODUCT_WRITE");
+
+        addPerm(admin, "USER_READ");
+        addPerm(admin, "USER_WRITE");
+
+        addPerm(admin, "ROLE_MANAGE");
+        addPerm(admin, "PERMISSION_MANAGE");
+
+        addPerm(admin, "INVENTORY_READ");
+        addPerm(admin, "INVENTORY_WRITE");
+
+        addPerm(admin, "ORDER_READ");
+        addPerm(admin, "ORDER_MANAGE");
+        // KHÔNG add ORDER_WRITE => admin không thể checkout
+
         roleRepository.save(admin);
 
         // ======== STAFF ========
@@ -40,16 +55,18 @@ public class RolePermissionSeeder implements CommandLineRunner {
         addPerm(staff, "PRODUCT_READ");
         addPerm(staff, "INVENTORY_READ");
         addPerm(staff, "INVENTORY_WRITE");
+
         addPerm(staff, "ORDER_READ");
-        addPerm(staff, "ORDER_MANAGE");
+        addPerm(staff, "ORDER_MANAGE");  // chỉ xử lý trạng thái đơn
 
         roleRepository.save(staff);
 
-        // ======== USER ========
+        // ======== USER (shopper) ========
         user.setPermissions(new HashSet<>());
 
         addPerm(user, "PRODUCT_READ");
-        addPerm(user, "ORDER_READ"); // chỉ xem đơn của chính mình
+        addPerm(user, "ORDER_READ");   // xem lịch sử đơn của chính mình
+        addPerm(user, "ORDER_WRITE");  // chỉ user được quyền add cart + checkout
 
         roleRepository.save(user);
 

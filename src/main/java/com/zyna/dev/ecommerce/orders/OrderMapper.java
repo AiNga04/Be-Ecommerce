@@ -12,9 +12,7 @@ import java.util.List;
 public class OrderMapper {
 
     public OrderResponse toOrderResponse(Order order) {
-        List<OrderItemResponse> items = order.getItems().stream()
-                .map(this::toOrderItemResponse)
-                .toList();
+        List<OrderItemResponse> items = toOrderItemResponses(order.getItems());
 
         return OrderResponse.builder()
                 .id(order.getId())
@@ -36,7 +34,13 @@ public class OrderMapper {
                 .build();
     }
 
-    private OrderItemResponse toOrderItemResponse(OrderItem item) {
+    public List<OrderItemResponse> toOrderItemResponses(List<OrderItem> items) {
+        return items.stream()
+                .map(this::toOrderItemResponse)
+                .toList();
+    }
+
+    public OrderItemResponse toOrderItemResponse(OrderItem item) {
         return OrderItemResponse.builder()
                 .productId(item.getProduct().getId())
                 .productName(item.getProduct().getName())

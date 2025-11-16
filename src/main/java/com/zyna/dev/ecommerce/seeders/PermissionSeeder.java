@@ -34,8 +34,11 @@ public class PermissionSeeder implements CommandLineRunner {
         create("INVENTORY_WRITE", "Can adjust stock");
 
         // ORDERS
-        create("ORDER_READ", "Can view all orders");
-        create("ORDER_WRITE", "Can update order status");
+        create("ORDER_READ", "Can view orders");
+        // chỉ dùng cho USER (shopper) để thêm giỏ & đặt hàng
+        create("ORDER_WRITE", "Can place orders (checkout, cart)");
+        // dùng cho STAFF / ADMIN để đổi trạng thái đơn
+        create("ORDER_MANAGE", "Can update order status");
     }
 
     private void create(String name, String desc) {

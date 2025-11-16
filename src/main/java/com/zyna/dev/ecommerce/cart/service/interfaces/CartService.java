@@ -1,0 +1,19 @@
+package com.zyna.dev.ecommerce.cart.service.interfaces;
+
+import com.zyna.dev.ecommerce.cart.dto.request.AddToCartRequest;
+import com.zyna.dev.ecommerce.cart.dto.request.UpdateCartItemRequest;
+import com.zyna.dev.ecommerce.cart.dto.response.CartItemResponse;
+
+import java.util.List;
+
+public interface CartService {
+    List<CartItemResponse> getMyCart(Long userId);
+
+    CartItemResponse addToCart(Long userId, AddToCartRequest request);
+
+    CartItemResponse updateCartItem(Long userId, Long cartItemId, UpdateCartItemRequest request);
+
+    void removeCartItem(Long userId, Long cartItemId);
+
+    void clearCart(Long userId);
+}

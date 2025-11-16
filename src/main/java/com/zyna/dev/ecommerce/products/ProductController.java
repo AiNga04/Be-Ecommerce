@@ -4,8 +4,6 @@ import com.zyna.dev.ecommerce.common.ApiResponse;
 import com.zyna.dev.ecommerce.products.criteria.ProductCriteria;
 import com.zyna.dev.ecommerce.products.dto.response.PriceHistoryResponse;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
-import com.zyna.dev.ecommerce.products.models.PriceHistory;
-import com.zyna.dev.ecommerce.products.repository.PriceHistoryRepository;
 import com.zyna.dev.ecommerce.products.service.interfaces.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,20 +19,28 @@ import java.util.List;
 @RequestMapping("/products")
 @RequiredArgsConstructor
 public class ProductController {
-    private final ProductService productService;
-    private final PriceHistoryRepository priceHistoryRepository;
+
+    private final ProductService productService; // ✅ chỉ còn service
 
     // PUBLIC / AUTH – cho phép mọi người xem sản phẩm
     @GetMapping("/{id}")
     public ApiResponse<ProductResponse> get(@PathVariable Long id) {
-        return ApiResponse.successfulResponse("Fetched product successfully!", productService.getProductById(id));
+        return ApiResponse.successfulResponse(
+                "Fetched product successfully!",
+                productService.getProductById(id)
+        );
     }
 
     @GetMapping
-    public ApiResponse<Page<ProductResponse>> search(@Valid ProductCriteria criteria,
-                                                     @RequestParam(defaultValue = "0") int page,
-                                                     @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.successfulResponse("Fetched product list!", productService.searchProducts(criteria, page, size));
+    public ApiResponse<Page<ProductResponse>> search(
+            @Valid ProductCriteria criteria,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ApiResponse.successfulResponse(
+                "Fetched product list!",
+                productService.searchProducts(criteria, page, size)
+        );
     }
 
     // ---------- ADMIN: cần PRODUCT_WRITE ----------
@@ -51,7 +57,9 @@ public class ProductController {
             @RequestParam(value = "stock", required = false) Integer stock,
             @RequestParam("image") MultipartFile image
     ) {
-        ProductResponse response = productService.createProduct(name, description, price, category, stock, image);
+        ProductResponse response = productService.createProduct(
+                name, description, price, category, stock, image
+        );
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
                 "Product created successfully!",
@@ -72,7 +80,9 @@ public class ProductController {
             @RequestParam(value = "stock", required = false) Integer stock,
             @RequestParam(value = "image", required = false) MultipartFile image
     ) {
-        ProductResponse response = productService.updateProduct(id, name, description, price, category, stock, image);
+        ProductResponse response = productService.updateProduct(
+                id, name, description, price, category, stock, image
+        );
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
                 "Product updated successfully!",
@@ -85,7 +95,10 @@ public class ProductController {
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
     public ApiResponse<Void> softDelete(@PathVariable Long id) {
         productService.softDeleteProduct(id);
-        return ApiResponse.successfulResponse(HttpStatus.OK.value(), "Product soft deleted successfully!");
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Product soft deleted successfully!"
+        );
     }
 
     // RESTORE 1 PRODUCT
@@ -93,7 +106,10 @@ public class ProductController {
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
     public ApiResponse<Void> restore(@PathVariable Long id) {
         productService.restoreProduct(id);
-        return ApiResponse.successfulResponse(HttpStatus.OK.value(), "Product restored successfully!");
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Product restored successfully!"
+        );
     }
 
     // HARD DELETE 1 PRODUCT
@@ -101,35 +117,52 @@ public class ProductController {
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
     public ApiResponse<Void> hardDelete(@PathVariable Long id) {
         productService.hardDeleteProduct(id);
-        return ApiResponse.successfulResponse(HttpStatus.OK.value(), "Product hard deleted successfully!");
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Product hard deleted successfully!"
+        );
     }
 
     // SOFT DELETE / RESTORE / HARD DELETE MANY PRODUCTS
     @PostMapping("/delete-many")
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
     public ApiResponse<List<Long>> softDeleteMany(@RequestBody List<Long> ids) {
-        return ApiResponse.successfulResponse("Soft deleted products!", productService.softDeleteProducts(ids));
+        return ApiResponse.successfulResponse(
+                "Soft deleted products!",
+                productService.softDeleteProducts(ids)
+        );
     }
 
     @PostMapping("/restore-many")
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
     public ApiResponse<List<Long>> restoreMany(@RequestBody List<Long> ids) {
-        return ApiResponse.successfulResponse("Restored products!", productService.restoreProducts(ids));
+        return ApiResponse.successfulResponse(
+                "Restored products!",
+                productService.restoreProducts(ids)
+        );
     }
 
     @PostMapping("/hard-delete-many")
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
     public ApiResponse<List<Long>> hardDeleteMany(@RequestBody List<Long> ids) {
-        return ApiResponse.successfulResponse("Hard deleted products!", productService.hardDeleteProducts(ids));
+        return ApiResponse.successfulResponse(
+                "Hard deleted products!",
+                productService.hardDeleteProducts(ids)
+        );
     }
 
     // GET LIST SOFT DELETE PRODUCTS
     @GetMapping("/deleted")
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
-    public ApiResponse<Page<ProductResponse>> getDeleted(@Valid ProductCriteria criteria,
-                                                         @RequestParam(defaultValue = "0") int page,
-                                                         @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.successfulResponse("Fetched deleted products!", productService.getDeletedProducts(criteria, page, size));
+    public ApiResponse<Page<ProductResponse>> getDeleted(
+            @Valid ProductCriteria criteria,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ApiResponse.successfulResponse(
+                "Fetched deleted products!",
+                productService.getDeletedProducts(criteria, page, size)
+        );
     }
 
     // UPLOAD GALLERY
@@ -182,16 +215,14 @@ public class ProductController {
     @GetMapping("/{id}/price-history")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
-    public ApiResponse<List<PriceHistoryResponse>> getPriceHistory(@PathVariable Long id) {
-        List<PriceHistory> histories = priceHistoryRepository.findByProductIdOrderByChangedAtDesc(id);
-        List<PriceHistoryResponse> response = histories.stream()
-                .map(h -> PriceHistoryResponse.builder()
-                        .oldPrice(h.getOldPrice())
-                        .newPrice(h.getNewPrice())
-                        .changedAt(h.getChangedAt())
-                        .build())
-                .toList();
-
-        return ApiResponse.successfulResponse(HttpStatus.OK.value(), "Fetched price history!", response);
+    public ApiResponse<List<PriceHistoryResponse>> getPriceHistory(
+            @PathVariable Long id
+    ) {
+        List<PriceHistoryResponse> response = productService.getPriceHistory(id);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Fetched price history!",
+                response
+        );
     }
 }

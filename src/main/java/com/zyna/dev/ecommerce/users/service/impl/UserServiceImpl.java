@@ -88,7 +88,15 @@ public class UserServiceImpl implements UserService {
         return userMapper.toUserResponse(saved);
     }
 
-
+    @Override
+    public Long getUserIdByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApplicationException(
+                        HttpStatus.NOT_FOUND,
+                        "User not found with email: " + email
+                ))
+                .getId();
+    }
 
     @Override
     public UserResponse getUserById(Long id) {
