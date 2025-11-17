@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.cart.dto.request;
+package com.zyna.dev.ecommerce.carts.dto.request;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

@@ -1,9 +1,9 @@
-package com.zyna.dev.ecommerce.cart;
+package com.zyna.dev.ecommerce.carts;
 
-import com.zyna.dev.ecommerce.cart.dto.request.AddToCartRequest;
-import com.zyna.dev.ecommerce.cart.dto.request.UpdateCartItemRequest;
-import com.zyna.dev.ecommerce.cart.dto.response.CartItemResponse;
-import com.zyna.dev.ecommerce.cart.service.interfaces.CartService;
+import com.zyna.dev.ecommerce.carts.dto.request.AddToCartRequest;
+import com.zyna.dev.ecommerce.carts.dto.request.UpdateCartItemRequest;
+import com.zyna.dev.ecommerce.carts.dto.response.CartItemResponse;
+import com.zyna.dev.ecommerce.carts.service.interfaces.CartService;
 import com.zyna.dev.ecommerce.common.ApiResponse;
 import com.zyna.dev.ecommerce.users.service.interfaces.UserService;
 import jakarta.validation.Valid;

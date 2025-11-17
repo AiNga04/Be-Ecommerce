@@ -1,7 +1,7 @@
-package com.zyna.dev.ecommerce.cart;
+package com.zyna.dev.ecommerce.carts;
 
-import com.zyna.dev.ecommerce.cart.dto.response.CartItemResponse;
-import com.zyna.dev.ecommerce.cart.models.CartItem;
+import com.zyna.dev.ecommerce.carts.dto.response.CartItemResponse;
+import com.zyna.dev.ecommerce.carts.models.CartItem;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;

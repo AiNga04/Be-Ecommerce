@@ -1,6 +1,6 @@
-package com.zyna.dev.ecommerce.cart.repository;
+package com.zyna.dev.ecommerce.carts.repository;
 
-import com.zyna.dev.ecommerce.cart.models.CartItem;
+import com.zyna.dev.ecommerce.carts.models.CartItem;
 import com.zyna.dev.ecommerce.users.User;
 import com.zyna.dev.ecommerce.products.models.Product;
 import org.springframework.data.jpa.repository.JpaRepository;

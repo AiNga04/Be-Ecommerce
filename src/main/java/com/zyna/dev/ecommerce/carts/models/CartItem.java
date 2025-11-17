@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.cart.models;
+package com.zyna.dev.ecommerce.carts.models;
 
 import com.zyna.dev.ecommerce.products.models.Product;
 import com.zyna.dev.ecommerce.users.User;

@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.cart.dto.response;
+package com.zyna.dev.ecommerce.carts.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;

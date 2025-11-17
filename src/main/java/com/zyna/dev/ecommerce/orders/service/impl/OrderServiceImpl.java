@@ -2,8 +2,8 @@ package com.zyna.dev.ecommerce.orders.service.impl;
 
 import com.zyna.dev.ecommerce.address.models.ShippingAddress;
 import com.zyna.dev.ecommerce.address.repository.ShippingAddressRepository;
-import com.zyna.dev.ecommerce.cart.models.CartItem;
-import com.zyna.dev.ecommerce.cart.repository.CartItemRepository;
+import com.zyna.dev.ecommerce.carts.models.CartItem;
+import com.zyna.dev.ecommerce.carts.repository.CartItemRepository;
 import com.zyna.dev.ecommerce.common.enums.OrderStatus;
 import com.zyna.dev.ecommerce.common.enums.PaymentStatus;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;

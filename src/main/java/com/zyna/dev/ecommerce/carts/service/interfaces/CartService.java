@@ -1,8 +1,8 @@
-package com.zyna.dev.ecommerce.cart.service.interfaces;
+package com.zyna.dev.ecommerce.carts.service.interfaces;
 
-import com.zyna.dev.ecommerce.cart.dto.request.AddToCartRequest;
-import com.zyna.dev.ecommerce.cart.dto.request.UpdateCartItemRequest;
-import com.zyna.dev.ecommerce.cart.dto.response.CartItemResponse;
+import com.zyna.dev.ecommerce.carts.dto.request.AddToCartRequest;
+import com.zyna.dev.ecommerce.carts.dto.request.UpdateCartItemRequest;
+import com.zyna.dev.ecommerce.carts.dto.response.CartItemResponse;
 
 import java.util.List;
 

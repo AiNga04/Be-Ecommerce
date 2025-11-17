@@ -1,12 +1,12 @@
-package com.zyna.dev.ecommerce.cart.service.impl;
+package com.zyna.dev.ecommerce.carts.service.impl;
 
-import com.zyna.dev.ecommerce.cart.CartMapper;
-import com.zyna.dev.ecommerce.cart.dto.request.AddToCartRequest;
-import com.zyna.dev.ecommerce.cart.dto.request.UpdateCartItemRequest;
-import com.zyna.dev.ecommerce.cart.dto.response.CartItemResponse;
-import com.zyna.dev.ecommerce.cart.models.CartItem;
-import com.zyna.dev.ecommerce.cart.repository.CartItemRepository;
-import com.zyna.dev.ecommerce.cart.service.interfaces.CartService;
+import com.zyna.dev.ecommerce.carts.CartMapper;
+import com.zyna.dev.ecommerce.carts.dto.request.AddToCartRequest;
+import com.zyna.dev.ecommerce.carts.dto.request.UpdateCartItemRequest;
+import com.zyna.dev.ecommerce.carts.dto.response.CartItemResponse;
+import com.zyna.dev.ecommerce.carts.models.CartItem;
+import com.zyna.dev.ecommerce.carts.repository.CartItemRepository;
+import com.zyna.dev.ecommerce.carts.service.interfaces.CartService;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.products.models.Product;
 import com.zyna.dev.ecommerce.products.repository.ProductRepository;
