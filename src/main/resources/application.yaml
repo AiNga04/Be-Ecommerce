@@ -3,6 +3,16 @@ server:
   servlet:
     context-path: /api
 
+vnpay:
+  pay-url: ${PAY_URL}
+  tmn-code: ${TMN_CODE}
+  hash-secret: ${SECRET_KEY}
+  return-url: ${RETURN_URL}
+  version: ${VERSION:2.1.0}
+  command: ${COMMAND:pay}
+  order-type: ${ORDER_TYPE:other}
+
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/ecommerce
@@ -45,3 +55,4 @@ app:
     secret: ${APP_JWT_SECRET}
     expiration-ms: ${APP_JWT_EXPIRATION_MS:86400000}
     issuer: ${APP_JWT_ISSUER:zyna-app}
+

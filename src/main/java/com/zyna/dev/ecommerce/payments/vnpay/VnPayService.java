@@ -1,0 +1,165 @@
+package com.zyna.dev.ecommerce.payments.vnpay;
+
+import com.zyna.dev.ecommerce.common.enums.OrderStatus;
+import com.zyna.dev.ecommerce.common.enums.PaymentMethod;
+import com.zyna.dev.ecommerce.common.enums.PaymentStatus;
+import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
+import com.zyna.dev.ecommerce.orders.models.Order;
+import com.zyna.dev.ecommerce.orders.repository.OrderRepository;
+import com.zyna.dev.ecommerce.payments.vnpay.dto.VnPayReturnResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class VnPayService {
+
+    private final VnPayConfig config;
+    private final OrderRepository orderRepository;
+
+    /**
+     * Tạo URL thanh toán VNPay cho một order
+     */
+    public String createPaymentUrl(Long orderId, HttpServletRequest request) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Order already paid");
+        }
+
+        // Chỉ cho ONLINE thanh toán qua VNPay
+        if (order.getPaymentMethod() != PaymentMethod.ONLINE) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Order payment method is not ONLINE");
+        }
+
+        // Đảm bảo có order code
+        if (order.getCode() == null || order.getCode().isBlank()) {
+            order.setCode("ORD-" + order.getId());
+        }
+
+        // VNPay yêu cầu amount là *100
+        long amount = order.getTotalPrice()
+                .multiply(BigDecimal.valueOf(100))
+                .longValue();
+
+        Map<String, String> params = config.baseParams();
+
+        params.put("vnp_Amount", String.valueOf(amount));
+        // Dùng order code làm TxnRef cho consistent với handleReturn()
+        params.put("vnp_TxnRef", order.getCode());
+        params.put("vnp_OrderInfo", "Thanh toan don hang " + order.getCode());
+        params.put("vnp_IpAddr", request.getRemoteAddr());
+
+        // Build hash data (chưa encode key)
+        String hashData = VnPayUtil.generateQuery(params, false);
+        String secureHash = VnPayUtil.hmacSHA512(config.getHashSecret(), hashData);
+
+        // Build final query (encode key) + secure hash
+        String queryUrl = VnPayUtil.generateQuery(params, true)
+                + "&vnp_SecureHash=" + secureHash;
+
+        log.info("VnPay Query URL: {}", queryUrl);
+        log.info("VnPay Query Params: {}", params);
+
+        return config.getPayUrl() + "?" + queryUrl;
+    }
+
+    /**
+     * Validate chữ ký VNPay từ vnp_* params
+     */
+    public boolean validateSignature(Map<String, String> params) {
+        String receivedHash = params.get("vnp_SecureHash");
+        if (receivedHash == null) return false;
+
+        // remove hash fields
+        params.remove("vnp_SecureHash");
+        params.remove("vnp_SecureHashType");
+
+        List<String> fieldNames = new ArrayList<>(params.keySet());
+        Collections.sort(fieldNames);
+
+        StringBuilder hashData = new StringBuilder();
+        for (Iterator<String> itr = fieldNames.iterator(); itr.hasNext(); ) {
+            String fieldName = itr.next();
+            String fieldValue = params.get(fieldName);
+            if (fieldValue != null && !fieldValue.isEmpty()) {
+                hashData.append(fieldName).append('=').append(fieldValue);
+                if (itr.hasNext()) hashData.append('&');
+            }
+        }
+
+        String expectedHash = VnPayUtil.hmacSHA512(config.getHashSecret(), hashData.toString());
+        return expectedHash.equalsIgnoreCase(receivedHash);
+    }
+
+    /**
+     * Xử lý kết quả thanh toán khi VNPay redirect về (vnp_ReturnUrl)
+     */
+    public VnPayReturnResponse handleReturn(Map<String, String> vnpParams) {
+
+        Map<String, String> paramsCopy = new HashMap<>(vnpParams);
+        boolean valid = validateSignature(paramsCopy);
+        if (!valid) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Invalid VNPay signature");
+        }
+
+        String txnRef = vnpParams.get("vnp_TxnRef");               // order code
+        String rspCode = vnpParams.get("vnp_ResponseCode");        // 00 = success
+        String transactionStatus = vnpParams.get("vnp_TransactionStatus"); // 00 = success
+        String transactionNo = vnpParams.get("vnp_TransactionNo");
+        String bankCode = vnpParams.get("vnp_BankCode");
+        String amountStr = vnpParams.get("vnp_Amount");
+        String payDateStr = vnpParams.get("vnp_PayDate");
+
+        Order order = orderRepository.findByCode(txnRef)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        // convert amount về BigDecimal (VNPay gửi *100)
+        BigDecimal paidAmount = null;
+        if (amountStr != null) {
+            long amountLong = Long.parseLong(amountStr);
+            paidAmount = BigDecimal.valueOf(amountLong).divide(BigDecimal.valueOf(100));
+        }
+
+        boolean success = "00".equals(rspCode) && "00".equals(transactionStatus);
+
+        if (success) {
+            order.markPaidByVnPay(
+                    transactionNo,
+                    rspCode,
+                    paidAmount != null ? paidAmount : order.getTotalPrice(),
+                    vnpParams.toString()
+            );
+
+            if (order.getStatus() == OrderStatus.PENDING) {
+                order.setStatus(OrderStatus.CONFIRMED);
+            }
+        } else {
+            order.markPaymentFailed("VNPAY", rspCode, vnpParams.toString());
+        }
+
+        orderRepository.save(order);
+
+        return VnPayReturnResponse.builder()
+                .orderCode(order.getCode())
+                .paymentStatus(order.getPaymentStatus())
+                .vnpResponseCode(rspCode)
+                .vnpTransactionStatus(transactionStatus)
+                .vnpTransactionNo(transactionNo)
+                .vnpBankCode(bankCode)
+                .vnpAmount(amountStr)
+                .vnpPayDate(payDateStr)
+                .message(success ? "Thanh toán thành công" : "Thanh toán thất bại")
+                .build();
+    }
+}
