@@ -1,5 +1,6 @@
 package com.zyna.dev.ecommerce.vouchers;
 
+import com.zyna.dev.ecommerce.common.enums.VoucherStatus;
 import com.zyna.dev.ecommerce.vouchers.dto.request.VoucherCreateRequest;
 import com.zyna.dev.ecommerce.vouchers.dto.request.VoucherUpdateRequest;
 import com.zyna.dev.ecommerce.vouchers.dto.response.VoucherResponse;
@@ -18,6 +19,7 @@ public class VoucherMapper {
                 .description(dto.getDescription())
                 .type(dto.getType())
                 .scope(dto.getScope())
+                .status(VoucherStatus.DRAFT)         // ⭐ tạo ra ở trạng thái DRAFT
                 .discountValue(dto.getDiscountValue())
                 .maxDiscountAmount(dto.getMaxDiscountAmount())
                 .minOrderValue(dto.getMinOrderValue())
@@ -25,7 +27,6 @@ public class VoucherMapper {
                 .maxUsagePerUser(dto.getMaxUsagePerUser())
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
-                .isActive(true)
                 .usedCount(0)
                 .build();
     }
@@ -42,7 +43,7 @@ public class VoucherMapper {
         if (dto.getMaxUsage() != null) voucher.setMaxUsage(dto.getMaxUsage());
         if (dto.getStartDate() != null) voucher.setStartDate(dto.getStartDate());
         if (dto.getEndDate() != null) voucher.setEndDate(dto.getEndDate());
-        if (dto.getIsActive() != null) voucher.setIsActive(dto.getIsActive());
+        // Không cho update status ở đây, mình tách thành API riêng (activate/deactivate)
         voucher.setUpdatedAt(LocalDateTime.now());
     }
 
@@ -54,6 +55,7 @@ public class VoucherMapper {
                 .description(entity.getDescription())
                 .type(entity.getType())
                 .scope(entity.getScope())
+                .status(entity.getStatus()) // ⭐ trả cả status
                 .discountValue(entity.getDiscountValue())
                 .maxDiscountAmount(entity.getMaxDiscountAmount())
                 .minOrderValue(entity.getMinOrderValue())
@@ -62,7 +64,6 @@ public class VoucherMapper {
                 .usedCount(entity.getUsedCount())
                 .startDate(entity.getStartDate())
                 .endDate(entity.getEndDate())
-                .isActive(entity.getIsActive())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

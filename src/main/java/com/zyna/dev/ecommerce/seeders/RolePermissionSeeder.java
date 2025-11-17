@@ -28,7 +28,7 @@ public class RolePermissionSeeder implements CommandLineRunner {
 
         if (admin == null || staff == null || user == null) return;
 
-        // ======== ADMIN ========
+        // ================= ADMIN =================
         admin.setPermissions(new HashSet<>());
 
         addPerm(admin, "PRODUCT_READ");
@@ -45,32 +45,44 @@ public class RolePermissionSeeder implements CommandLineRunner {
 
         addPerm(admin, "ORDER_READ");
         addPerm(admin, "ORDER_MANAGE");
-        // KHÔNG add ORDER_WRITE => admin không thể checkout
+        // KHÔNG cần ORDER_WRITE cho admin, để tránh tự đi đặt hàng 😄
+
+        // VOUCHER: admin full quyền
+        addPerm(admin, "VOUCHER_READ");
+        addPerm(admin, "VOUCHER_WRITE");
+        addPerm(admin, "VOUCHER_STATUS_MANAGE");
 
         roleRepository.save(admin);
 
-        // ======== STAFF ========
+        // ================= STAFF =================
         staff.setPermissions(new HashSet<>());
 
         addPerm(staff, "PRODUCT_READ");
+
         addPerm(staff, "INVENTORY_READ");
         addPerm(staff, "INVENTORY_WRITE");
 
         addPerm(staff, "ORDER_READ");
-        addPerm(staff, "ORDER_MANAGE");  // chỉ xử lý trạng thái đơn
+        addPerm(staff, "ORDER_MANAGE");
+
+        // VOUCHER: staff được xem + bật/tắt, nhưng không sửa nội dung
+        addPerm(staff, "VOUCHER_READ");
+        addPerm(staff, "VOUCHER_STATUS_MANAGE");
 
         roleRepository.save(staff);
 
-        // ======== USER (shopper) ========
+        // ================= USER (shopper) =================
         user.setPermissions(new HashSet<>());
 
         addPerm(user, "PRODUCT_READ");
         addPerm(user, "ORDER_READ");   // xem lịch sử đơn của chính mình
-        addPerm(user, "ORDER_WRITE");  // chỉ user được quyền add cart + checkout
+        addPerm(user, "ORDER_WRITE");  // checkout, apply voucher
+
+        // Không gán bất kỳ VOUCHER_* permission nào cho user
 
         roleRepository.save(user);
 
-        System.out.println(">>> Permissions assigned successfully.");
+        System.out.println(">>> RolePermissionSeeder: permissions assigned.");
     }
 
     private void addPerm(AppRole role, String permName) {

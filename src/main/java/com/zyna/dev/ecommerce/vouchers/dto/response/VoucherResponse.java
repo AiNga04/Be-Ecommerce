@@ -1,6 +1,7 @@
 package com.zyna.dev.ecommerce.vouchers.dto.response;
 
 import com.zyna.dev.ecommerce.common.enums.VoucherScope;
+import com.zyna.dev.ecommerce.common.enums.VoucherStatus;
 import com.zyna.dev.ecommerce.common.enums.VoucherType;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,6 +27,7 @@ public class VoucherResponse {
     private Integer maxUsagePerUser;
     private Integer maxUsage;
     private Integer usedCount;
+    private VoucherStatus status;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private Boolean isActive;

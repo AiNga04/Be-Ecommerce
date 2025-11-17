@@ -15,9 +15,15 @@ public interface VoucherService {
 
     void deactivate(Long id);
 
+    void activate(Long id);
+
     VoucherResponse getById(Long id);
 
     Page<VoucherResponse> list(int page, int size);
 
+    Page<VoucherResponse> listActive(int page, int size); // 👈 thêm
+
     VoucherApplyResponse apply(VoucherApplyRequest request);
 }
+
+

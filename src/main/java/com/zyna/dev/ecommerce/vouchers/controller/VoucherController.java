@@ -21,10 +21,10 @@ public class VoucherController {
 
     private final VoucherService voucherService;
 
-    // ADMIN: tạo voucher
+    // ADMIN: tạo voucher (DRAFT) -> chỉ ADMIN có VOUCHER_WRITE
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('PRODUCT_WRITE')") // hoặc tạo riêng 'VOUCHER_MANAGE'
+    @PreAuthorize("hasAuthority('VOUCHER_WRITE')")
     public ApiResponse<VoucherResponse> create(@Valid @RequestBody VoucherCreateRequest request) {
         VoucherResponse data = voucherService.create(request);
         return ApiResponse.successfulResponse(
@@ -34,10 +34,10 @@ public class VoucherController {
         );
     }
 
-    // ADMIN: update
+    // ADMIN: update nội dung voucher -> chỉ ADMIN
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
+    @PreAuthorize("hasAuthority('VOUCHER_WRITE')")
     public ApiResponse<VoucherResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody VoucherUpdateRequest request
@@ -50,10 +50,10 @@ public class VoucherController {
         );
     }
 
-    // ADMIN: deactivate (soft)
+    // ADMIN: deactivate / xóa logic (INACTIVE) -> chỉ ADMIN
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
+    @PreAuthorize("hasAuthority('VOUCHER_WRITE')")
     public ApiResponse<Void> deactivate(@PathVariable Long id) {
         voucherService.deactivate(id);
         return ApiResponse.successfulResponseNoData(
@@ -62,10 +62,22 @@ public class VoucherController {
         );
     }
 
-    // ADMIN: get by id
+    // ADMIN + STAFF: activate -> ACTIVE
+    @PutMapping("/{id}/activate")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('VOUCHER_STATUS_MANAGE')") // admin + staff
+    public ApiResponse<Void> activate(@PathVariable Long id) {
+        voucherService.activate(id);
+        return ApiResponse.successfulResponseNoData(
+                HttpStatus.OK.value(),
+                "Voucher activated successfully!"
+        );
+    }
+
+    // ADMIN + STAFF: xem chi tiết 1 voucher
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
+    @PreAuthorize("hasAuthority('VOUCHER_READ')")
     public ApiResponse<VoucherResponse> getById(@PathVariable Long id) {
         VoucherResponse data = voucherService.getById(id);
         return ApiResponse.successfulResponse(
@@ -75,10 +87,10 @@ public class VoucherController {
         );
     }
 
-    // ADMIN: list
+    // ADMIN + STAFF: xem full list
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
+    @PreAuthorize("hasAuthority('VOUCHER_READ')")
     public ApiResponse<Page<VoucherResponse>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
@@ -91,9 +103,26 @@ public class VoucherController {
         );
     }
 
-    // USER / PUBLIC: apply voucher cho đơn hàng
+    // USER: xem list voucher đang áp dụng (ACTIVE & trong thời gian hiệu lực)
+    @GetMapping("/active")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('ORDER_WRITE')") // chỉ user (shopper) có
+    public ApiResponse<Page<VoucherResponse>> listActiveForUser(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Page<VoucherResponse> data = voucherService.listActive(page, size);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Get active voucher list successfully!",
+                data
+        );
+    }
+
+    // USER: apply voucher khi checkout
     @PostMapping("/apply")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('ORDER_WRITE')")
     public ApiResponse<VoucherApplyResponse> apply(
             @Valid @RequestBody VoucherApplyRequest request
     ) {

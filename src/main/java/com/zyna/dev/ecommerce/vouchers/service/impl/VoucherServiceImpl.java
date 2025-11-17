@@ -1,5 +1,6 @@
 package com.zyna.dev.ecommerce.vouchers.service.impl;
 
+import com.zyna.dev.ecommerce.common.enums.VoucherStatus;
 import com.zyna.dev.ecommerce.common.enums.VoucherType;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.vouchers.VoucherMapper;
@@ -33,7 +34,7 @@ public class VoucherServiceImpl implements VoucherService {
             throw new ApplicationException(HttpStatus.CONFLICT, "Voucher code already exists!");
         }
 
-        Voucher voucher = voucherMapper.toEntity(request);
+        Voucher voucher = voucherMapper.toEntity(request); // status = DRAFT trong mapper
         Voucher saved = voucherRepository.save(voucher);
         return voucherMapper.toResponse(saved);
     }
@@ -43,17 +44,44 @@ public class VoucherServiceImpl implements VoucherService {
         Voucher voucher = voucherRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Voucher not found!"));
 
+        // không cho sửa voucher đã hết hạn
+        if (voucher.getStatus() == VoucherStatus.EXPIRED) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Expired voucher cannot be updated!");
+        }
+
         voucherMapper.applyUpdate(voucher, request);
         Voucher saved = voucherRepository.save(voucher);
         return voucherMapper.toResponse(saved);
     }
 
+    /**
+     * Admin tắt voucher (INACTIVE)
+     */
     @Override
     public void deactivate(Long id) {
         Voucher voucher = voucherRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Voucher not found!"));
 
-        voucher.setIsActive(false);
+        voucher.setStatus(VoucherStatus.INACTIVE);
+        voucherRepository.save(voucher);
+    }
+
+    /**
+     * Admin bật voucher (ACTIVE) từ DRAFT/INACTIVE
+     */
+    @Override
+    public void activate(Long id) {
+        Voucher voucher = voucherRepository.findById(id)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Voucher not found!"));
+
+        LocalDateTime now = LocalDateTime.now();
+        if (voucher.getEndDate() != null && now.isAfter(voucher.getEndDate())) {
+            voucher.setStatus(VoucherStatus.EXPIRED);
+            voucherRepository.save(voucher);
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Voucher is already expired!");
+        }
+
+        voucher.setStatus(VoucherStatus.ACTIVE);
         voucherRepository.save(voucher);
     }
 
@@ -74,16 +102,47 @@ public class VoucherServiceImpl implements VoucherService {
 
     @Override
     @Transactional(readOnly = true)
-    public VoucherApplyResponse apply(VoucherApplyRequest request) {
-        Voucher voucher = voucherRepository.findByCodeIgnoreCaseAndIsActiveTrue(request.getCode())
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Voucher not found or inactive!"));
+    public Page<VoucherResponse> listActive(int page, int size) {
+        // Lấy các voucher ACTIVE, rồi filter thêm theo startDate/endDate
+        Page<Voucher> vouchers = voucherRepository.findAllByStatus(
+                VoucherStatus.ACTIVE,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
 
         LocalDateTime now = LocalDateTime.now();
 
+        var filtered = vouchers.getContent().stream()
+                .filter(v -> (v.getStartDate() == null || !now.isBefore(v.getStartDate()))
+                        && (v.getEndDate() == null || !now.isAfter(v.getEndDate())))
+                .map(voucherMapper::toResponse)
+                .toList();
+
+        return new PageImpl<>(filtered, vouchers.getPageable(), filtered.size());
+    }
+
+
+    /**
+     * User apply voucher khi checkout
+     */
+    @Override
+    @Transactional
+    public VoucherApplyResponse apply(VoucherApplyRequest request) {
+        Voucher voucher = voucherRepository
+                .findByCodeIgnoreCaseAndStatus(request.getCode(), VoucherStatus.ACTIVE)
+                .orElseThrow(() -> new ApplicationException(
+                        HttpStatus.NOT_FOUND,
+                        "Voucher not found or inactive!"
+                ));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // thời gian hiệu lực
         if (voucher.getStartDate() != null && now.isBefore(voucher.getStartDate())) {
             return invalid("Voucher is not started yet!", request);
         }
         if (voucher.getEndDate() != null && now.isAfter(voucher.getEndDate())) {
+            voucher.setStatus(VoucherStatus.EXPIRED);
+            voucherRepository.save(voucher);
             return invalid("Voucher is expired!", request);
         }
 
@@ -92,13 +151,23 @@ public class VoucherServiceImpl implements VoucherService {
         BigDecimal discountAmount = BigDecimal.ZERO;
         BigDecimal shippingDiscount = BigDecimal.ZERO;
 
-        // check minOrderValue
+        // đơn tối thiểu
         if (voucher.getMinOrderValue() != null &&
                 cartTotal.compareTo(voucher.getMinOrderValue()) < 0) {
             return invalid("Order total does not reach minimum value for this voucher!", request);
         }
 
+        // (optional) giới hạn số lần dùng tổng
+        if (voucher.getMaxUsage() != null && voucher.getUsedCount() != null &&
+                voucher.getUsedCount() >= voucher.getMaxUsage()) {
+            voucher.setStatus(VoucherStatus.INACTIVE);
+            voucherRepository.save(voucher);
+            return invalid("This voucher has reached its maximum usage!", request);
+        }
+
+        // TÍNH GIẢM GIÁ
         if (voucher.getType() == VoucherType.PERCENTAGE) {
+
             BigDecimal percent = voucher.getDiscountValue();
             discountAmount = cartTotal
                     .multiply(percent)
@@ -108,13 +177,16 @@ public class VoucherServiceImpl implements VoucherService {
                     discountAmount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
                 discountAmount = voucher.getMaxDiscountAmount();
             }
+
         } else if (voucher.getType() == VoucherType.FIXED_AMOUNT) {
+
             discountAmount = voucher.getDiscountValue();
             if (discountAmount.compareTo(cartTotal) > 0) {
                 discountAmount = cartTotal;
             }
+
         } else if (voucher.getType() == VoucherType.FREESHIP) {
-            // nếu discountValue null, coi như freeship toàn bộ
+
             BigDecimal maxShipDiscount = voucher.getDiscountValue() != null
                     ? voucher.getDiscountValue()
                     : shippingFee;
@@ -124,6 +196,14 @@ public class VoucherServiceImpl implements VoucherService {
         BigDecimal finalCartTotal = cartTotal.subtract(discountAmount);
         BigDecimal finalShipping = shippingFee.subtract(shippingDiscount);
         BigDecimal finalPayable = finalCartTotal.add(finalShipping);
+
+        // tăng usedCount
+        if (voucher.getUsedCount() == null) {
+            voucher.setUsedCount(1);
+        } else {
+            voucher.setUsedCount(voucher.getUsedCount() + 1);
+        }
+        voucherRepository.save(voucher);
 
         return VoucherApplyResponse.builder()
                 .valid(true)
