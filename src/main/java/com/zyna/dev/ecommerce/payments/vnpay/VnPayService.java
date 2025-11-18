@@ -14,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -37,7 +36,6 @@ public class VnPayService {
             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Order already paid");
         }
 
-        // Chỉ cho ONLINE thanh toán qua VNPay
         if (order.getPaymentMethod() != PaymentMethod.ONLINE) {
             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Order payment method is not ONLINE");
         }
@@ -45,9 +43,10 @@ public class VnPayService {
         // Đảm bảo có order code
         if (order.getCode() == null || order.getCode().isBlank()) {
             order.setCode("ORD-" + order.getId());
+            // 🔴 QUAN TRỌNG: LƯU LẠI
+            order = orderRepository.save(order);
         }
 
-        // VNPay yêu cầu amount là *100
         long amount = order.getTotalPrice()
                 .multiply(BigDecimal.valueOf(100))
                 .longValue();
@@ -55,16 +54,13 @@ public class VnPayService {
         Map<String, String> params = config.baseParams();
 
         params.put("vnp_Amount", String.valueOf(amount));
-        // Dùng order code làm TxnRef cho consistent với handleReturn()
         params.put("vnp_TxnRef", order.getCode());
         params.put("vnp_OrderInfo", "Thanh toan don hang " + order.getCode());
         params.put("vnp_IpAddr", request.getRemoteAddr());
 
-        // Build hash data (chưa encode key)
         String hashData = VnPayUtil.generateQuery(params, false);
         String secureHash = VnPayUtil.hmacSHA512(config.getHashSecret(), hashData);
 
-        // Build final query (encode key) + secure hash
         String queryUrl = VnPayUtil.generateQuery(params, true)
                 + "&vnp_SecureHash=" + secureHash;
 
@@ -74,31 +70,31 @@ public class VnPayService {
         return config.getPayUrl() + "?" + queryUrl;
     }
 
+
     /**
      * Validate chữ ký VNPay từ vnp_* params
      */
-    public boolean validateSignature(Map<String, String> params) {
-        String receivedHash = params.get("vnp_SecureHash");
-        if (receivedHash == null) return false;
-
-        // remove hash fields
-        params.remove("vnp_SecureHash");
-        params.remove("vnp_SecureHashType");
-
-        List<String> fieldNames = new ArrayList<>(params.keySet());
-        Collections.sort(fieldNames);
-
-        StringBuilder hashData = new StringBuilder();
-        for (Iterator<String> itr = fieldNames.iterator(); itr.hasNext(); ) {
-            String fieldName = itr.next();
-            String fieldValue = params.get(fieldName);
-            if (fieldValue != null && !fieldValue.isEmpty()) {
-                hashData.append(fieldName).append('=').append(fieldValue);
-                if (itr.hasNext()) hashData.append('&');
-            }
+    public boolean validateSignature(Map<String, String> vnpParams) {
+        String receivedHash = vnpParams.get("vnp_SecureHash");
+        if (receivedHash == null || receivedHash.isBlank()) {
+            return false;
         }
 
-        String expectedHash = VnPayUtil.hmacSHA512(config.getHashSecret(), hashData.toString());
+        // copy map, bỏ các field hash
+        Map<String, String> params = new HashMap<>();
+        vnpParams.forEach((k, v) -> {
+            if (k.startsWith("vnp_")
+                    && !"vnp_SecureHash".equals(k)
+                    && !"vnp_SecureHashType".equals(k)) {
+                params.put(k, v);
+            }
+        });
+
+        // build hashData giống lúc tạo URL: sort + encode value, không encode key
+        String hashData = VnPayUtil.generateQuery(params, false);
+
+        String expectedHash = VnPayUtil.hmacSHA512(config.getHashSecret(), hashData);
+
         return expectedHash.equalsIgnoreCase(receivedHash);
     }
 
