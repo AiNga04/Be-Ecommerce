@@ -95,7 +95,7 @@ public class ProductServiceImpl implements ProductService {
                         new ApplicationException(HttpStatus.NOT_FOUND, "Product not found or inactive!")
                 );
 
-        return productMapper.toProductResponse(product);
+        return productMapper.toProductResponseDetail(product);
     }
 
     @Override

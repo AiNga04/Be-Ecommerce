@@ -76,6 +76,27 @@ public class ProductMapper {
                 .isActive(entity.getIsActive())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    // Chuyển entity sang response DTO
+    public ProductResponse toProductResponseDetail(Product entity) {
+        String categoryName = null;
+        if (entity.getCategory() != null) {
+            categoryName = entity.getCategory().getName(); // hoặc getCode()
+        }
+
+        return ProductResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .price(entity.getPrice())
+                .imageUrl(entity.getImageUrl())
+                .category(categoryName)   // ✅ giờ là name/code từ Category
+                .stock(entity.getStock())
+                .isActive(entity.getIsActive())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
                 .gallery(
                         entity.getGallery() == null
                                 ? Collections.emptyList()
