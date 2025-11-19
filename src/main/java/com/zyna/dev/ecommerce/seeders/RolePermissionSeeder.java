@@ -56,6 +56,7 @@ public class RolePermissionSeeder implements CommandLineRunner {
 
         // ================= STAFF =================
         staff.setPermissions(new HashSet<>());
+        addPerm(staff, "USER_READ");
 
         addPerm(staff, "PRODUCT_READ");
 
