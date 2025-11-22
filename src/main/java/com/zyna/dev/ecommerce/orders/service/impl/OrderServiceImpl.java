@@ -6,6 +6,7 @@ import com.zyna.dev.ecommerce.carts.models.CartItem;
 import com.zyna.dev.ecommerce.carts.repository.CartItemRepository;
 import com.zyna.dev.ecommerce.common.enums.OrderStatus;
 import com.zyna.dev.ecommerce.common.enums.PaymentStatus;
+import com.zyna.dev.ecommerce.common.enums.ShipmentStatus;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.orders.OrderMapper;
 import com.zyna.dev.ecommerce.orders.dto.request.CheckoutFromCartRequest;
@@ -18,6 +19,8 @@ import com.zyna.dev.ecommerce.orders.repository.OrderRepository;
 import com.zyna.dev.ecommerce.orders.service.interfaces.OrderService;
 import com.zyna.dev.ecommerce.products.models.Product;
 import com.zyna.dev.ecommerce.products.repository.ProductRepository;
+import com.zyna.dev.ecommerce.shipping.models.Shipment;
+import com.zyna.dev.ecommerce.shipping.repository.ShipmentRepository;
 import com.zyna.dev.ecommerce.users.User;
 import com.zyna.dev.ecommerce.users.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +45,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderMapper orderMapper;
     private final CartItemRepository cartItemRepository;
     private final ShippingAddressRepository addressRepository;
+    private final ShipmentRepository shipmentRepository;
 
     @Override
     @Transactional
@@ -153,6 +157,8 @@ public class OrderServiceImpl implements OrderService {
         // 5. Lưu order
         order = orderRepository.save(order);
 
+        createShipmentIfMissing(order);
+
         // 6. Map sang response
         return orderMapper.toOrderResponse(order);
     }
@@ -166,19 +172,24 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(newStatus);
 
         LocalDateTime now = LocalDateTime.now();
-        switch (newStatus) {
-            case CONFIRMED -> order.setConfirmedAt(now);
-            case SHIPPED -> order.setShippedAt(now);
-            case DELIVERED -> order.setDeliveredAt(now);
-            case CANCELED -> order.setCanceledAt(now);
-            default -> {
-            }
+        if (newStatus == OrderStatus.CONFIRMED) {
+            order.setConfirmedAt(now);
+        } else if (newStatus == OrderStatus.CANCELED) {
+            order.setCanceledAt(now);
         }
 
-        // Ví dụ: khi giao thành công thì coi như đã thanh toán
-        // if (newStatus == OrderStatus.DELIVERED) {
-        //     order.setPaymentStatus(PaymentStatus.PAID);
-        // }
+        Shipment shipment = null;
+        if (newStatus == OrderStatus.CONFIRMED || newStatus == OrderStatus.CANCELED) {
+            shipment = ensureShipmentForOrder(order);
+            if (newStatus == OrderStatus.CONFIRMED && shipment.getStatus() == null) {
+                shipment.setStatus(ShipmentStatus.PENDING_ASSIGN);
+            }
+            if (newStatus == OrderStatus.CANCELED) {
+                shipment.setStatus(ShipmentStatus.RETURNED);
+                shipment.setReturnedAt(now);
+            }
+            shipmentRepository.save(shipment);
+        }
 
         order = orderRepository.save(order);
         return orderMapper.toOrderResponse(order);
@@ -279,6 +290,8 @@ public class OrderServiceImpl implements OrderService {
 
         order = orderRepository.save(order);
 
+        createShipmentIfMissing(order);
+
         // xoá chỉ các cart item đã checkout
         cartItemRepository.deleteAll(selectedItems);
 
@@ -332,5 +345,25 @@ public class OrderServiceImpl implements OrderService {
     private User getUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    private void createShipmentIfMissing(Order order) {
+        shipmentRepository.findByOrder(order)
+                .orElseGet(() -> shipmentRepository.save(
+                        Shipment.builder()
+                                .order(order)
+                                .status(ShipmentStatus.PENDING_ASSIGN)
+                                .build()
+                ));
+    }
+
+    private Shipment ensureShipmentForOrder(Order order) {
+        return shipmentRepository.findByOrder(order)
+                .orElseGet(() -> shipmentRepository.save(
+                        Shipment.builder()
+                                .order(order)
+                                .status(ShipmentStatus.PENDING_ASSIGN)
+                                .build()
+                ));
     }
 }

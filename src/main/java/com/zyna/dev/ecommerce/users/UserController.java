@@ -25,6 +25,22 @@ public class UserController {
 
     private final UserService userService;
 
+    // LIST SHIPPERS (đặt trước GET /{id} để tránh conflict path)
+    @GetMapping("/shippers")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('SHIPPING_MANAGE')")
+    public ApiResponse<Page<UserResponse>> getShippers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<UserResponse> result = userService.getShippers(page, size);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Get shippers successfully!",
+                result
+        );
+    }
+
     // CREATE
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

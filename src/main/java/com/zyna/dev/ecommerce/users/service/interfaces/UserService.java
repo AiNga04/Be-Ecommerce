@@ -37,4 +37,6 @@ public interface UserService {
 
     UserBatchCreateResponse createUsers(UserBatchCreateRequest request);
 
+    Page<UserResponse> getShippers(int page, int size);
+
 }

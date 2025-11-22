@@ -19,6 +19,7 @@ public class RoleSeeder implements CommandLineRunner {
         createRole("USER", "Default role for normal users");
         createRole("STAFF", "Staff role for handling orders and inventory");
         createRole("ADMIN", "Administrator with full permissions");
+        createRole("SHIPPER", "Shipper role for delivery operations");
     }
 
     private void createRole(String code, String description) {

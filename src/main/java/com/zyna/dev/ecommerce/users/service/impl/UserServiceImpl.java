@@ -418,5 +418,20 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+    @Override
+    public Page<UserResponse> getShippers(int page, int size) {
+        Page<User> basePage = userRepository.findDistinctByRoles_CodeIgnoreCaseAndIsDeletedFalse(
+                "SHIPPER",
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+
+        List<UserResponse> list = basePage.getContent()
+                .stream()
+                .map(userMapper::toUserResponse)
+                .toList();
+
+        return new PageImpl<>(list, basePage.getPageable(), basePage.getTotalElements());
+    }
+
 
 }

@@ -26,5 +26,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findAllByIdIn(Collection<Long> ids);
 
     Page<User> findAllByIsDeletedTrue(Pageable pageable);
-}
 
+    Page<User> findDistinctByRoles_CodeIgnoreCaseAndIsDeletedFalse(String roleCode, Pageable pageable);
+}

@@ -40,6 +40,9 @@ public class PermissionSeeder implements CommandLineRunner {
         // dùng cho STAFF / ADMIN để đổi trạng thái đơn
         create("ORDER_MANAGE", "Can update order status");
 
+        // SHIPPING
+        create("SHIPPING_MANAGE", "Can manage shipment lifecycle");
+
         // VOUCHERS (permission riêng)
         create("VOUCHER_READ", "Can view vouchers");
         create("VOUCHER_WRITE", "Can create/update voucher info");

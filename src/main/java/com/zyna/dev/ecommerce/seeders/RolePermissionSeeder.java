@@ -25,8 +25,9 @@ public class RolePermissionSeeder implements CommandLineRunner {
         AppRole admin = roleRepository.findByCode("ADMIN").orElse(null);
         AppRole staff = roleRepository.findByCode("STAFF").orElse(null);
         AppRole user = roleRepository.findByCode("USER").orElse(null);
+        AppRole shipper = roleRepository.findByCode("SHIPPER").orElse(null);
 
-        if (admin == null || staff == null || user == null) return;
+        if (admin == null || staff == null || user == null || shipper == null) return;
 
         // ================= ADMIN =================
         admin.setPermissions(new HashSet<>());
@@ -45,6 +46,7 @@ public class RolePermissionSeeder implements CommandLineRunner {
 
         addPerm(admin, "ORDER_READ");
         addPerm(admin, "ORDER_MANAGE");
+        addPerm(admin, "SHIPPING_MANAGE");
         // KHÔNG cần ORDER_WRITE cho admin, để tránh tự đi đặt hàng 😄
 
         // VOUCHER: admin full quyền
@@ -65,6 +67,7 @@ public class RolePermissionSeeder implements CommandLineRunner {
 
         addPerm(staff, "ORDER_READ");
         addPerm(staff, "ORDER_MANAGE");
+        addPerm(staff, "SHIPPING_MANAGE");
 
         // VOUCHER: staff được xem + bật/tắt, nhưng không sửa nội dung
         addPerm(staff, "VOUCHER_READ");
@@ -82,6 +85,12 @@ public class RolePermissionSeeder implements CommandLineRunner {
         // Không gán bất kỳ VOUCHER_* permission nào cho user
 
         roleRepository.save(user);
+
+        // ================= SHIPPER =================
+        shipper.setPermissions(new HashSet<>());
+        addPerm(shipper, "SHIPPING_MANAGE");
+        addPerm(shipper, "ORDER_READ"); // xem thông tin đơn khi giao
+        roleRepository.save(shipper);
 
         System.out.println(">>> RolePermissionSeeder: permissions assigned.");
     }

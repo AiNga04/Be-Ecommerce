@@ -40,8 +40,8 @@ public class Order {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
 
-    // trạng thái đơn (PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELED, ...)
-    @Enumerated(EnumType.STRING)
+    // trạng thái đơn (PENDING, CONFIRMED, CANCELED)
+    @Convert(converter = com.zyna.dev.ecommerce.orders.models.OrderStatusConverter.class)
     @Column(length = 20, nullable = false)
     private OrderStatus status;
 
