@@ -2,11 +2,13 @@ package com.zyna.dev.ecommerce.users.service.impl;
 
 import com.zyna.dev.ecommerce.authentication.models.AppRole;
 import com.zyna.dev.ecommerce.authentication.repository.AppRoleRepository;
+import com.zyna.dev.ecommerce.authentication.service.AccountActivationService;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.users.User;
 import com.zyna.dev.ecommerce.users.UserMapper;
 import com.zyna.dev.ecommerce.users.UserRepository;
+import com.zyna.dev.ecommerce.users.service.UserAuditService;
 import com.zyna.dev.ecommerce.users.criteria.UserCriteria;
 import com.zyna.dev.ecommerce.users.dto.request.UserBatchCreateRequest;
 import com.zyna.dev.ecommerce.users.dto.request.UserCreateRequest;
@@ -22,7 +24,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -39,8 +44,11 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final AppRoleRepository appRoleRepository;
+    private final AccountActivationService accountActivationService;
+    private final UserAuditService userAuditService;
 
     @Override
+    @Transactional
     public UserResponse createUser(UserCreateRequest createRequest) {
         log.info("Create user with email={}", createRequest.getEmail());
 
@@ -85,6 +93,7 @@ public class UserServiceImpl implements UserService {
         }
 
         User saved = userRepository.save(user);
+        accountActivationService.sendActivationToken(saved, getCurrentActorEmail());
         return userMapper.toUserResponse(saved);
     }
 
@@ -364,6 +373,7 @@ public class UserServiceImpl implements UserService {
     public UserBatchCreateResponse createUsers(UserBatchCreateRequest request) {
         var createdList = new java.util.ArrayList<UserResponse>();
         var failedList = new java.util.ArrayList<UserBatchCreateResponse.FailedUser>();
+        String actorEmail = getCurrentActorEmail();
 
         // thời điểm tạo
         var now = java.time.LocalDateTime.now();
@@ -396,6 +406,7 @@ public class UserServiceImpl implements UserService {
                 user.setCreatedAt(now);
 
                 User saved = userRepository.save(user);
+                accountActivationService.sendActivationToken(saved, actorEmail);
 
                 createdList.add(userMapper.toUserResponse(saved)); // :contentReference[oaicite:11]{index=11}
             } catch (Exception e) {
@@ -433,5 +444,11 @@ public class UserServiceImpl implements UserService {
         return new PageImpl<>(list, basePage.getPageable(), basePage.getTotalElements());
     }
 
-
+    private String getCurrentActorEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return authentication.getName();
+        }
+        return "system";
+    }
 }

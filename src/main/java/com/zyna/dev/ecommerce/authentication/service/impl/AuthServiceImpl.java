@@ -14,6 +14,7 @@ import com.zyna.dev.ecommerce.authentication.dto.response.IntrospectResponse;
 import com.zyna.dev.ecommerce.authentication.dto.response.LoginResponse;
 import com.zyna.dev.ecommerce.authentication.repository.RefreshTokenRepository;
 import com.zyna.dev.ecommerce.authentication.service.interfaces.AuthService;
+import com.zyna.dev.ecommerce.authentication.service.AccountActivationService;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.security.JwtUtil;
@@ -42,6 +43,7 @@ public class AuthServiceImpl implements AuthService {
     private final AppRoleRepository appRoleRepository;
     private final TokenBlacklistService tokenBlacklistService;
     private final RefreshTokenRepository  refreshTokenRepository;
+    private final AccountActivationService accountActivationService;
 
 
     @Override
@@ -67,7 +69,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (user.getStatus() != null && user.getStatus() != Status.ACTIVE) {
-            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Account is not active");
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Account is not active. Please check your email for the activation link.");
         }
 
         rateLimiter.resetAttempts(email);
@@ -99,6 +101,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public UserResponse register(RegisterRequest registerRequest) {
         if (authRepository.existsByEmail(registerRequest.getEmail())) {
             throw new ApplicationException(HttpStatus.CONFLICT, "Email already in use!");
@@ -115,10 +118,11 @@ public class AuthServiceImpl implements AuthService {
         user.getRoles().add(userRole);
 
         if (user.getStatus() == null) {
-            user.setStatus(Status.ACTIVE);
+            user.setStatus(Status.PENDING);
         }
 
         User saved = authRepository.save(user);
+        accountActivationService.sendActivationToken(saved, saved.getEmail());
         return authMapper.toUserResponse(saved);
     }
 
@@ -198,6 +202,12 @@ public class AuthServiceImpl implements AuthService {
                 refreshTokenRepository.save(rt);
             });
         }
+    }
+
+    @Override
+    public UserResponse activateAccount(String token) {
+        User activated = accountActivationService.activate(token);
+        return authMapper.toUserResponse(activated);
     }
 
 

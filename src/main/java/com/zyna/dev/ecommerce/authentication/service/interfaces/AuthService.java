@@ -19,4 +19,6 @@ public interface AuthService {
     RefreshTokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest);
 
     void logout(String accessToken, String refreshTokenStr);
+
+    UserResponse activateAccount(String token);
 }

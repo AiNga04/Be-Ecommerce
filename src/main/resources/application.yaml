@@ -12,8 +12,19 @@ vnpay:
   command: ${COMMAND:pay}
   order-type: ${ORDER_TYPE:other}
 
-
 spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: aingaspkt@gmail.com
+    password: wpri gwod lcdi mhxu
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
   datasource:
     url: jdbc:postgresql://localhost:5432/ecommerce
     username: postgres
@@ -55,4 +66,6 @@ app:
     secret: ${APP_JWT_SECRET}
     expiration-ms: ${APP_JWT_EXPIRATION_MS:86400000}
     issuer: ${APP_JWT_ISSUER:zyna-app}
-
+  activation:
+    base-url: ${APP_ACTIVATION_BASE_URL:http://localhost:3000/activate}
+    ttl-hours: ${APP_ACTIVATION_TTL_HOURS:24}

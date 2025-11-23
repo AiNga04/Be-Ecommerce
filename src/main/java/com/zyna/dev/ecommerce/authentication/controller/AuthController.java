@@ -4,6 +4,7 @@ import com.zyna.dev.ecommerce.authentication.dto.request.IntrospectRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.LoginRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.RefreshTokenRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.ActivateAccountRequest;
 import com.zyna.dev.ecommerce.authentication.dto.response.IntrospectResponse;
 import com.zyna.dev.ecommerce.authentication.dto.response.LoginResponse;
 import com.zyna.dev.ecommerce.authentication.dto.response.RefreshTokenResponse;
@@ -39,7 +40,7 @@ public class AuthController {
         UserResponse userResponse = authService.register(registerRequest);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Register successfully!",
+                "Register successfully! Please check your email to activate your account.",
                 userResponse
         );
     }
@@ -64,6 +65,17 @@ public class AuthController {
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
                 "Token refreshed successfully!",
+                response
+        );
+    }
+
+    @PostMapping("/activate")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<UserResponse> activate(@RequestBody @Valid ActivateAccountRequest request) {
+        UserResponse response = authService.activateAccount(request.getToken());
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Account activated successfully!",
                 response
         );
     }
