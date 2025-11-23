@@ -53,6 +53,7 @@ public class RolePermissionSeeder implements CommandLineRunner {
         addPerm(admin, "VOUCHER_READ");
         addPerm(admin, "VOUCHER_WRITE");
         addPerm(admin, "VOUCHER_STATUS_MANAGE");
+        addPerm(admin, "REVIEW_MANAGE");
 
         roleRepository.save(admin);
 
@@ -72,6 +73,7 @@ public class RolePermissionSeeder implements CommandLineRunner {
         // VOUCHER: staff được xem + bật/tắt, nhưng không sửa nội dung
         addPerm(staff, "VOUCHER_READ");
         addPerm(staff, "VOUCHER_STATUS_MANAGE");
+        addPerm(staff, "REVIEW_MANAGE");
 
         roleRepository.save(staff);
 

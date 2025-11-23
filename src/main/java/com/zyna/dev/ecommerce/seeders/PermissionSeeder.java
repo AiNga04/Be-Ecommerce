@@ -47,6 +47,9 @@ public class PermissionSeeder implements CommandLineRunner {
         create("VOUCHER_READ", "Can view vouchers");
         create("VOUCHER_WRITE", "Can create/update voucher info");
         create("VOUCHER_STATUS_MANAGE", "Can change voucher status (activate/deactivate)");
+
+        // REVIEWS
+        create("REVIEW_MANAGE", "Can hide/unhide reviews");
     }
 
     private void create(String name, String desc) {

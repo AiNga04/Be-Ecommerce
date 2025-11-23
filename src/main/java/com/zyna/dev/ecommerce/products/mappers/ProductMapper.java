@@ -74,6 +74,8 @@ public class ProductMapper {
                 .category(categoryName)   // ✅ giờ là name/code từ Category
                 .stock(entity.getStock())
                 .isActive(entity.getIsActive())
+                .ratingAverage(entity.getRatingAverage())
+                .reviewCount(entity.getReviewCount())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -95,6 +97,8 @@ public class ProductMapper {
                 .category(categoryName)   // ✅ giờ là name/code từ Category
                 .stock(entity.getStock())
                 .isActive(entity.getIsActive())
+                .ratingAverage(entity.getRatingAverage())
+                .reviewCount(entity.getReviewCount())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .gallery(

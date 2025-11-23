@@ -50,6 +50,12 @@ public class Product {
     @Column(nullable = false)
     private Boolean isActive = true;
 
+    @Column(precision = 3, scale = 2)
+    private BigDecimal ratingAverage = BigDecimal.ZERO;
+
+    @Column
+    private Integer reviewCount = 0;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

@@ -19,6 +19,8 @@ public class ProductResponse {
     private String category;
     private Integer stock;
     private Boolean isActive;
+    private BigDecimal ratingAverage;
+    private Integer reviewCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
