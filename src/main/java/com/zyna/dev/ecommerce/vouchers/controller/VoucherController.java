@@ -1,10 +1,8 @@
 package com.zyna.dev.ecommerce.vouchers.controller;
 
 import com.zyna.dev.ecommerce.common.ApiResponse;
-import com.zyna.dev.ecommerce.vouchers.dto.request.VoucherApplyRequest;
 import com.zyna.dev.ecommerce.vouchers.dto.request.VoucherCreateRequest;
 import com.zyna.dev.ecommerce.vouchers.dto.request.VoucherUpdateRequest;
-import com.zyna.dev.ecommerce.vouchers.dto.response.VoucherApplyResponse;
 import com.zyna.dev.ecommerce.vouchers.dto.response.VoucherResponse;
 import com.zyna.dev.ecommerce.vouchers.service.interfaces.VoucherService;
 import jakarta.validation.Valid;
@@ -119,18 +117,4 @@ public class VoucherController {
         );
     }
 
-    // USER: apply voucher khi checkout
-    @PostMapping("/apply")
-    @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('ORDER_WRITE')")
-    public ApiResponse<VoucherApplyResponse> apply(
-            @Valid @RequestBody VoucherApplyRequest request
-    ) {
-        VoucherApplyResponse data = voucherService.apply(request);
-        return ApiResponse.successfulResponse(
-                HttpStatus.OK.value(),
-                "Apply voucher result",
-                data
-        );
-    }
 }

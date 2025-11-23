@@ -129,6 +129,21 @@ public class Order {
     @Column(length = 100)
     private String shippingCarrier;
 
+    @Column(precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal shippingFee = BigDecimal.ZERO;
+
+    @Column(precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal shippingDiscount = BigDecimal.ZERO;
+
+    @Column(length = 50)
+    private String voucherCode;
+
     // ================== TIMESTAMP ==================
 
     @CreationTimestamp

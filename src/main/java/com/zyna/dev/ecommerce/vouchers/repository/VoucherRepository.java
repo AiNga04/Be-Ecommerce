@@ -12,9 +12,10 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
 
     boolean existsByCodeIgnoreCase(String code);
 
+    Optional<Voucher> findByCodeIgnoreCase(String code);
+
     Optional<Voucher> findByCodeIgnoreCaseAndStatus(String code, VoucherStatus status);
 
     Page<Voucher> findAllByStatus(VoucherStatus status, Pageable pageable);
 }
-
 

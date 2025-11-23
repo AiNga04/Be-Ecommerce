@@ -22,6 +22,11 @@ public class OrderResponse {
     private PaymentMethod paymentMethod;
     private PaymentStatus paymentStatus;
 
+    private BigDecimal shippingFee;
+    private BigDecimal discountAmount;
+    private BigDecimal shippingDiscount;
+    private String voucherCode;
+
     private String shippingName;
     private String shippingPhone;
     private String shippingAddress;

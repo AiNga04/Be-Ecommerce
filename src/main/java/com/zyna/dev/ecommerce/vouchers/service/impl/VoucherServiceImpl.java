@@ -34,6 +34,9 @@ public class VoucherServiceImpl implements VoucherService {
             throw new ApplicationException(HttpStatus.CONFLICT, "Voucher code already exists!");
         }
 
+        validateDates(request.getStartDate(), request.getEndDate());
+        validateDiscountConfig(request.getType(), request.getDiscountValue());
+
         Voucher voucher = voucherMapper.toEntity(request); // status = DRAFT trong mapper
         Voucher saved = voucherRepository.save(voucher);
         return voucherMapper.toResponse(saved);
@@ -43,6 +46,21 @@ public class VoucherServiceImpl implements VoucherService {
     public VoucherResponse update(Long id, VoucherUpdateRequest request) {
         Voucher voucher = voucherRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Voucher not found!"));
+
+        VoucherType typeAfterUpdate = request.getType() != null ? request.getType() : voucher.getType();
+        BigDecimal discountAfterUpdate = request.getDiscountValue() != null
+                ? request.getDiscountValue()
+                : voucher.getDiscountValue();
+
+        LocalDateTime startDateAfterUpdate = request.getStartDate() != null
+                ? request.getStartDate()
+                : voucher.getStartDate();
+        LocalDateTime endDateAfterUpdate = request.getEndDate() != null
+                ? request.getEndDate()
+                : voucher.getEndDate();
+
+        validateDates(startDateAfterUpdate, endDateAfterUpdate);
+        validateDiscountConfig(typeAfterUpdate, discountAfterUpdate);
 
         // không cho sửa voucher đã hết hạn
         if (voucher.getStatus() == VoucherStatus.EXPIRED) {
@@ -127,23 +145,40 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     @Transactional
     public VoucherApplyResponse apply(VoucherApplyRequest request) {
+        String code = request.getCode().trim();
         Voucher voucher = voucherRepository
-                .findByCodeIgnoreCaseAndStatus(request.getCode(), VoucherStatus.ACTIVE)
+                .findByCodeIgnoreCase(code)
                 .orElseThrow(() -> new ApplicationException(
                         HttpStatus.NOT_FOUND,
-                        "Voucher not found or inactive!"
+                        "Voucher not found!"
                 ));
 
         LocalDateTime now = LocalDateTime.now();
+
+        // cập nhật trạng thái hết hạn nếu đã quá endDate
+        if (voucher.getEndDate() != null && now.isAfter(voucher.getEndDate())) {
+            voucher.setStatus(VoucherStatus.EXPIRED);
+            voucherRepository.save(voucher);
+            return invalid("Voucher is expired!", request);
+        }
+
+        if (voucher.getStatus() == VoucherStatus.DRAFT || voucher.getStatus() == VoucherStatus.INACTIVE) {
+            return invalid("Voucher is not active!", request);
+        }
+
+        if (voucher.getStatus() == VoucherStatus.EXPIRED) {
+            return invalid("Voucher is expired!", request);
+        }
 
         // thời gian hiệu lực
         if (voucher.getStartDate() != null && now.isBefore(voucher.getStartDate())) {
             return invalid("Voucher is not started yet!", request);
         }
-        if (voucher.getEndDate() != null && now.isAfter(voucher.getEndDate())) {
-            voucher.setStatus(VoucherStatus.EXPIRED);
-            voucherRepository.save(voucher);
-            return invalid("Voucher is expired!", request);
+
+        try {
+            validateDiscountConfig(voucher.getType(), voucher.getDiscountValue());
+        } catch (ApplicationException ex) {
+            return invalid(ex.getMessage(), request);
         }
 
         BigDecimal cartTotal = request.getCartTotal();
@@ -158,8 +193,8 @@ public class VoucherServiceImpl implements VoucherService {
         }
 
         // (optional) giới hạn số lần dùng tổng
-        if (voucher.getMaxUsage() != null && voucher.getUsedCount() != null &&
-                voucher.getUsedCount() >= voucher.getMaxUsage()) {
+        int currentUsed = voucher.getUsedCount() != null ? voucher.getUsedCount() : 0;
+        if (voucher.getMaxUsage() != null && currentUsed >= voucher.getMaxUsage()) {
             voucher.setStatus(VoucherStatus.INACTIVE);
             voucherRepository.save(voucher);
             return invalid("This voucher has reached its maximum usage!", request);
@@ -169,6 +204,9 @@ public class VoucherServiceImpl implements VoucherService {
         if (voucher.getType() == VoucherType.PERCENTAGE) {
 
             BigDecimal percent = voucher.getDiscountValue();
+            if (percent == null || percent.compareTo(BigDecimal.ZERO) <= 0) {
+                return invalid("Voucher discount is not configured correctly!", request);
+            }
             discountAmount = cartTotal
                     .multiply(percent)
                     .divide(BigDecimal.valueOf(100));
@@ -177,10 +215,16 @@ public class VoucherServiceImpl implements VoucherService {
                     discountAmount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
                 discountAmount = voucher.getMaxDiscountAmount();
             }
+            if (discountAmount.compareTo(cartTotal) > 0) {
+                discountAmount = cartTotal;
+            }
 
         } else if (voucher.getType() == VoucherType.FIXED_AMOUNT) {
 
             discountAmount = voucher.getDiscountValue();
+            if (discountAmount == null || discountAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                return invalid("Voucher discount is not configured correctly!", request);
+            }
             if (discountAmount.compareTo(cartTotal) > 0) {
                 discountAmount = cartTotal;
             }
@@ -194,14 +238,20 @@ public class VoucherServiceImpl implements VoucherService {
         }
 
         BigDecimal finalCartTotal = cartTotal.subtract(discountAmount);
+        if (finalCartTotal.compareTo(BigDecimal.ZERO) < 0) {
+            finalCartTotal = BigDecimal.ZERO;
+        }
         BigDecimal finalShipping = shippingFee.subtract(shippingDiscount);
+        if (finalShipping.compareTo(BigDecimal.ZERO) < 0) {
+            finalShipping = BigDecimal.ZERO;
+        }
         BigDecimal finalPayable = finalCartTotal.add(finalShipping);
 
         // tăng usedCount
-        if (voucher.getUsedCount() == null) {
-            voucher.setUsedCount(1);
-        } else {
-            voucher.setUsedCount(voucher.getUsedCount() + 1);
+        int newUsedCount = currentUsed + 1;
+        voucher.setUsedCount(newUsedCount);
+        if (voucher.getMaxUsage() != null && newUsedCount >= voucher.getMaxUsage()) {
+            voucher.setStatus(VoucherStatus.INACTIVE);
         }
         voucherRepository.save(voucher);
 
@@ -228,5 +278,30 @@ public class VoucherServiceImpl implements VoucherService {
                 .shippingDiscount(BigDecimal.ZERO)
                 .finalPayable(cartTotal.add(shippingFee))
                 .build();
+    }
+
+    private void validateDates(LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "End date must be after start date");
+        }
+    }
+
+    private void validateDiscountConfig(VoucherType type, BigDecimal discountValue) {
+        if (type == null) return;
+
+        if (type == VoucherType.FREESHIP) {
+            if (discountValue != null && discountValue.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipping discount must be greater than 0");
+            }
+            return;
+        }
+
+        if (discountValue == null || discountValue.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Discount value must be greater than 0");
+        }
+
+        if (type == VoucherType.PERCENTAGE && discountValue.compareTo(BigDecimal.valueOf(100)) > 0) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Percentage discount cannot exceed 100");
+        }
     }
 }

@@ -21,6 +21,9 @@ import com.zyna.dev.ecommerce.products.models.Product;
 import com.zyna.dev.ecommerce.products.repository.ProductRepository;
 import com.zyna.dev.ecommerce.shipping.models.Shipment;
 import com.zyna.dev.ecommerce.shipping.repository.ShipmentRepository;
+import com.zyna.dev.ecommerce.vouchers.dto.request.VoucherApplyRequest;
+import com.zyna.dev.ecommerce.vouchers.dto.response.VoucherApplyResponse;
+import com.zyna.dev.ecommerce.vouchers.service.interfaces.VoucherService;
 import com.zyna.dev.ecommerce.users.User;
 import com.zyna.dev.ecommerce.users.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +49,7 @@ public class OrderServiceImpl implements OrderService {
     private final CartItemRepository cartItemRepository;
     private final ShippingAddressRepository addressRepository;
     private final ShipmentRepository shipmentRepository;
+    private final VoucherService voucherService;
 
     @Override
     @Transactional
@@ -129,6 +133,34 @@ public class OrderServiceImpl implements OrderService {
             shippingAddress = request.getShippingAddress();
         }
 
+        BigDecimal shippingFee = request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO;
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        BigDecimal shippingDiscount = BigDecimal.ZERO;
+        String voucherCode = null;
+
+        if (request.getVoucherCode() != null) {
+            if (!StringUtils.hasText(request.getVoucherCode())) {
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Voucher code must not be blank");
+            }
+            VoucherApplyResponse res = voucherService.apply(
+                    VoucherApplyRequest.builder()
+                            .code(request.getVoucherCode())
+                            .cartTotal(total)
+                            .shippingFee(shippingFee)
+                            .build()
+            );
+            if (!res.isValid()) {
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, res.getMessage());
+            }
+            discountAmount = res.getDiscountAmount();
+            shippingDiscount = res.getShippingDiscount();
+            shippingFee = res.getShippingFee();
+            voucherCode = request.getVoucherCode();
+            total = res.getFinalPayable();
+        } else {
+            total = total.add(shippingFee);
+        }
+
         // 3. Tạo Order
         Order order = Order.builder()
                 .user(user)
@@ -136,6 +168,10 @@ public class OrderServiceImpl implements OrderService {
                 .status(OrderStatus.PENDING)
                 .paymentMethod(request.getPaymentMethod())
                 .paymentStatus(PaymentStatus.UNPAID)
+                .shippingFee(shippingFee)
+                .discountAmount(discountAmount)
+                .shippingDiscount(shippingDiscount)
+                .voucherCode(voucherCode)
                 .shippingName(shippingName)
                 .shippingPhone(shippingPhone)
                 .shippingAddress(shippingAddress)
@@ -266,12 +302,44 @@ public class OrderServiceImpl implements OrderService {
             shippingAddress = addr.getFullAddress();
         }
 
+        BigDecimal shippingFee = request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO;
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        BigDecimal shippingDiscount = BigDecimal.ZERO;
+        String voucherCode = null;
+
+        if (request.getVoucherCode() != null) {
+            if (!StringUtils.hasText(request.getVoucherCode())) {
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Voucher code must not be blank");
+            }
+            VoucherApplyResponse res = voucherService.apply(
+                    VoucherApplyRequest.builder()
+                            .code(request.getVoucherCode())
+                            .cartTotal(total)
+                            .shippingFee(shippingFee)
+                            .build()
+            );
+            if (!res.isValid()) {
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, res.getMessage());
+            }
+            discountAmount = res.getDiscountAmount();
+            shippingDiscount = res.getShippingDiscount();
+            shippingFee = res.getShippingFee();
+            voucherCode = request.getVoucherCode();
+            total = res.getFinalPayable();
+        } else {
+            total = total.add(shippingFee);
+        }
+
         Order order = Order.builder()
                 .user(user)
                 .totalPrice(total)
                 .status(OrderStatus.PENDING)
                 .paymentMethod(request.getPaymentMethod())
                 .paymentStatus(PaymentStatus.UNPAID)
+                .shippingFee(shippingFee)
+                .discountAmount(discountAmount)
+                .shippingDiscount(shippingDiscount)
+                .voucherCode(voucherCode)
                 .shippingName(shippingName)
                 .shippingPhone(shippingPhone)
                 .shippingAddress(shippingAddress)
