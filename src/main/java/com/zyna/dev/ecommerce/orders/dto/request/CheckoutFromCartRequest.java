@@ -24,8 +24,8 @@ public class CheckoutFromCartRequest {
 
     private List<Long> cartItemIds;
 
-    @NotNull
     @DecimalMin("0.0")
-    private BigDecimal shippingFee;
-    private String voucherCode;
+    private BigDecimal shippingFee; // optional: null => default 30k in service
+    private String voucherCode;          // giảm giá sản phẩm/tổng đơn (percentage/fixed)
+    private String shippingVoucherCode;  // giảm phí ship (freeship)
 }

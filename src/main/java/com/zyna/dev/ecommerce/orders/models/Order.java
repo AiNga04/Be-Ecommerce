@@ -144,6 +144,9 @@ public class Order {
     @Column(length = 50)
     private String voucherCode;
 
+    @Column(length = 50)
+    private String shippingVoucherCode;
+
     // ================== TIMESTAMP ==================
 
     @CreationTimestamp

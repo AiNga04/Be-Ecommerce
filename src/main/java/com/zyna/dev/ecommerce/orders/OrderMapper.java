@@ -24,6 +24,7 @@ public class OrderMapper {
                 .discountAmount(order.getDiscountAmount())
                 .shippingDiscount(order.getShippingDiscount())
                 .voucherCode(order.getVoucherCode())
+                .shippingVoucherCode(order.getShippingVoucherCode())
                 .shippingName(order.getShippingName())
                 .shippingPhone(order.getShippingPhone())
                 .shippingAddress(order.getShippingAddress())

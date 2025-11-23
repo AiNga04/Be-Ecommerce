@@ -62,7 +62,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 1. Chuẩn bị danh sách item, check tồn kho, tính tổng tiền
         List<OrderItem> orderItems = new ArrayList<>();
-        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal itemsTotal = BigDecimal.ZERO;
 
         for (CheckoutItemRequest itemReq : request.getItems()) {
             Product product = productRepository.findById(itemReq.getProductId())
@@ -94,7 +94,7 @@ public class OrderServiceImpl implements OrderService {
                     .build();
 
             orderItems.add(orderItem);
-            total = total.add(subtotal);
+            itemsTotal = itemsTotal.add(subtotal);
         }
 
         // 2. Xử lý địa chỉ: dùng addressId hoặc dùng 3 field tay
@@ -133,33 +133,99 @@ public class OrderServiceImpl implements OrderService {
             shippingAddress = request.getShippingAddress();
         }
 
-        BigDecimal shippingFee = request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO;
+        BigDecimal baseShippingFee = BigDecimal.valueOf(30000); // mặc định 30k, không phụ thuộc client gửi
         BigDecimal discountAmount = BigDecimal.ZERO;
         BigDecimal shippingDiscount = BigDecimal.ZERO;
         String voucherCode = null;
+        String shippingVoucherCode = null;
+        boolean discountVoucherUsed = false;
+        boolean shippingVoucherUsed = false;
 
-        if (request.getVoucherCode() != null) {
-            if (!StringUtils.hasText(request.getVoucherCode())) {
-                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Voucher code must not be blank");
-            }
+        // Apply vouchers in order; each code may be discount or freeship. Limit 1 of each type.
+        if (StringUtils.hasText(request.getVoucherCode())) {
             VoucherApplyResponse res = voucherService.apply(
                     VoucherApplyRequest.builder()
-                            .code(request.getVoucherCode())
-                            .cartTotal(total)
-                            .shippingFee(shippingFee)
+                            .code(request.getVoucherCode().trim())
+                            .cartTotal(itemsTotal)
+                            .shippingFee(baseShippingFee)
                             .build()
             );
             if (!res.isValid()) {
                 throw new ApplicationException(HttpStatus.BAD_REQUEST, res.getMessage());
             }
-            discountAmount = res.getDiscountAmount();
-            shippingDiscount = res.getShippingDiscount();
-            shippingFee = res.getShippingFee();
-            voucherCode = request.getVoucherCode();
-            total = res.getFinalPayable();
-        } else {
-            total = total.add(shippingFee);
+
+            BigDecimal discountFromVoucher = res.getDiscountAmount();
+            BigDecimal shippingDiscountFromVoucher = res.getShippingDiscount();
+
+            if (discountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
+                if (discountVoucherUsed) {
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Discount voucher already applied");
+                }
+                discountAmount = discountAmount.add(discountFromVoucher);
+                discountVoucherUsed = true;
+                voucherCode = request.getVoucherCode().trim();
+            }
+
+            if (shippingDiscountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
+                if (shippingVoucherUsed) {
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipping voucher already applied");
+                }
+                shippingDiscount = shippingDiscount.add(shippingDiscountFromVoucher);
+                shippingVoucherUsed = true;
+                if (shippingVoucherCode == null) {
+                    shippingVoucherCode = request.getVoucherCode().trim();
+                }
+                if (voucherCode == null) {
+                    voucherCode = request.getVoucherCode().trim();
+                }
+            }
         }
+
+        if (StringUtils.hasText(request.getShippingVoucherCode())) {
+            VoucherApplyResponse res = voucherService.apply(
+                    VoucherApplyRequest.builder()
+                            .code(request.getShippingVoucherCode().trim())
+                            .cartTotal(itemsTotal)
+                            .shippingFee(baseShippingFee)
+                            .build()
+            );
+            if (!res.isValid()) {
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, res.getMessage());
+            }
+
+            BigDecimal discountFromVoucher = res.getDiscountAmount();
+            BigDecimal shippingDiscountFromVoucher = res.getShippingDiscount();
+
+            if (discountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
+                if (discountVoucherUsed) {
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Discount voucher already applied");
+                }
+                discountAmount = discountAmount.add(discountFromVoucher);
+                discountVoucherUsed = true;
+                if (voucherCode == null) {
+                    voucherCode = request.getShippingVoucherCode().trim();
+                }
+            }
+
+            if (shippingDiscountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
+                if (shippingVoucherUsed) {
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipping voucher already applied");
+                }
+                shippingDiscount = shippingDiscount.add(shippingDiscountFromVoucher);
+                shippingVoucherUsed = true;
+                shippingVoucherCode = request.getShippingVoucherCode().trim();
+            }
+        }
+
+        BigDecimal finalCartTotal = itemsTotal.subtract(discountAmount);
+        if (finalCartTotal.compareTo(BigDecimal.ZERO) < 0) {
+            finalCartTotal = BigDecimal.ZERO;
+        }
+        BigDecimal shippingFee = baseShippingFee.subtract(shippingDiscount);
+        if (shippingFee.compareTo(BigDecimal.ZERO) < 0) {
+            shippingFee = BigDecimal.ZERO;
+        }
+        BigDecimal total = finalCartTotal.add(shippingFee);
 
         // 3. Tạo Order
         Order order = Order.builder()
@@ -172,6 +238,7 @@ public class OrderServiceImpl implements OrderService {
                 .discountAmount(discountAmount)
                 .shippingDiscount(shippingDiscount)
                 .voucherCode(voucherCode)
+                .shippingVoucherCode(shippingVoucherCode)
                 .shippingName(shippingName)
                 .shippingPhone(shippingPhone)
                 .shippingAddress(shippingAddress)
@@ -254,7 +321,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         List<OrderItem> orderItems = new ArrayList<>();
-        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal itemsTotal = BigDecimal.ZERO;
 
         // check tồn kho + build order items
         for (CartItem cartItem : selectedItems) {
@@ -281,7 +348,7 @@ public class OrderServiceImpl implements OrderService {
                     .build();
 
             orderItems.add(orderItem);
-            total = total.add(subtotal);
+            itemsTotal = itemsTotal.add(subtotal);
         }
 
         if (orderItems.isEmpty()) {
@@ -302,33 +369,93 @@ public class OrderServiceImpl implements OrderService {
             shippingAddress = addr.getFullAddress();
         }
 
-        BigDecimal shippingFee = request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO;
+        BigDecimal baseShippingFee = BigDecimal.valueOf(30000); // mặc định 30k, không phụ thuộc client gửi
         BigDecimal discountAmount = BigDecimal.ZERO;
         BigDecimal shippingDiscount = BigDecimal.ZERO;
         String voucherCode = null;
+        String shippingVoucherCode = null;
+        boolean discountVoucherUsed = false;
+        boolean shippingVoucherUsed = false;
 
-        if (request.getVoucherCode() != null) {
-            if (!StringUtils.hasText(request.getVoucherCode())) {
-                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Voucher code must not be blank");
-            }
+        if (StringUtils.hasText(request.getVoucherCode())) {
             VoucherApplyResponse res = voucherService.apply(
                     VoucherApplyRequest.builder()
-                            .code(request.getVoucherCode())
-                            .cartTotal(total)
-                            .shippingFee(shippingFee)
+                            .code(request.getVoucherCode().trim())
+                            .cartTotal(itemsTotal)
+                            .shippingFee(baseShippingFee)
                             .build()
             );
             if (!res.isValid()) {
                 throw new ApplicationException(HttpStatus.BAD_REQUEST, res.getMessage());
             }
-            discountAmount = res.getDiscountAmount();
-            shippingDiscount = res.getShippingDiscount();
-            shippingFee = res.getShippingFee();
-            voucherCode = request.getVoucherCode();
-            total = res.getFinalPayable();
-        } else {
-            total = total.add(shippingFee);
+            BigDecimal discountFromVoucher = res.getDiscountAmount();
+            BigDecimal shippingDiscountFromVoucher = res.getShippingDiscount();
+
+            if (discountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
+                if (discountVoucherUsed) {
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Discount voucher already applied");
+                }
+                discountAmount = discountAmount.add(discountFromVoucher);
+                discountVoucherUsed = true;
+                voucherCode = request.getVoucherCode().trim();
+            }
+
+            if (shippingDiscountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
+                if (shippingVoucherUsed) {
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipping voucher already applied");
+                }
+                shippingDiscount = shippingDiscount.add(shippingDiscountFromVoucher);
+                shippingVoucherUsed = true;
+                if (shippingVoucherCode == null) {
+                    shippingVoucherCode = request.getVoucherCode().trim();
+                }
+            }
         }
+
+        if (StringUtils.hasText(request.getShippingVoucherCode())) {
+            VoucherApplyResponse res = voucherService.apply(
+                    VoucherApplyRequest.builder()
+                            .code(request.getShippingVoucherCode().trim())
+                            .cartTotal(itemsTotal)
+                            .shippingFee(baseShippingFee)
+                            .build()
+            );
+            if (!res.isValid()) {
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, res.getMessage());
+            }
+            BigDecimal discountFromVoucher = res.getDiscountAmount();
+            BigDecimal shippingDiscountFromVoucher = res.getShippingDiscount();
+
+            if (discountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
+                if (discountVoucherUsed) {
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Discount voucher already applied");
+                }
+                discountAmount = discountAmount.add(discountFromVoucher);
+                discountVoucherUsed = true;
+                if (voucherCode == null) {
+                    voucherCode = request.getShippingVoucherCode().trim();
+                }
+            }
+
+            if (shippingDiscountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
+                if (shippingVoucherUsed) {
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipping voucher already applied");
+                }
+                shippingDiscount = shippingDiscount.add(shippingDiscountFromVoucher);
+                shippingVoucherUsed = true;
+                shippingVoucherCode = request.getShippingVoucherCode().trim();
+            }
+        }
+
+        BigDecimal finalCartTotal = itemsTotal.subtract(discountAmount);
+        if (finalCartTotal.compareTo(BigDecimal.ZERO) < 0) {
+            finalCartTotal = BigDecimal.ZERO;
+        }
+        BigDecimal shippingFee = baseShippingFee.subtract(shippingDiscount);
+        if (shippingFee.compareTo(BigDecimal.ZERO) < 0) {
+            shippingFee = BigDecimal.ZERO;
+        }
+        BigDecimal total = finalCartTotal.add(shippingFee);
 
         Order order = Order.builder()
                 .user(user)
@@ -340,6 +467,7 @@ public class OrderServiceImpl implements OrderService {
                 .discountAmount(discountAmount)
                 .shippingDiscount(shippingDiscount)
                 .voucherCode(voucherCode)
+                .shippingVoucherCode(shippingVoucherCode)
                 .shippingName(shippingName)
                 .shippingPhone(shippingPhone)
                 .shippingAddress(shippingAddress)
