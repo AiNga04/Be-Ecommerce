@@ -4,6 +4,7 @@ import com.zyna.dev.ecommerce.products.criteria.ProductCriteria;
 import com.zyna.dev.ecommerce.products.dto.request.ProductCreateRequest;
 import com.zyna.dev.ecommerce.products.dto.request.ProductUpdateRequest;
 import com.zyna.dev.ecommerce.products.dto.response.PriceHistoryResponse;
+import com.zyna.dev.ecommerce.products.dto.response.GalleryImageResponse;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,7 +29,8 @@ public interface ProductService {
     Page<ProductResponse> getDeletedProducts(ProductCriteria criteria, int page, int size);
 
     // gallery
-    List<String> addGalleryImages(Long productId, List<MultipartFile> images);
+    List<GalleryImageResponse> addGalleryImages(Long productId, List<MultipartFile> images);
+    GalleryImageResponse updateGalleryImage(Long productId, Long imageId, MultipartFile image);
     void deleteGalleryImage(Long productId, Long imageId);
     int deleteAllGalleryImages(Long productId);
 }

@@ -2,6 +2,7 @@ package com.zyna.dev.ecommerce.products.mappers;
 
 import com.zyna.dev.ecommerce.products.dto.request.ProductCreateRequest;
 import com.zyna.dev.ecommerce.products.dto.request.ProductUpdateRequest;
+import com.zyna.dev.ecommerce.products.dto.response.GalleryImageResponse;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
 import com.zyna.dev.ecommerce.products.models.Category;
 import com.zyna.dev.ecommerce.products.models.Product;
@@ -105,7 +106,10 @@ public class ProductMapper {
                         entity.getGallery() == null
                                 ? Collections.emptyList()
                                 : entity.getGallery().stream()
-                                .map(ProductImage::getImageUrl)
+                                .map(img -> GalleryImageResponse.builder()
+                                        .id(img.getId())
+                                        .url(img.getImageUrl())
+                                        .build())
                                 .toList()
                 )
                 .build();

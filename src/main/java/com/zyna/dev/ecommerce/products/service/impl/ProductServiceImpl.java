@@ -4,6 +4,7 @@ import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.common.utils.FileUploadUtil;
 import com.zyna.dev.ecommerce.products.criteria.ProductCriteria;
 import com.zyna.dev.ecommerce.products.dto.response.PriceHistoryResponse;
+import com.zyna.dev.ecommerce.products.dto.response.GalleryImageResponse;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
 import com.zyna.dev.ecommerce.products.mappers.ProductMapper;
 import com.zyna.dev.ecommerce.products.models.Category;
@@ -361,7 +362,7 @@ public class ProductServiceImpl implements ProductService {
 
     // CREATE GALLERY
     @Override
-    public List<String> addGalleryImages(Long productId, List<MultipartFile> images) {
+    public List<GalleryImageResponse> addGalleryImages(Long productId, List<MultipartFile> images) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Product not found!"));
 
@@ -379,10 +380,40 @@ public class ProductServiceImpl implements ProductService {
                         .build())
                 .toList();
 
-        productImageRepository.saveAll(gallery);
-        log.info("Added {} gallery images for product id={}", gallery.size(), productId);
+        List<ProductImage> saved = productImageRepository.saveAll(gallery);
+        log.info("Added {} gallery images for product id={}", saved.size(), productId);
 
-        return savedUrls;
+        return saved.stream()
+                .map(img -> GalleryImageResponse.builder()
+                        .id(img.getId())
+                        .url(img.getImageUrl())
+                        .build())
+                .toList();
+    }
+
+    @Override
+    public GalleryImageResponse updateGalleryImage(Long productId, Long imageId, MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Image file is required");
+        }
+
+        ProductImage existing = productImageRepository.findById(imageId)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Image not found!"));
+
+        if (existing.getProduct() == null || !existing.getProduct().getId().equals(productId)) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Image does not belong to this product!");
+        }
+
+        String newUrl = FileUploadUtil.replaceImage(existing.getImageUrl(), image);
+        existing.setImageUrl(newUrl);
+        existing.setUploadedAt(LocalDateTime.now());
+
+        productImageRepository.save(existing);
+
+        return GalleryImageResponse.builder()
+                .id(existing.getId())
+                .url(existing.getImageUrl())
+                .build();
     }
 
     // DELETE 1 IMAGE IN GALLERY

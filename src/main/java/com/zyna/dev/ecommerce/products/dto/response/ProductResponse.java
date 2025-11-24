@@ -4,6 +4,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.zyna.dev.ecommerce.products.dto.response.GalleryImageResponse;
 
 @Getter
 @Setter
@@ -24,5 +25,5 @@ public class ProductResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    private List<String> gallery;
+    private List<GalleryImageResponse> gallery;
 }

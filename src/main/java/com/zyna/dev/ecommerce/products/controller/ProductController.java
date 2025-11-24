@@ -4,6 +4,7 @@ import com.zyna.dev.ecommerce.common.ApiResponse;
 import com.zyna.dev.ecommerce.products.criteria.ProductCriteria;
 import com.zyna.dev.ecommerce.products.dto.response.PriceHistoryResponse;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
+import com.zyna.dev.ecommerce.products.dto.response.GalleryImageResponse;
 import com.zyna.dev.ecommerce.products.service.interfaces.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -169,15 +170,31 @@ public class ProductController {
     @PostMapping("/{productId}/gallery")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
-    public ApiResponse<List<String>> uploadGallery(
+    public ApiResponse<List<GalleryImageResponse>> uploadGallery(
             @PathVariable Long productId,
             @RequestPart("images") List<MultipartFile> images
     ) {
-        List<String> urls = productService.addGalleryImages(productId, images);
+        List<GalleryImageResponse> urls = productService.addGalleryImages(productId, images);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
                 "Gallery uploaded successfully!",
                 urls
+        );
+    }
+
+    @PutMapping("/{productId}/gallery/{imageId}")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
+    public ApiResponse<GalleryImageResponse> updateGalleryImage(
+            @PathVariable Long productId,
+            @PathVariable Long imageId,
+            @RequestPart("image") MultipartFile image
+    ) {
+        var response = productService.updateGalleryImage(productId, imageId, image);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Gallery image updated successfully!",
+                response
         );
     }
 
