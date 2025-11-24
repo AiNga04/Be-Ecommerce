@@ -4,8 +4,11 @@ import com.zyna.dev.ecommerce.authentication.LoginRateLimiter;
 import com.zyna.dev.ecommerce.authentication.dto.request.ChangeEmailRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.IntrospectRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.LoginRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.ChangePasswordRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.ForgotPasswordRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.RefreshTokenRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.ResetPasswordRequest;
 import com.zyna.dev.ecommerce.authentication.dto.response.IntrospectResponse;
 import com.zyna.dev.ecommerce.authentication.dto.response.LoginResponse;
 import com.zyna.dev.ecommerce.authentication.dto.response.RefreshTokenResponse;
@@ -15,6 +18,7 @@ import com.zyna.dev.ecommerce.authentication.repository.AppRoleRepository;
 import com.zyna.dev.ecommerce.authentication.repository.AuthRepository;
 import com.zyna.dev.ecommerce.authentication.repository.RefreshTokenRepository;
 import com.zyna.dev.ecommerce.authentication.service.AccountActivationService;
+import com.zyna.dev.ecommerce.authentication.service.PasswordResetService;
 import com.zyna.dev.ecommerce.authentication.service.interfaces.AuthService;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
@@ -47,6 +51,7 @@ public class AuthServiceImpl implements AuthService {
     private final TokenBlacklistService tokenBlacklistService;
     private final RefreshTokenRepository  refreshTokenRepository;
     private final AccountActivationService accountActivationService;
+    private final PasswordResetService passwordResetService;
 
 
     @Override
@@ -248,6 +253,46 @@ public class AuthServiceImpl implements AuthService {
         User saved = authRepository.save(user);
         accountActivationService.sendActivationToken(saved, currentEmail);
         return authMapper.toUserResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(ChangePasswordRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Login is required");
+        }
+
+        String currentEmail = authentication.getName();
+        User user = authRepository.findByEmailAndIsDeletedFalse(currentEmail)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        authRepository.save(user);
+    }
+
+    @Override
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = authRepository.findByEmailAndIsDeletedFalse(request.getEmail())
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+
+        passwordResetService.createAndSendOtp(user);
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        User user = authRepository.findByEmailAndIsDeletedFalse(request.getEmail())
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+
+        passwordResetService.validateOtp(user, request.getOtpCode());
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        authRepository.save(user);
     }
 
 

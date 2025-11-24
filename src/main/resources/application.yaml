@@ -72,3 +72,5 @@ app:
     jwt-secret: ${APP_ACTIVATION_JWT_SECRET:change-me-activation-secret-32bytes-long}
   mail:
     from: ${APP_MAIL_FROM:no-reply@zyna.dev}
+  password-reset:
+    ttl-minutes: ${APP_PASSWORD_RESET_TTL_MINUTES:10}

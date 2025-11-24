@@ -7,6 +7,9 @@ import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.ResendActivationRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.ChangeEmailRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.ActivateAccountRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.ChangePasswordRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.ForgotPasswordRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.ResetPasswordRequest;
 import com.zyna.dev.ecommerce.authentication.dto.response.IntrospectResponse;
 import com.zyna.dev.ecommerce.authentication.dto.response.LoginResponse;
 import com.zyna.dev.ecommerce.authentication.dto.response.RefreshTokenResponse;
@@ -102,6 +105,37 @@ public class AuthController {
                 HttpStatus.OK.value(),
                 "Email updated. Please check the new inbox to activate your account.",
                 response
+        );
+    }
+
+    @PostMapping("/change-password")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<Void> changePassword(@RequestBody @Valid ChangePasswordRequest request) {
+        authService.changePassword(request);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Password changed successfully!"
+        );
+    }
+
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Void> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "OTP has been sent to your email."
+        );
+    }
+
+    @PostMapping("/reset-password")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Password has been reset successfully!"
         );
     }
 

@@ -34,4 +34,22 @@ public class MailService {
 
         mailSender.send(message);
     }
+
+    public void sendPasswordResetOtp(User user, String otpCode) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(user.getEmail());
+        message.setFrom(defaultFrom);
+        message.setSubject("Mã OTP đặt lại mật khẩu");
+
+        String greeting = StringUtils.hasText(user.getFirstName())
+                ? "Xin chào " + user.getFirstName() + ","
+                : "Xin chào,";
+
+        message.setText(greeting + "\n\n"
+                + "Mã OTP của bạn là: " + otpCode + "\n"
+                + "OTP có hiệu lực trong thời gian ngắn, vui lòng không chia sẻ cho người khác.\n\n"
+                + "Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.");
+
+        mailSender.send(message);
+    }
 }
