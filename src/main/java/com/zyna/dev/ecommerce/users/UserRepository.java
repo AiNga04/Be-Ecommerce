@@ -28,4 +28,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findAllByIsDeletedTrue(Pageable pageable);
 
     Page<User> findDistinctByRoles_CodeIgnoreCaseAndIsDeletedFalse(String roleCode, Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT u FROM User u
+            WHERE u.isDeleted = false
+              AND u.dateOfBirth IS NOT NULL
+              AND FUNCTION('MONTH', u.dateOfBirth) = :month
+              AND FUNCTION('DAY', u.dateOfBirth) = :day
+            """)
+    List<User> findByBirthDayMonthDay(int month, int day);
+
+    List<User> findAllByRoles_CodeIgnoreCaseAndIsDeletedFalse(String roleCode);
 }

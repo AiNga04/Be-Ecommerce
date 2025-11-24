@@ -74,3 +74,14 @@ app:
     from: ${APP_MAIL_FROM:no-reply@zyna.dev}
   password-reset:
     ttl-minutes: ${APP_PASSWORD_RESET_TTL_MINUTES:10}
+  scheduler:
+    birthday:
+      cron: ${APP_SCHEDULER_BIRTHDAY_CRON:0 0 6 * * ?}
+      enabled: ${APP_SCHEDULER_BIRTHDAY_ENABLED:true}
+    voucher-expiring:
+      cron: ${APP_SCHEDULER_VOUCHER_EXPIRING_CRON:0 0 7 * * ?}
+      enabled: ${APP_SCHEDULER_VOUCHER_EXPIRING_ENABLED:true}
+      days-before: ${APP_SCHEDULER_VOUCHER_EXPIRING_DAYS_BEFORE:3}
+  inventory:
+    low-stock:
+      threshold: ${APP_INVENTORY_LOW_STOCK_THRESHOLD:5}

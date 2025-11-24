@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface VoucherRepository extends JpaRepository<Voucher, Long> {
@@ -17,5 +19,6 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
     Optional<Voucher> findByCodeIgnoreCaseAndStatus(String code, VoucherStatus status);
 
     Page<Voucher> findAllByStatus(VoucherStatus status, Pageable pageable);
-}
 
+    List<Voucher> findByStatusAndEndDateBetween(VoucherStatus status, LocalDateTime start, LocalDateTime end);
+}

@@ -2,6 +2,8 @@ package com.zyna.dev.ecommerce.inventory.service.impl;
 
 import com.lowagie.text.Font;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
+import com.zyna.dev.ecommerce.notifications.NotificationService;
+import com.zyna.dev.ecommerce.notifications.NotificationType;
 import com.zyna.dev.ecommerce.inventory.InventoryMapper;
 import com.zyna.dev.ecommerce.inventory.dto.request.AdjustStockRequest;
 import com.zyna.dev.ecommerce.inventory.dto.response.InventoryAuditResponse;
@@ -14,6 +16,7 @@ import com.zyna.dev.ecommerce.users.User;
 import com.zyna.dev.ecommerce.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Row;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -44,6 +47,10 @@ public class InventoryServiceImpl implements InventoryService {
     private final UserRepository userRepository;
     private final InventoryAuditLogRepository auditLogRepository;
     private final InventoryMapper inventoryMapper;
+    private final NotificationService notificationService;
+
+    @Value("${app.inventory.low-stock.threshold:5}")
+    private int lowStockThreshold;
 
     // Lấy user hiện tại từ SecurityContext
     private User getCurrentUser() {
@@ -82,6 +89,8 @@ public class InventoryServiceImpl implements InventoryService {
         // cập nhật tồn kho: oldStock -> newStock = oldStock + delta
         product.setStock(newStock);
         productRepository.save(product);
+
+        checkLowStockAndNotify(product, newStock);
 
         // tạo audit log
         InventoryAuditLog log = InventoryAuditLog.builder()
@@ -320,6 +329,32 @@ public class InventoryServiceImpl implements InventoryService {
             throw new ApplicationException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Failed to export PDF: " + e.getMessage());
         }
+    }
+
+    private void checkLowStockAndNotify(Product product, int currentStock) {
+        if (currentStock >= lowStockThreshold) {
+            return;
+        }
+
+        var inventoryUsers = userRepository.findAllByRoles_CodeIgnoreCaseAndIsDeletedFalse("INVENTORY");
+        var adminUsers = userRepository.findAllByRoles_CodeIgnoreCaseAndIsDeletedFalse("ADMIN");
+
+        var emails = new java.util.HashSet<String>();
+        inventoryUsers.forEach(u -> emails.add(u.getEmail()));
+        adminUsers.forEach(u -> emails.add(u.getEmail()));
+
+        if (emails.isEmpty()) {
+            return;
+        }
+
+        notificationService.sendEmail(
+                NotificationType.LOW_STOCK_ALERT,
+                emails,
+                java.util.Map.of(
+                        "productName", product.getName(),
+                        "stock", currentStock
+                )
+        );
     }
 
     private void addHeaderCell(PdfPTable table, String text, Font font) {

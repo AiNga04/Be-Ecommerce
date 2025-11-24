@@ -3,6 +3,8 @@ package com.zyna.dev.ecommerce.vouchers.service.impl;
 import com.zyna.dev.ecommerce.common.enums.VoucherStatus;
 import com.zyna.dev.ecommerce.common.enums.VoucherType;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
+import com.zyna.dev.ecommerce.notifications.NotificationService;
+import com.zyna.dev.ecommerce.notifications.NotificationType;
 import com.zyna.dev.ecommerce.vouchers.VoucherMapper;
 import com.zyna.dev.ecommerce.vouchers.dto.request.VoucherApplyRequest;
 import com.zyna.dev.ecommerce.vouchers.dto.request.VoucherCreateRequest;
@@ -12,6 +14,7 @@ import com.zyna.dev.ecommerce.vouchers.dto.response.VoucherResponse;
 import com.zyna.dev.ecommerce.vouchers.models.Voucher;
 import com.zyna.dev.ecommerce.vouchers.repository.VoucherRepository;
 import com.zyna.dev.ecommerce.vouchers.service.interfaces.VoucherService;
+import com.zyna.dev.ecommerce.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
@@ -27,6 +30,8 @@ public class VoucherServiceImpl implements VoucherService {
 
     private final VoucherRepository voucherRepository;
     private final VoucherMapper voucherMapper;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @Override
     public VoucherResponse create(VoucherCreateRequest request) {
@@ -101,6 +106,17 @@ public class VoucherServiceImpl implements VoucherService {
 
         voucher.setStatus(VoucherStatus.ACTIVE);
         voucherRepository.save(voucher);
+
+        var admins = userRepository.findAllByRoles_CodeIgnoreCaseAndIsDeletedFalse("ADMIN")
+                .stream().map(u -> u.getEmail()).toList();
+        notificationService.sendEmail(
+                NotificationType.VOUCHER_ACTIVATED,
+                admins,
+                java.util.Map.of(
+                        "code", voucher.getCode(),
+                        "endDate", voucher.getEndDate()
+                )
+        );
     }
 
     @Override

@@ -24,7 +24,7 @@ public class AdminUserSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        if (userRepository.existsByEmail("admin@zyna.dev")) return;
+        if (userRepository.existsByEmail("tuhocbackend@gmail.com")) return;
 
         var adminRole = roleRepository.findByCode("ADMIN")
                 .orElseThrow();
@@ -32,7 +32,7 @@ public class AdminUserSeeder implements CommandLineRunner {
         User admin = User.builder()
                 .firstName("System")
                 .lastName("Admin")
-                .email("admin@zyna.dev")
+                .email("tuhocbackend@gmail.com")
                 .password(passwordEncoder.encode("Admin@123"))
                 .roles(Set.of(adminRole))
                 .status(Status.ACTIVE)

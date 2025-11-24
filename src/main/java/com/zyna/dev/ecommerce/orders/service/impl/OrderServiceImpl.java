@@ -26,6 +26,8 @@ import com.zyna.dev.ecommerce.vouchers.dto.response.VoucherApplyResponse;
 import com.zyna.dev.ecommerce.vouchers.service.interfaces.VoucherService;
 import com.zyna.dev.ecommerce.users.User;
 import com.zyna.dev.ecommerce.users.UserRepository;
+import com.zyna.dev.ecommerce.notifications.NotificationService;
+import com.zyna.dev.ecommerce.notifications.NotificationType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
@@ -50,6 +52,7 @@ public class OrderServiceImpl implements OrderService {
     private final ShippingAddressRepository addressRepository;
     private final ShipmentRepository shipmentRepository;
     private final VoucherService voucherService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -262,7 +265,17 @@ public class OrderServiceImpl implements OrderService {
 
         createShipmentIfMissing(order);
 
-        // 6. Map sang response
+        // 6. Notification
+        notificationService.sendEmail(
+                NotificationType.ORDER_PLACED,
+                user,
+                java.util.Map.of(
+                        "orderCode", order.getCode() != null ? order.getCode() : order.getId(),
+                        "total", order.getTotalPrice()
+                )
+        );
+
+        // 7. Map sang response
         return orderMapper.toOrderResponse(order);
     }
 
@@ -490,6 +503,15 @@ public class OrderServiceImpl implements OrderService {
 
         // xoá chỉ các cart item đã checkout
         cartItemRepository.deleteAll(selectedItems);
+
+        notificationService.sendEmail(
+                NotificationType.ORDER_PLACED,
+                user,
+                java.util.Map.of(
+                        "orderCode", order.getCode() != null ? order.getCode() : order.getId(),
+                        "total", order.getTotalPrice()
+                )
+        );
 
         return orderMapper.toOrderResponse(order);
     }
