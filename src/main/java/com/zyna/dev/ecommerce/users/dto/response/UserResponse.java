@@ -26,6 +26,7 @@ public class UserResponse {
     private String phone;
     private String address;
     private City city;
+    private String avatarUrl;
     private Status status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

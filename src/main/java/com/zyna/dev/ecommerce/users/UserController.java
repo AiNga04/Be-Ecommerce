@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -33,13 +34,44 @@ public class UserController {
 
     @GetMapping("/me")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('USER_READ')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<UserResponse> getMyInfo(Authentication authentication) {
         Long userId = getCurrentUserId(authentication);
         UserResponse userResponse = userService.getUserById(userId);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
                 "Fetched current user successfully!",
+                userResponse
+        );
+    }
+
+    @PatchMapping("/me/avatar")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<UserResponse> updateMyAvatar(
+            Authentication authentication,
+            @RequestPart("image") MultipartFile image
+    ) {
+        Long userId = getCurrentUserId(authentication);
+        UserResponse userResponse = userService.updateAvatar(userId, image);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Avatar updated successfully!",
+                userResponse
+        );
+    }
+
+    @PatchMapping("/{id}/avatar")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('USER_WRITE')")
+    public ApiResponse<UserResponse> updateUserAvatarByAdmin(
+            @PathVariable Long id,
+            @RequestPart("image") MultipartFile image
+    ) {
+        UserResponse userResponse = userService.updateAvatarByAdmin(id, image);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Avatar updated successfully!",
                 userResponse
         );
     }

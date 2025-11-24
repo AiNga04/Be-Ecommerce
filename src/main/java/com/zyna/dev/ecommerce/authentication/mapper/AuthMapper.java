@@ -20,6 +20,7 @@ public class AuthMapper {
                 .phone(dto.getPhone())
                 .address(dto.getAddress())
                 .city(dto.getCity())
+                .avatarUrl(null)
                 .build();
     }
 
@@ -40,6 +41,7 @@ public class AuthMapper {
                 .phone(entity.getPhone())
                 .address(entity.getAddress())
                 .city(entity.getCity())
+                .avatarUrl(entity.getAvatarUrl())
                 .status(entity.getStatus())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())

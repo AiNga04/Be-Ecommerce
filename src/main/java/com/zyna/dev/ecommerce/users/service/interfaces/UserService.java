@@ -39,4 +39,7 @@ public interface UserService {
 
     Page<UserResponse> getShippers(int page, int size);
 
+    UserResponse updateAvatar(Long userId, org.springframework.web.multipart.MultipartFile image);
+
+    UserResponse updateAvatarByAdmin(Long targetUserId, org.springframework.web.multipart.MultipartFile image);
 }

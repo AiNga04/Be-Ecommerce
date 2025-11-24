@@ -41,4 +41,7 @@ public class UserUpdateRequest {
     private String address; // optional
 
     private City city; // optional
+
+    @Size(max = 255, message = "Avatar URL must be less than 255 characters")
+    private String avatarUrl;
 }

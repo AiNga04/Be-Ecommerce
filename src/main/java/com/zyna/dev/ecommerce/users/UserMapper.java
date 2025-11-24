@@ -20,6 +20,7 @@ public class UserMapper {
                 .phone(dto.getPhone())
                 .address(dto.getAddress())
                 .city(dto.getCity())
+                .avatarUrl(null)
                 .build();
     }
 
@@ -32,6 +33,7 @@ public class UserMapper {
         if (dto.getPhone() != null) target.setPhone(dto.getPhone());
         if (dto.getAddress() != null) target.setAddress(dto.getAddress());
         if (dto.getCity() != null) target.setCity(dto.getCity());
+        if (dto.getAvatarUrl() != null) target.setAvatarUrl(dto.getAvatarUrl());
     }
 
     public UserResponse toUserResponse(User entity) {
@@ -51,6 +53,7 @@ public class UserMapper {
                 .phone(entity.getPhone())
                 .address(entity.getAddress())
                 .city(entity.getCity())
+                .avatarUrl(entity.getAvatarUrl())
                 .status(entity.getStatus())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())

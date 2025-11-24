@@ -28,6 +28,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -184,6 +185,10 @@ public class UserServiceImpl implements UserService {
         // update password nếu có
         if (updateRequest.getPassword() != null && !updateRequest.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
+        }
+
+        if (updateRequest.getAvatarUrl() != null && !updateRequest.getAvatarUrl().isBlank()) {
+            user.setAvatarUrl(updateRequest.getAvatarUrl());
         }
 
         // UPDATE ROLES (nếu FE gửi lên)
@@ -442,6 +447,52 @@ public class UserServiceImpl implements UserService {
                 .toList();
 
         return new PageImpl<>(list, basePage.getPageable(), basePage.getTotalElements());
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateAvatar(Long userId, MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Image file is required");
+        }
+
+        User user = userRepository.findByIdAndIsDeletedFalse(userId).orElseThrow(
+                () -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found or deleted")
+        );
+
+        String newUrl;
+        if (user.getAvatarUrl() == null || user.getAvatarUrl().isBlank()) {
+            newUrl = com.zyna.dev.ecommerce.common.utils.FileUploadUtil.saveImage(image);
+        } else {
+            newUrl = com.zyna.dev.ecommerce.common.utils.FileUploadUtil.replaceImage(user.getAvatarUrl(), image);
+        }
+
+        user.setAvatarUrl(newUrl);
+        User saved = userRepository.save(user);
+        return userMapper.toUserResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateAvatarByAdmin(Long targetUserId, MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Image file is required");
+        }
+
+        User user = userRepository.findByIdAndIsDeletedFalse(targetUserId).orElseThrow(
+                () -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found or deleted")
+        );
+
+        String newUrl;
+        if (user.getAvatarUrl() == null || user.getAvatarUrl().isBlank()) {
+            newUrl = com.zyna.dev.ecommerce.common.utils.FileUploadUtil.saveImage(image);
+        } else {
+            newUrl = com.zyna.dev.ecommerce.common.utils.FileUploadUtil.replaceImage(user.getAvatarUrl(), image);
+        }
+
+        user.setAvatarUrl(newUrl);
+        User saved = userRepository.save(user);
+        return userMapper.toUserResponse(saved);
     }
 
     private String getCurrentActorEmail() {

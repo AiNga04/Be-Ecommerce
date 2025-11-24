@@ -70,6 +70,9 @@ public class User {
     @Column(length = 50)
     private City city;
 
+    @Column(length = 255)
+    private String avatarUrl;
+
     // ---- Account Management ----
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
