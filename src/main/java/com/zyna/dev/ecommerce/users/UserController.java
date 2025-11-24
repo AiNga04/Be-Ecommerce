@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -24,6 +25,24 @@ import java.util.*;
 public class UserController {
 
     private final UserService userService;
+
+    private Long getCurrentUserId(Authentication authentication) {
+        String email = (String) authentication.getPrincipal();
+        return userService.getUserIdByEmail(email);
+    }
+
+    @GetMapping("/me")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('USER_READ')")
+    public ApiResponse<UserResponse> getMyInfo(Authentication authentication) {
+        Long userId = getCurrentUserId(authentication);
+        UserResponse userResponse = userService.getUserById(userId);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Fetched current user successfully!",
+                userResponse
+        );
+    }
 
     // LIST SHIPPERS (đặt trước GET /{id} để tránh conflict path)
     @GetMapping("/shippers")
