@@ -7,6 +7,8 @@ import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.orders.models.Order;
 import com.zyna.dev.ecommerce.orders.repository.OrderRepository;
 import com.zyna.dev.ecommerce.payments.vnpay.dto.VnPayReturnResponse;
+import com.zyna.dev.ecommerce.payments.models.PaymentTransactionLog;
+import com.zyna.dev.ecommerce.payments.repository.PaymentTransactionLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ public class VnPayService {
 
     private final VnPayConfig config;
     private final OrderRepository orderRepository;
+    private final PaymentTransactionLogRepository paymentTransactionLogRepository;
 
     /**
      * Tạo URL thanh toán VNPay cho một order
@@ -145,6 +148,7 @@ public class VnPayService {
         }
 
         orderRepository.save(order);
+        savePaymentLog(order, success ? PaymentStatus.PAID : PaymentStatus.FAILED, paidAmount, transactionNo, rspCode, vnpParams.toString());
 
         return VnPayReturnResponse.builder()
                 .orderCode(order.getCode())
@@ -157,5 +161,27 @@ public class VnPayService {
                 .vnpPayDate(payDateStr)
                 .message(success ? "Thanh toán thành công" : "Thanh toán thất bại")
                 .build();
+    }
+
+    private void savePaymentLog(Order order,
+                                PaymentStatus status,
+                                BigDecimal amount,
+                                String transactionId,
+                                String responseCode,
+                                String rawPayload) {
+        PaymentTransactionLog logEntry = PaymentTransactionLog.builder()
+                .order(order)
+                .provider("VNPAY")
+                .status(status)
+                .amount(amount != null ? amount : order.getTotalPrice())
+                .currency("VND")
+                .transactionId(transactionId)
+                .orderCode(order.getCode())
+                .responseCode(responseCode)
+                .rawPayload(rawPayload)
+                .note(status == PaymentStatus.PAID ? "Payment success" : "Payment failed")
+                .build();
+
+        paymentTransactionLogRepository.save(logEntry);
     }
 }
