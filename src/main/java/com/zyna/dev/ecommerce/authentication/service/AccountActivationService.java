@@ -1,7 +1,5 @@
 package com.zyna.dev.ecommerce.authentication.service;
 
-import com.zyna.dev.ecommerce.authentication.models.AccountActivationToken;
-import com.zyna.dev.ecommerce.authentication.repository.AccountActivationTokenRepository;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.enums.UserAuditAction;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
@@ -16,28 +14,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 public class AccountActivationService {
 
-    private final AccountActivationTokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final MailService mailService;
     private final UserAuditService userAuditService;
+    private final ActivationTokenProvider activationTokenProvider;
 
-    @Value("${app.activation.base-url:http://localhost:8080/activate}")
+    @Value("${app.activation.base-url:http://localhost:3000/activate}")
     private String activationBaseUrl;
 
-    @Value("${app.activation.ttl-hours:24}")
-    private long ttlHours;
-
     public void sendActivationToken(User user, String actorEmail) {
-        AccountActivationToken token = createToken(user);
-        String activationLink = buildActivationLink(token.getToken());
+        String token = activationTokenProvider.generate(user);
+        String activationLink = buildActivationLink(token);
         mailService.sendActivationEmail(user, activationLink);
 
         userAuditService.record(
@@ -54,31 +45,31 @@ public class AccountActivationService {
             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Activation token is required");
         }
 
-        AccountActivationToken token = tokenRepository.findByToken(rawToken)
-                .orElseThrow(() -> new ApplicationException(
-                        HttpStatus.BAD_REQUEST,
-                        "Activation token is invalid"
-                ));
-
-        if (token.isUsed()) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Activation token has already been used");
+        var claims = activationTokenProvider.parse(rawToken);
+        if (!activationTokenProvider.isActivationType(claims)) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Invalid activation token type");
         }
 
-        if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Activation token is expired");
+        Long userId;
+        try {
+            userId = Long.parseLong(claims.getSubject());
+        } catch (NumberFormatException ex) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Invalid activation token payload");
         }
 
-        User user = token.getUser();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "User not found"));
 
         if (user.isDeleted()) {
             throw new ApplicationException(HttpStatus.BAD_REQUEST, "User was deleted and cannot be activated");
         }
 
-        user.setStatus(Status.ACTIVE);
-        token.setUsed(true);
-        token.setUsedAt(LocalDateTime.now());
+        String emailInToken = activationTokenProvider.getEmail(claims);
+        if (StringUtils.hasText(emailInToken) && !user.getEmail().equalsIgnoreCase(emailInToken)) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Activation token does not match current email");
+        }
 
-        tokenRepository.save(token);
+        user.setStatus(Status.ACTIVE);
         userRepository.save(user);
 
         userAuditService.record(
@@ -89,21 +80,6 @@ public class AccountActivationService {
         );
 
         return user;
-    }
-
-    private AccountActivationToken createToken(User user) {
-        tokenRepository.deleteAllByUser(user);
-
-        Duration ttl = Duration.ofHours(ttlHours > 0 ? ttlHours : 24);
-        LocalDateTime expiresAt = LocalDateTime.now().plus(ttl);
-
-        AccountActivationToken token = AccountActivationToken.builder()
-                .user(user)
-                .token(UUID.randomUUID().toString())
-                .expiresAt(expiresAt)
-                .build();
-
-        return tokenRepository.save(token);
     }
 
     private String buildActivationLink(String token) {

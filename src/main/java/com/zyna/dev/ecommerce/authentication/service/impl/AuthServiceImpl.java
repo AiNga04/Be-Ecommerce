@@ -1,20 +1,21 @@
 package com.zyna.dev.ecommerce.authentication.service.impl;
 
+import com.zyna.dev.ecommerce.authentication.LoginRateLimiter;
+import com.zyna.dev.ecommerce.authentication.dto.request.ChangeEmailRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.IntrospectRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.LoginRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.RefreshTokenRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
+import com.zyna.dev.ecommerce.authentication.dto.response.IntrospectResponse;
+import com.zyna.dev.ecommerce.authentication.dto.response.LoginResponse;
 import com.zyna.dev.ecommerce.authentication.dto.response.RefreshTokenResponse;
 import com.zyna.dev.ecommerce.authentication.mapper.AuthMapper;
 import com.zyna.dev.ecommerce.authentication.models.RefreshToken;
 import com.zyna.dev.ecommerce.authentication.repository.AppRoleRepository;
 import com.zyna.dev.ecommerce.authentication.repository.AuthRepository;
-import com.zyna.dev.ecommerce.authentication.LoginRateLimiter;
-import com.zyna.dev.ecommerce.authentication.dto.request.IntrospectRequest;
-import com.zyna.dev.ecommerce.authentication.dto.request.LoginRequest;
-import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
-import com.zyna.dev.ecommerce.authentication.dto.response.IntrospectResponse;
-import com.zyna.dev.ecommerce.authentication.dto.response.LoginResponse;
 import com.zyna.dev.ecommerce.authentication.repository.RefreshTokenRepository;
-import com.zyna.dev.ecommerce.authentication.service.interfaces.AuthService;
 import com.zyna.dev.ecommerce.authentication.service.AccountActivationService;
+import com.zyna.dev.ecommerce.authentication.service.interfaces.AuthService;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.security.JwtUtil;
@@ -23,6 +24,8 @@ import com.zyna.dev.ecommerce.users.User;
 import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -208,6 +211,43 @@ public class AuthServiceImpl implements AuthService {
     public UserResponse activateAccount(String token) {
         User activated = accountActivationService.activate(token);
         return authMapper.toUserResponse(activated);
+    }
+
+    @Override
+    public void resendActivationEmail(String email) {
+        User user = authRepository.findByEmailAndIsDeletedFalse(email)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (user.getStatus() == Status.ACTIVE) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Account already active");
+        }
+
+        accountActivationService.sendActivationToken(user, email);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse changeEmail(ChangeEmailRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Login is required");
+        }
+
+        String currentEmail = authentication.getName();
+
+        User user = authRepository.findByEmailAndIsDeletedFalse(currentEmail)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (authRepository.existsByEmail(request.getNewEmail())) {
+            throw new ApplicationException(HttpStatus.CONFLICT, "New email is already in use");
+        }
+
+        user.setEmail(request.getNewEmail());
+        user.setStatus(Status.PENDING);
+
+        User saved = authRepository.save(user);
+        accountActivationService.sendActivationToken(saved, currentEmail);
+        return authMapper.toUserResponse(saved);
     }
 
 

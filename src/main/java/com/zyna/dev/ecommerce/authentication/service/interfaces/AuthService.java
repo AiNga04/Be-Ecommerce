@@ -2,6 +2,7 @@ package com.zyna.dev.ecommerce.authentication.service.interfaces;
 
 import com.zyna.dev.ecommerce.authentication.dto.request.IntrospectRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.LoginRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.ChangeEmailRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.RefreshTokenRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
 import com.zyna.dev.ecommerce.authentication.dto.response.IntrospectResponse;
@@ -21,4 +22,8 @@ public interface AuthService {
     void logout(String accessToken, String refreshTokenStr);
 
     UserResponse activateAccount(String token);
+
+    void resendActivationEmail(String email);
+
+    UserResponse changeEmail(ChangeEmailRequest request);
 }

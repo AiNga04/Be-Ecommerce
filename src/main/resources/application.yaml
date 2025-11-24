@@ -69,3 +69,6 @@ app:
   activation:
     base-url: ${APP_ACTIVATION_BASE_URL:http://localhost:3000/activate}
     ttl-hours: ${APP_ACTIVATION_TTL_HOURS:24}
+    jwt-secret: ${APP_ACTIVATION_JWT_SECRET:change-me-activation-secret-32bytes-long}
+  mail:
+    from: ${APP_MAIL_FROM:no-reply@zyna.dev}

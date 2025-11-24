@@ -4,6 +4,8 @@ import com.zyna.dev.ecommerce.authentication.dto.request.IntrospectRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.LoginRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.RefreshTokenRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.ResendActivationRequest;
+import com.zyna.dev.ecommerce.authentication.dto.request.ChangeEmailRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.ActivateAccountRequest;
 import com.zyna.dev.ecommerce.authentication.dto.response.IntrospectResponse;
 import com.zyna.dev.ecommerce.authentication.dto.response.LoginResponse;
@@ -15,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -76,6 +79,28 @@ public class AuthController {
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
                 "Account activated successfully!",
+                response
+        );
+    }
+
+    @PostMapping("/activate/resend")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Void> resendActivation(@RequestBody @Valid ResendActivationRequest request) {
+        authService.resendActivationEmail(request.getEmail());
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Activation email re-sent successfully!"
+        );
+    }
+
+    @PostMapping("/change-email")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<UserResponse> changeEmail(@RequestBody @Valid ChangeEmailRequest request) {
+        UserResponse response = authService.changeEmail(request);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Email updated. Please check the new inbox to activate your account.",
                 response
         );
     }

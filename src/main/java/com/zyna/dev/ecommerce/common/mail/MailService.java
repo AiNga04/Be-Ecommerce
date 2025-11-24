@@ -14,7 +14,7 @@ public class MailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username:no-reply@zyna.dev}")
+    @Value("${app.mail.from:no-reply@zyna.dev}")
     private String defaultFrom;
 
     public void sendActivationEmail(User user, String activationLink) {
