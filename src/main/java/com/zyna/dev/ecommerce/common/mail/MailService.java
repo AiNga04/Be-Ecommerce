@@ -27,6 +27,14 @@ public class MailService {
         );
     }
 
+    public void sendActivationEmail(User user, String activationLink, String rawPassword) {
+        sendHtmlEmail(
+                new String[]{user.getEmail()},
+                "Kích hoạt tài khoản của bạn",
+                buildActivationWithPasswordHtml(user, activationLink, rawPassword)
+        );
+    }
+
     public void sendTemplateEmail(String[] recipients, String subject, String body) {
         if (recipients == null || recipients.length == 0) {
             return;
@@ -92,6 +100,23 @@ public class MailService {
         );
     }
 
+    private String buildActivationWithPasswordHtml(User user, String activationLink, String rawPassword) {
+        String greeting = StringUtils.hasText(user.getFirstName())
+                ? "Xin chào " + user.getFirstName() + ","
+                : "Xin chào,";
+        return baseTemplate(
+                greeting,
+                "<p>Tài khoản của bạn đã được admin tạo. Dùng mật khẩu tạm bên dưới để đăng nhập sau khi kích hoạt:</p>"
+                        + "<div style=\"font-size:20px;font-weight:700;color:#22d3ee;margin:16px 0;\">"
+                        + rawPassword + "</div>"
+                        + "<p style=\"text-align:center;margin:24px 0;\">"
+                        + "<a href=\"" + activationLink + "\" style=\"background:#2563eb;color:#fff;"
+                        + "padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block;\">Kích hoạt tài khoản</a>"
+                        + "</p>"
+                        + "<p>Vui lòng đổi mật khẩu sau khi đăng nhập lần đầu để đảm bảo an toàn.</p>"
+        );
+    }
+
     private String buildOtpHtml(User user, String otpCode) {
         String greeting = StringUtils.hasText(user.getFirstName())
                 ? "Xin chào " + user.getFirstName() + ","
@@ -133,19 +158,19 @@ public class MailService {
 
     private String baseTemplate(String title, String contentHtml) {
         return """
-                <div style="font-family:Arial,Helvetica,sans-serif; background:#0b1220; padding:32px;">
-                  <div style="max-width:680px;margin:0 auto;background:#0f172a;border:1px solid #1f2937;border-radius:16px;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,0.28);">
-                    <div style="background:linear-gradient(135deg,#2563eb,#5b21b6);color:#ffffff;padding:20px 24px;font-size:18px;font-weight:700;letter-spacing:0.2px;">
+                <div style="font-family:Arial,Helvetica,sans-serif; background:#f4f6fb; padding:32px;">
+                  <div style="max-width:700px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;box-shadow:0 12px 32px rgba(15,23,42,0.08);">
+                    <div style="background:linear-gradient(120deg,#60a5fa,#7c3aed);color:#ffffff;padding:18px 22px;font-size:18px;font-weight:700;letter-spacing:0.2px;">
                       Zyna
                     </div>
-                    <div style="background:#111827;padding:28px 26px;color:#e5e7eb;font-size:15px;line-height:1.6;">
-                      <h2 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#f8fafc;">""" + title + """
+                    <div style="padding:28px 26px;color:#0f172a;font-size:15px;line-height:1.65;">
+                      <h2 style="margin:0 0 14px;font-size:22px;font-weight:700;color:#0f172a;">""" + title + """
                       </h2>
-                      <div style="background:#0b1220;border:1px solid #1f2937;border-radius:12px;padding:18px 18px 10px;margin-top:10px;box-shadow:0 6px 16px rgba(0,0,0,0.25);">
+                      <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:18px 18px 12px;margin-top:10px;box-shadow:0 6px 16px rgba(15,23,42,0.06);">
                         """ + contentHtml + """
                       </div>
                     </div>
-                    <div style="padding:16px 20px;font-size:12px;color:#9ca3af;background:#0b1220;border-top:1px solid #1f2937;text-align:center;">
+                    <div style="padding:16px 20px;font-size:12px;color:#6b7280;background:#f9fafb;border-top:1px solid #e5e7eb;text-align:center;">
                       Đây là email tự động, vui lòng không trả lời.
                     </div>
                   </div>

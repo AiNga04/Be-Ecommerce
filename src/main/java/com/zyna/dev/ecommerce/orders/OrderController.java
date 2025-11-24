@@ -40,7 +40,7 @@ public class OrderController {
         OrderResponse response = orderService.checkout(userId, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Checkout successfully!",
+                "Order " + displayCode(response) + " created successfully!",
                 response
         );
     }
@@ -57,7 +57,7 @@ public class OrderController {
         OrderResponse response = orderService.checkoutFromCart(userId, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Checkout from cart successfully!",
+                "Order " + displayCode(response) + " created successfully!",
                 response
         );
     }
@@ -144,5 +144,19 @@ public class OrderController {
                 "Update order status successfully!",
                 response
         );
+    }
+
+    private String displayCode(OrderResponse response) {
+        if (response.getId() == null) return "";
+        // ưu tiên code nếu sau này có trong response
+        try {
+            var codeField = response.getClass().getDeclaredMethod("getCode");
+            Object code = codeField.invoke(response);
+            if (code != null) {
+                return code.toString();
+            }
+        } catch (Exception ignored) {
+        }
+        return response.getId().toString();
     }
 }

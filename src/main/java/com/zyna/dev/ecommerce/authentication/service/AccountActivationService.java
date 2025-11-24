@@ -27,9 +27,17 @@ public class AccountActivationService {
     private String activationBaseUrl;
 
     public void sendActivationToken(User user, String actorEmail) {
+        sendActivationToken(user, actorEmail, null);
+    }
+
+    public void sendActivationToken(User user, String actorEmail, String rawPassword) {
         String token = activationTokenProvider.generate(user);
         String activationLink = buildActivationLink(token);
-        mailService.sendActivationEmail(user, activationLink);
+        if (StringUtils.hasText(rawPassword)) {
+            mailService.sendActivationEmail(user, activationLink, rawPassword);
+        } else {
+            mailService.sendActivationEmail(user, activationLink);
+        }
 
         userAuditService.record(
                 user,

@@ -16,6 +16,7 @@ public class OrderMapper {
 
         return OrderResponse.builder()
                 .id(order.getId())
+                .code(order.getCode())
                 .totalPrice(order.getTotalPrice())
                 .status(order.getStatus())
                 .paymentMethod(order.getPaymentMethod())

@@ -17,6 +17,7 @@ import com.zyna.dev.ecommerce.common.enums.PaymentStatus;
 @Builder
 public class OrderResponse {
     private Long id;
+    private String code;
     private BigDecimal totalPrice;
     private OrderStatus status;
     private PaymentMethod paymentMethod;

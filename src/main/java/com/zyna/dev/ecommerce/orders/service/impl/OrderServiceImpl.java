@@ -29,6 +29,7 @@ import com.zyna.dev.ecommerce.users.UserRepository;
 import com.zyna.dev.ecommerce.notifications.NotificationService;
 import com.zyna.dev.ecommerce.notifications.NotificationType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -53,6 +54,8 @@ public class OrderServiceImpl implements OrderService {
     private final ShipmentRepository shipmentRepository;
     private final VoucherService voucherService;
     private final NotificationService notificationService;
+    @Value("${app.inventory.low-stock.threshold:5}")
+    private int lowStockThreshold;
 
     @Override
     @Transactional
@@ -247,6 +250,10 @@ public class OrderServiceImpl implements OrderService {
                 .shippingAddress(shippingAddress)
                 .build();
 
+        if (order.getCode() == null) {
+            order.setCode(generateOrderCode());
+        }
+
         // set quan hệ 2 chiều
         for (OrderItem oi : orderItems) {
             oi.setOrder(order);
@@ -258,6 +265,7 @@ public class OrderServiceImpl implements OrderService {
             Product p = oi.getProduct();
             int newStock = p.getStock() - oi.getQuantity();
             p.setStock(newStock);
+            checkLowStockAndNotify(p);
         }
 
         // 5. Lưu order
@@ -271,7 +279,11 @@ public class OrderServiceImpl implements OrderService {
                 user,
                 java.util.Map.of(
                         "orderCode", order.getCode() != null ? order.getCode() : order.getId(),
-                        "total", order.getTotalPrice()
+                        "total", order.getTotalPrice(),
+                        "paymentMethod", order.getPaymentMethod(),
+                        "shippingName", order.getShippingName(),
+                        "shippingPhone", order.getShippingPhone(),
+                        "shippingAddress", order.getShippingAddress()
                 )
         );
 
@@ -486,6 +498,10 @@ public class OrderServiceImpl implements OrderService {
                 .shippingAddress(shippingAddress)
                 .build();
 
+        if (order.getCode() == null) {
+            order.setCode(generateOrderCode());
+        }
+
         for (OrderItem oi : orderItems) {
             oi.setOrder(order);
         }
@@ -495,6 +511,7 @@ public class OrderServiceImpl implements OrderService {
         for (OrderItem oi : orderItems) {
             Product p = oi.getProduct();
             p.setStock(p.getStock() - oi.getQuantity());
+            checkLowStockAndNotify(p);
         }
 
         order = orderRepository.save(order);
@@ -509,7 +526,11 @@ public class OrderServiceImpl implements OrderService {
                 user,
                 java.util.Map.of(
                         "orderCode", order.getCode() != null ? order.getCode() : order.getId(),
-                        "total", order.getTotalPrice()
+                        "total", order.getTotalPrice(),
+                        "paymentMethod", order.getPaymentMethod(),
+                        "shippingName", order.getShippingName(),
+                        "shippingPhone", order.getShippingPhone(),
+                        "shippingAddress", order.getShippingAddress()
                 )
         );
 
@@ -583,5 +604,36 @@ public class OrderServiceImpl implements OrderService {
                                 .status(ShipmentStatus.PENDING_ASSIGN)
                                 .build()
                 ));
+    }
+
+    private String generateOrderCode() {
+        return "ORD-" + System.currentTimeMillis();
+    }
+
+    private void checkLowStockAndNotify(Product product) {
+        Integer stock = product.getStock();
+        if (stock == null || stock >= lowStockThreshold) {
+            return;
+        }
+
+        var inventoryUsers = userRepository.findAllByRoles_CodeIgnoreCaseAndIsDeletedFalse("INVENTORY");
+        var adminUsers = userRepository.findAllByRoles_CodeIgnoreCaseAndIsDeletedFalse("ADMIN");
+
+        var emails = new java.util.HashSet<String>();
+        inventoryUsers.forEach(u -> emails.add(u.getEmail()));
+        adminUsers.forEach(u -> emails.add(u.getEmail()));
+
+        if (emails.isEmpty()) {
+            return;
+        }
+
+        notificationService.sendEmail(
+                NotificationType.LOW_STOCK_ALERT,
+                emails,
+                java.util.Map.of(
+                        "productName", product.getName(),
+                        "stock", stock
+                )
+        );
     }
 }

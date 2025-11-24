@@ -93,7 +93,7 @@ public class UserServiceImpl implements UserService {
         }
 
         User saved = userRepository.save(user);
-        accountActivationService.sendActivationToken(saved, getCurrentActorEmail());
+        accountActivationService.sendActivationToken(saved, getCurrentActorEmail(), createRequest.getPassword());
         return userMapper.toUserResponse(saved);
     }
 
@@ -406,7 +406,7 @@ public class UserServiceImpl implements UserService {
                 user.setCreatedAt(now);
 
                 User saved = userRepository.save(user);
-                accountActivationService.sendActivationToken(saved, actorEmail);
+                accountActivationService.sendActivationToken(saved, actorEmail, item.getPassword());
 
                 createdList.add(userMapper.toUserResponse(saved)); // :contentReference[oaicite:11]{index=11}
             } catch (Exception e) {

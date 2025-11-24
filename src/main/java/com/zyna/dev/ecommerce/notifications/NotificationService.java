@@ -46,10 +46,28 @@ public class NotificationService {
             case ORDER_PLACED -> {
                 String orderCode = stringVal(model.get("orderCode"));
                 String total = stringVal(model.get("total"));
-                subject = "Đơn hàng của bạn đã được tạo";
-                body = "Đơn hàng " + (orderCode != null ? orderCode : "") + " đã được tạo thành công.\n"
-                        + "Tổng tiền: " + (total != null ? total : "N/A") + "\n"
-                        + "Cảm ơn bạn đã mua sắm tại Zyna.";
+                String shippingName = stringVal(model.get("shippingName"));
+                String shippingPhone = stringVal(model.get("shippingPhone"));
+                String shippingAddress = stringVal(model.get("shippingAddress"));
+                String paymentMethod = stringVal(model.get("paymentMethod"));
+
+                subject = "Đơn hàng " + (orderCode != null ? orderCode : "") + " đã được tạo";
+                StringBuilder sb = new StringBuilder();
+                sb.append("Đơn hàng ").append(orderCode != null ? orderCode : "").append(" đã được tạo thành công.\n")
+                        .append("Tổng tiền: ").append(total != null ? total : "N/A").append("\n");
+                if (paymentMethod != null) {
+                    sb.append("Phương thức thanh toán: ").append(paymentMethod).append("\n");
+                }
+                if (shippingName != null) {
+                    sb.append("Người nhận: ").append(shippingName);
+                    if (shippingPhone != null) sb.append(" | ").append(shippingPhone);
+                    sb.append("\n");
+                }
+                if (shippingAddress != null) {
+                    sb.append("Địa chỉ: ").append(shippingAddress).append("\n");
+                }
+                sb.append("Cảm ơn bạn đã mua sắm tại Zyna.");
+                body = sb.toString();
             }
             case LOW_STOCK_ALERT -> {
                 String productName = stringVal(model.get("productName"));
