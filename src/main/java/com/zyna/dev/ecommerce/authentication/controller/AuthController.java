@@ -66,8 +66,31 @@ public class AuthController {
 
     @PostMapping("/refresh")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<RefreshTokenResponse> refresh(@RequestBody @Valid RefreshTokenRequest request) {
-        RefreshTokenResponse response = authService.refreshToken(request);
+    public ApiResponse<RefreshTokenResponse> refresh(
+            HttpServletRequest httpRequest,
+            @RequestBody(required = false) RefreshTokenRequest request
+    ) {
+        String refreshToken = null;
+
+        if (request != null && request.getRefreshToken() != null && !request.getRefreshToken().isBlank()) {
+            refreshToken = request.getRefreshToken();
+        } else if (httpRequest.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : httpRequest.getCookies()) {
+                if ("refreshToken".equals(cookie.getName())) {
+                    refreshToken = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ApiResponse.failedResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    "Refresh token not provided"
+            );
+        }
+
+        RefreshTokenResponse response = authService.refreshToken(new RefreshTokenRequest(refreshToken));
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
                 "Token refreshed successfully!",
