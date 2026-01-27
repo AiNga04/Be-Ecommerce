@@ -29,26 +29,26 @@ spring:
     url: jdbc:postgresql://localhost:5432/ecommerce
     username: postgres
     password: 123123
-#    driver-class-name: org.postgresql.Driver
+  #    driver-class-name: org.postgresql.Driver
 
   data:
     redis:
       host: localhost
       port: 6379
-#      password: your_password_if_any
+  #      password: your_password_if_any
 
   config:
     import: optional:file:.env[.properties]
 
   jpa:
     hibernate:
-      ddl-auto: update          # tự tạo / cập nhật bảng khi entity thay đổi (dev mode)
-    show-sql: true              # log câu SQL ra console
+      ddl-auto: update # tự tạo / cập nhật bảng khi entity thay đổi (dev mode)
+    show-sql: true # log câu SQL ra console
     properties:
       hibernate:
-        format_sql: true        # định dạng SQL cho dễ đọc
+        format_sql: true # định dạng SQL cho dễ đọc
         dialect: org.hibernate.dialect.PostgreSQLDialect
-    open-in-view: false         # khuyến nghị tắt để tránh lazy-loading lỗi
+    open-in-view: false # khuyến nghị tắt để tránh lazy-loading lỗi
 
   # Nếu bạn dùng file .sql hoặc data.sql seed data
   sql:
@@ -57,9 +57,8 @@ spring:
 
 logging:
   level:
-    org.hibernate.SQL: debug         # log câu SQL
-    org.hibernate.type.descriptor.sql.BasicBinder: trace  # log giá trị parameter
-
+    org.hibernate.SQL: debug # log câu SQL
+    org.hibernate.type.descriptor.sql.BasicBinder: trace # log giá trị parameter
 
 app:
   jwt:
@@ -67,7 +66,7 @@ app:
     expiration-ms: ${APP_JWT_EXPIRATION_MS:86400000}
     issuer: ${APP_JWT_ISSUER:zyna-app}
   activation:
-    base-url: ${APP_ACTIVATION_BASE_URL:http://localhost:3000/activate}
+    base-url: ${APP_ACTIVATION_BASE_URL:http://localhost:8080/api/auth/activate}
     ttl-hours: ${APP_ACTIVATION_TTL_HOURS:24}
     jwt-secret: ${APP_ACTIVATION_JWT_SECRET:change-me-activation-secret-32bytes-long}
   mail:

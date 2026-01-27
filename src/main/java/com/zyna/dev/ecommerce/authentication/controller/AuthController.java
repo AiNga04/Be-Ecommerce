@@ -6,7 +6,7 @@ import com.zyna.dev.ecommerce.authentication.dto.request.RefreshTokenRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.ResendActivationRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.ChangeEmailRequest;
-import com.zyna.dev.ecommerce.authentication.dto.request.ActivateAccountRequest;
+
 import com.zyna.dev.ecommerce.authentication.dto.request.ChangePasswordRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.ForgotPasswordRequest;
 import com.zyna.dev.ecommerce.authentication.dto.request.ResetPasswordRequest;
@@ -98,10 +98,10 @@ public class AuthController {
         );
     }
 
-    @PostMapping("/activate")
+    @GetMapping("/activate")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<UserResponse> activate(@RequestBody @Valid ActivateAccountRequest request) {
-        UserResponse response = authService.activateAccount(request.getToken());
+    public ApiResponse<UserResponse> activate(@RequestParam String token) {
+        UserResponse response = authService.activateAccount(token);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
                 "Account activated successfully!",
