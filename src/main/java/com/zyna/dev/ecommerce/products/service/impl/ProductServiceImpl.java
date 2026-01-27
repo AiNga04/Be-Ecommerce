@@ -32,7 +32,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Predicate;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
 
 @Slf4j
 @Service
@@ -118,35 +119,46 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProductResponse> searchProducts(ProductCriteria criteria, int page, int size) {
-        Page<Product> basePage = productRepository.findAllByIsActiveTrue(
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
-        );
+        Specification<Product> spec = createSpecification(criteria, true);
+        Page<Product> productPage = productRepository.findAll(spec,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
 
-        Predicate<Product> matches = p -> {
-            if (criteria.getName() != null &&
-                    !p.getName().toLowerCase().contains(criteria.getName().toLowerCase())) return false;
-            if (criteria.getCategory() != null) {
-                if (p.getCategory() == null ||
-                        p.getCategory().getCode() == null ||
-                        !p.getCategory().getCode().equalsIgnoreCase(criteria.getCategory())) {
-                    return false;
-                }
+        return productPage.map(productMapper::toProductResponse);
+    }
+
+    private Specification<Product> createSpecification(ProductCriteria criteria, boolean isActive) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // isActive filter
+            predicates.add(cb.equal(root.get("isActive"), isActive));
+
+            if (criteria.getName() != null && !criteria.getName().isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("name")),
+                        "%" + criteria.getName().toLowerCase() + "%"));
             }
-            if (criteria.getMinPrice() != null &&
-                    (p.getPrice() == null || p.getPrice().compareTo(criteria.getMinPrice()) < 0)) return false;
-            if (criteria.getMaxPrice() != null &&
-                    (p.getPrice() == null || p.getPrice().compareTo(criteria.getMaxPrice()) > 0)) return false;
-            if (criteria.getMinStock() != null &&
-                    (p.getStock() == null || p.getStock() < criteria.getMinStock())) return false;
-            return true;
+
+            if (criteria.getCategory() != null && !criteria.getCategory().isBlank()) {
+                predicates.add(cb.equal(
+                        cb.lower(root.get("category").get("code")),
+                        criteria.getCategory().toLowerCase()
+                ));
+            }
+
+            if (criteria.getMinPrice() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), criteria.getMinPrice()));
+            }
+
+            if (criteria.getMaxPrice() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), criteria.getMaxPrice()));
+            }
+
+            if (criteria.getMinStock() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("stock"), criteria.getMinStock()));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
         };
-
-        List<ProductResponse> filtered = basePage.getContent().stream()
-                .filter(matches)
-                .map(productMapper::toProductResponse)
-                .toList();
-
-        return new PageImpl<>(filtered, basePage.getPageable(), filtered.size());
     }
 
     // UPDATE PRODUCT (multipart/form-data)
@@ -330,34 +342,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProductResponse> getDeletedProducts(ProductCriteria criteria, int page, int size) {
-        Page<Product> basePage = productRepository.findAllByIsActiveFalse(
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "deletedAt"))
-        );
+        Specification<Product> spec = createSpecification(criteria, false);
+        Page<Product> productPage = productRepository.findAll(spec,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "deletedAt")));
 
-        Predicate<Product> matches = p -> {
-            if (criteria.getName() != null &&
-                    !p.getName().toLowerCase().contains(criteria.getName().toLowerCase())) {
-                return false;
-            }
-
-            if (criteria.getCategory() != null) {
-                // p.getCategory() là Category, so sánh theo code
-                if (p.getCategory() == null ||
-                        p.getCategory().getCode() == null ||
-                        !p.getCategory().getCode().equalsIgnoreCase(criteria.getCategory())) {
-                    return false;
-                }
-            }
-
-            return true;
-        };
-
-        List<ProductResponse> filtered = basePage.getContent().stream()
-                .filter(matches)
-                .map(productMapper::toProductResponse)
-                .toList();
-
-        return new PageImpl<>(filtered, basePage.getPageable(), filtered.size());
+        return productPage.map(productMapper::toProductResponse);
     }
 
     // CREATE GALLERY

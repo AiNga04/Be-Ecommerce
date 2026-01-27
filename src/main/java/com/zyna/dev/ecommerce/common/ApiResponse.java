@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import java.util.List;
 
 
 @Getter
@@ -77,6 +79,31 @@ public class ApiResponse<T> {
         ApiResponse<T> response = new ApiResponse<>(statusCode, message);
         response.setSuccess(true);
         return response;
+    }
+
+    private Pagination pagination;
+
+    public static <T> ApiResponse<List<T>> successfulResponse(String message, Page<T> page) {
+        ApiResponse<List<T>> response = new ApiResponse<>(HttpStatus.OK.value(), message);
+        response.setSuccess(true);
+        response.setData(page.getContent());
+        response.setPagination(Pagination.builder()
+                .pageNumber(page.getNumber())
+                .pageSize(page.getSize())
+                .totalPages(page.getTotalPages())
+                .totalElements(page.getTotalElements())
+                .build());
+        return response;
+    }
+
+    @Getter
+    @Setter
+    @lombok.Builder
+    public static class Pagination {
+        private int pageNumber;
+        private int pageSize;
+        private int totalPages;
+        private long totalElements;
     }
 
 }

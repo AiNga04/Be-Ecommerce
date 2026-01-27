@@ -10,8 +10,10 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 @Repository
-public interface ProductRepository extends JpaRepository<Product, Long> {
+public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
     Page<Product> findAllByIsActiveTrue(Pageable pageable);
     Page<Product> findAllByIsActiveFalse(Pageable pageable);
     boolean existsByName(String name);

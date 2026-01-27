@@ -33,7 +33,7 @@ public class ProductController {
     }
 
     @GetMapping
-    public ApiResponse<Page<ProductResponse>> search(
+    public ApiResponse<List<ProductResponse>> search(
             @Valid ProductCriteria criteria,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
@@ -155,7 +155,7 @@ public class ProductController {
     // GET LIST SOFT DELETE PRODUCTS
     @GetMapping("/deleted")
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
-    public ApiResponse<Page<ProductResponse>> getDeleted(
+    public ApiResponse<List<ProductResponse>> getDeleted(
             @Valid ProductCriteria criteria,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
