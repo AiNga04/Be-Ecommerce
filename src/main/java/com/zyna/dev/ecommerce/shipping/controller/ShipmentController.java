@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
+import java.util.List;
 
 @RestController
 @RequestMapping("/shipments")
@@ -145,12 +146,12 @@ public class ShipmentController {
     @GetMapping("/my")
     @PreAuthorize("hasAuthority('SHIPPING_MANAGE')")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<Page<ShipmentInfoResponse>> getMyShipments(
+    public ApiResponse<List<ShipmentInfoResponse>> getMyShipments(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         Page<ShipmentInfoResponse> result = shipmentService.getMyShipments(page, size);
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get my shipments successfully",
                 result

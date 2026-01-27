@@ -38,7 +38,7 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 "Fetched product list!",
                 productService.searchProducts(criteria, page, size)
         );
@@ -160,7 +160,7 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 "Fetched deleted products!",
                 productService.getDeletedProducts(criteria, page, size)
         );

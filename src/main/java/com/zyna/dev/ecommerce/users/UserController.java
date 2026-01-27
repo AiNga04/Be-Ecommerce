@@ -80,12 +80,12 @@ public class UserController {
     @GetMapping("/shippers")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('SHIPPING_MANAGE')")
-    public ApiResponse<Page<UserResponse>> getShippers(
+    public ApiResponse<List<UserResponse>> getShippers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         Page<UserResponse> result = userService.getShippers(page, size);
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get shippers successfully!",
                 result
@@ -124,13 +124,13 @@ public class UserController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('USER_READ')")
-    public ApiResponse<Page<UserResponse>> searchUsers(
+    public ApiResponse<List<UserResponse>> searchUsers(
             @Valid UserCriteria criteria,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         Page<UserResponse> result = userService.searchUsers(criteria, page, size);
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get users successfully!",
                 result
@@ -253,7 +253,7 @@ public class UserController {
     @GetMapping("/deleted")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('USER_READ')")
-    public ApiResponse<Page<UserResponse>> getDeletedUsers(
+    public ApiResponse<List<UserResponse>> getDeletedUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -261,7 +261,7 @@ public class UserController {
             UserCriteria criteria
     ) {
         Page<UserResponse> deletedUsers = userService.getDeletedUsers(criteria, page, size);
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "List of soft-deleted users!",
                 deletedUsers

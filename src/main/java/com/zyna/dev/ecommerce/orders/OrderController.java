@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/orders")
@@ -66,14 +67,14 @@ public class OrderController {
     @GetMapping("/my")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('ORDER_READ')")
-    public ApiResponse<Page<OrderResponse>> getMyOrders(
+    public ApiResponse<List<OrderResponse>> getMyOrders(
             Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         Long userId = getCurrentUserId(authentication);
         Page<OrderResponse> result = orderService.getMyOrders(userId, page, size);
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get my orders successfully!",
                 result
@@ -103,12 +104,12 @@ public class OrderController {
     @GetMapping("/admin")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('ORDER_MANAGE')")
-    public ApiResponse<Page<OrderResponse>> getAllOrders(
+    public ApiResponse<List<OrderResponse>> getAllOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         Page<OrderResponse> result = orderService.getAllOrders(page, size);
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get all orders successfully!",
                 result

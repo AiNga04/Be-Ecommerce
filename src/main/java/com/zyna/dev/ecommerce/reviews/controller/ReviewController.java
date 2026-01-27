@@ -182,12 +182,12 @@ public class ReviewController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('REVIEW_MANAGE')")
-    public ApiResponse<Page<ReviewResponse>> listAll(
+    public ApiResponse<List<ReviewResponse>> listAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         Page<ReviewResponse> data = reviewService.listAll(page, size);
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get all reviews successfully!",
                 data
@@ -198,12 +198,12 @@ public class ReviewController {
     @GetMapping("/reported")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('REVIEW_MANAGE')")
-    public ApiResponse<Page<ReviewResponse>> listReported(
+    public ApiResponse<List<ReviewResponse>> listReported(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         Page<ReviewResponse> data = reviewService.listReported(page, size);
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get reported reviews successfully!",
                 data
@@ -214,12 +214,12 @@ public class ReviewController {
     @GetMapping("/hidden")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('REVIEW_MANAGE')")
-    public ApiResponse<Page<ReviewResponse>> listHidden(
+    public ApiResponse<List<ReviewResponse>> listHidden(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         Page<ReviewResponse> data = reviewService.listHidden(page, size);
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get hidden reviews successfully!",
                 data

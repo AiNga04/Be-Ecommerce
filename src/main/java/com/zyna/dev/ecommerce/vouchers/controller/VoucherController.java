@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/vouchers")
@@ -89,12 +90,12 @@ public class VoucherController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('VOUCHER_READ')")
-    public ApiResponse<Page<VoucherResponse>> list(
+    public ApiResponse<List<VoucherResponse>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         Page<VoucherResponse> data = voucherService.list(page, size);
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get voucher list successfully!",
                 data
@@ -105,12 +106,12 @@ public class VoucherController {
     @GetMapping("/active")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('ORDER_WRITE')") // chỉ user (shopper) có
-    public ApiResponse<Page<VoucherResponse>> listActiveForUser(
+    public ApiResponse<List<VoucherResponse>> listActiveForUser(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         Page<VoucherResponse> data = voucherService.listActive(page, size);
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get active voucher list successfully!",
                 data

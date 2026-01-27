@@ -7,12 +7,15 @@ import com.zyna.dev.ecommerce.inventory.service.interfaces.InventoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/inventory")
@@ -39,7 +42,7 @@ public class InventoryController {
     @GetMapping("/audit-logs")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('INVENTORY_READ')")
-    public ApiResponse<Page<InventoryAuditResponse>> getInventoryLogs(
+    public ApiResponse<List<InventoryAuditResponse>> getInventoryLogs(
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
@@ -51,7 +54,7 @@ public class InventoryController {
         Page<InventoryAuditResponse> result =
                 inventoryService.getInventoryLogs(productId, fromDate, toDate, page, size);
 
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get inventory audit logs successfully!",
                 result

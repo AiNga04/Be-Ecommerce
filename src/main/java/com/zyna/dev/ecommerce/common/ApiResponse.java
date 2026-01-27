@@ -83,8 +83,12 @@ public class ApiResponse<T> {
 
     private Pagination pagination;
 
-    public static <T> ApiResponse<List<T>> successfulResponse(String message, Page<T> page) {
-        ApiResponse<List<T>> response = new ApiResponse<>(HttpStatus.OK.value(), message);
+    public static <T> ApiResponse<List<T>> successfulPageResponse(String message, Page<T> page) {
+        return successfulPageResponse(HttpStatus.OK.value(), message, page);
+    }
+
+    public static <T> ApiResponse<List<T>> successfulPageResponse(int statusCode, String message, Page<T> page) {
+        ApiResponse<List<T>> response = new ApiResponse<>(statusCode, message);
         response.setSuccess(true);
         response.setData(page.getContent());
         response.setPagination(Pagination.builder()
