@@ -3,7 +3,7 @@ package com.zyna.dev.ecommerce.carts.models;
 import com.zyna.dev.ecommerce.products.models.Product;
 import com.zyna.dev.ecommerce.products.models.Size;
 import com.zyna.dev.ecommerce.products.models.Color;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -12,7 +12,7 @@ import com.zyna.dev.ecommerce.inventory.repository.InventoryAuditLogRepository;
 import com.zyna.dev.ecommerce.inventory.service.interfaces.InventoryService;
 import com.zyna.dev.ecommerce.products.models.Product;
 import com.zyna.dev.ecommerce.products.repository.ProductRepository;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Row;

@@ -1,7 +1,7 @@
 package com.zyna.dev.ecommerce.authentication.mapper;
 
 import com.zyna.dev.ecommerce.authentication.dto.request.RegisterRequest;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
 import org.springframework.stereotype.Component;
 

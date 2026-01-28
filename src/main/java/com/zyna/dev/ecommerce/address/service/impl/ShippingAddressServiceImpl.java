@@ -7,7 +7,7 @@ import com.zyna.dev.ecommerce.address.models.ShippingAddress;
 import com.zyna.dev.ecommerce.address.repository.ShippingAddressRepository;
 import com.zyna.dev.ecommerce.address.service.interfaces.ShippingAddressService;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

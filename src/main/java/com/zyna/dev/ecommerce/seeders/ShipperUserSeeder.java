@@ -2,7 +2,7 @@ package com.zyna.dev.ecommerce.seeders;
 
 import com.zyna.dev.ecommerce.authentication.repository.AppRoleRepository;
 import com.zyna.dev.ecommerce.common.enums.Status;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;

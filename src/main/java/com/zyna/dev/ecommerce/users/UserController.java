@@ -61,6 +61,22 @@ public class UserController {
         );
     }
 
+    @PatchMapping("/me/info")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<UserResponse> updateMyInfo(
+            Authentication authentication,
+            @RequestBody @Valid com.zyna.dev.ecommerce.users.dto.request.UserUpdateProfileRequest request
+    ) {
+        Long userId = getCurrentUserId(authentication);
+        UserResponse userResponse = userService.updateMyInfo(userId, request);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Profile updated successfully!",
+                userResponse
+        );
+    }
+
     @PatchMapping("/{id}/avatar")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority('USER_WRITE')")

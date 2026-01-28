@@ -1,4 +1,4 @@
-package com.zyna.dev.ecommerce.users;
+package com.zyna.dev.ecommerce.users.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.zyna.dev.ecommerce.authentication.models.AppRole;

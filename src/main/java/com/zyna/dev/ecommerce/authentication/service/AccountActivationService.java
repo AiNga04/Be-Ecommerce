@@ -4,7 +4,7 @@ import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.enums.UserAuditAction;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.common.mail.MailService;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.users.UserRepository;
 import com.zyna.dev.ecommerce.users.service.UserAuditService;
 import lombok.RequiredArgsConstructor;

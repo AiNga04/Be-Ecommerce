@@ -1,7 +1,6 @@
 package com.zyna.dev.ecommerce.users.models;
 
 import com.zyna.dev.ecommerce.common.enums.UserAuditAction;
-import com.zyna.dev.ecommerce.users.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

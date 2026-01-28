@@ -4,7 +4,7 @@ import com.zyna.dev.ecommerce.authentication.models.PasswordResetToken;
 import com.zyna.dev.ecommerce.authentication.repository.PasswordResetTokenRepository;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
 import com.zyna.dev.ecommerce.common.mail.MailService;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;

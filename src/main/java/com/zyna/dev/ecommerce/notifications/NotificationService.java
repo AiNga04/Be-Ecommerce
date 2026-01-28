@@ -1,7 +1,7 @@
 package com.zyna.dev.ecommerce.notifications;
 
 import com.zyna.dev.ecommerce.common.mail.MailService;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

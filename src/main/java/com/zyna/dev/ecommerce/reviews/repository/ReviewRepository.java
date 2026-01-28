@@ -2,7 +2,7 @@ package com.zyna.dev.ecommerce.reviews.repository;
 
 import com.zyna.dev.ecommerce.reviews.models.Review;
 import com.zyna.dev.ecommerce.products.models.Product;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

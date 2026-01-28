@@ -1,7 +1,7 @@
 package com.zyna.dev.ecommerce.security;
 
 import com.zyna.dev.ecommerce.authentication.repository.AuthRepository;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

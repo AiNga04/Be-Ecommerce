@@ -1,6 +1,6 @@
 package com.zyna.dev.ecommerce.authentication.models;
 
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import jakarta.persistence.*;
 import lombok.*;
 

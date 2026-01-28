@@ -2,7 +2,7 @@ package com.zyna.dev.ecommerce.shipping.repository;
 
 import com.zyna.dev.ecommerce.orders.models.Order;
 import com.zyna.dev.ecommerce.shipping.models.Shipment;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -24,7 +24,7 @@ import com.zyna.dev.ecommerce.shipping.repository.ShipmentRepository;
 import com.zyna.dev.ecommerce.vouchers.dto.request.VoucherApplyRequest;
 import com.zyna.dev.ecommerce.vouchers.dto.response.VoucherApplyResponse;
 import com.zyna.dev.ecommerce.vouchers.service.interfaces.VoucherService;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.users.UserRepository;
 import com.zyna.dev.ecommerce.notifications.NotificationService;
 import com.zyna.dev.ecommerce.notifications.NotificationType;

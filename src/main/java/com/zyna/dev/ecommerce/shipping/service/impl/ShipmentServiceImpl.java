@@ -11,7 +11,7 @@ import com.zyna.dev.ecommerce.shipping.dto.response.ShipmentInfoResponse;
 import com.zyna.dev.ecommerce.shipping.models.Shipment;
 import com.zyna.dev.ecommerce.shipping.repository.ShipmentRepository;
 import com.zyna.dev.ecommerce.shipping.service.interfaces.ShipmentService;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

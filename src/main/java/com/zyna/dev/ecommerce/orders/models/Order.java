@@ -3,7 +3,7 @@ package com.zyna.dev.ecommerce.orders.models;
 import com.zyna.dev.ecommerce.common.enums.OrderStatus;
 import com.zyna.dev.ecommerce.common.enums.PaymentMethod;
 import com.zyna.dev.ecommerce.common.enums.PaymentStatus;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

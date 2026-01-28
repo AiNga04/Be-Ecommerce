@@ -2,7 +2,7 @@ package com.zyna.dev.ecommerce.reviews.models;
 
 import com.zyna.dev.ecommerce.orders.models.Order;
 import com.zyna.dev.ecommerce.products.models.Product;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

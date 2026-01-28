@@ -3,6 +3,8 @@ package com.zyna.dev.ecommerce.users;
 import com.zyna.dev.ecommerce.users.dto.response.UserResponse;
 import com.zyna.dev.ecommerce.users.dto.request.UserCreateRequest;
 import com.zyna.dev.ecommerce.users.dto.request.UserUpdateRequest;
+import com.zyna.dev.ecommerce.users.dto.request.UserUpdateProfileRequest;
+import com.zyna.dev.ecommerce.users.models.User;
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
@@ -34,6 +36,16 @@ public class UserMapper {
         if (dto.getAddress() != null) target.setAddress(dto.getAddress());
         if (dto.getCity() != null) target.setCity(dto.getCity());
         if (dto.getAvatarUrl() != null) target.setAvatarUrl(dto.getAvatarUrl());
+    }
+
+    public void applyUpdateProfile(User target, UserUpdateProfileRequest dto) {
+        if (dto.getFirstName() != null) target.setFirstName(dto.getFirstName());
+        if (dto.getLastName() != null) target.setLastName(dto.getLastName());
+        if (dto.getDateOfBirth() != null) target.setDateOfBirth(dto.getDateOfBirth());
+        if (dto.getGender() != null) target.setGender(dto.getGender());
+        if (dto.getPhone() != null) target.setPhone(dto.getPhone());
+        if (dto.getAddress() != null) target.setAddress(dto.getAddress());
+        if (dto.getCity() != null) target.setCity(dto.getCity());
     }
 
     public UserResponse toUserResponse(User entity) {

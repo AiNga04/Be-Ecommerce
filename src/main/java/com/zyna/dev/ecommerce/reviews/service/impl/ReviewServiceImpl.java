@@ -17,7 +17,7 @@ import com.zyna.dev.ecommerce.reviews.models.Review;
 import com.zyna.dev.ecommerce.reviews.models.ReviewImage;
 import com.zyna.dev.ecommerce.reviews.repository.ReviewRepository;
 import com.zyna.dev.ecommerce.reviews.service.interfaces.ReviewService;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

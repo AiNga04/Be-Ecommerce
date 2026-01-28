@@ -1,11 +1,10 @@
 package com.zyna.dev.ecommerce.users.service.impl;
 
-import com.zyna.dev.ecommerce.authentication.models.AppRole;
 import com.zyna.dev.ecommerce.authentication.repository.AppRoleRepository;
 import com.zyna.dev.ecommerce.authentication.service.AccountActivationService;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.users.UserMapper;
 import com.zyna.dev.ecommerce.users.UserRepository;
 import com.zyna.dev.ecommerce.users.service.UserAuditService;
@@ -491,6 +490,19 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setAvatarUrl(newUrl);
+        User saved = userRepository.save(user);
+        return userMapper.toUserResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateMyInfo(Long userId, com.zyna.dev.ecommerce.users.dto.request.UserUpdateProfileRequest request) {
+        User user = userRepository.findByIdAndIsDeletedFalse(userId).orElseThrow(
+                () -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found or deleted")
+        );
+
+        userMapper.applyUpdateProfile(user, request);
+
         User saved = userRepository.save(user);
         return userMapper.toUserResponse(saved);
     }

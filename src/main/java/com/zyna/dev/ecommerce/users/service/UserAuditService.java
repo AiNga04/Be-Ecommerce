@@ -1,7 +1,7 @@
 package com.zyna.dev.ecommerce.users.service;
 
 import com.zyna.dev.ecommerce.common.enums.UserAuditAction;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.users.models.UserAuditLog;
 import com.zyna.dev.ecommerce.users.repository.UserAuditLogRepository;
 import lombok.RequiredArgsConstructor;

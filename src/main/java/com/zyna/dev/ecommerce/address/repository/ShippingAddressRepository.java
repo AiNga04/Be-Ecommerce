@@ -1,7 +1,7 @@
 package com.zyna.dev.ecommerce.address.repository;
 
 import com.zyna.dev.ecommerce.address.models.ShippingAddress;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

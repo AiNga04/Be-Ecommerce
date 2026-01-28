@@ -2,7 +2,7 @@ package com.zyna.dev.ecommerce.shipping.models;
 
 import com.zyna.dev.ecommerce.common.enums.ShipmentStatus;
 import com.zyna.dev.ecommerce.orders.models.Order;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import jakarta.persistence.*;
 import lombok.*;
 

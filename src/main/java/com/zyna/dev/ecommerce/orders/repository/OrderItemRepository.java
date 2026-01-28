@@ -3,7 +3,7 @@ package com.zyna.dev.ecommerce.orders.repository;
 import com.zyna.dev.ecommerce.common.enums.OrderStatus;
 import com.zyna.dev.ecommerce.orders.models.OrderItem;
 import com.zyna.dev.ecommerce.products.models.Product;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

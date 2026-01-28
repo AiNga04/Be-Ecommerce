@@ -17,7 +17,7 @@ import com.zyna.dev.ecommerce.products.repository.ProductImageRepository;
 import com.zyna.dev.ecommerce.products.repository.ProductRepository;
 import com.zyna.dev.ecommerce.products.service.interfaces.ProductService;
 import com.zyna.dev.ecommerce.security.JwtUtil;
-import com.zyna.dev.ecommerce.users.User;
+import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.users.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.transaction.annotation.Transactional;
