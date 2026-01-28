@@ -54,12 +54,15 @@ public class ProductController {
             @RequestParam("name") String name,
             @RequestParam(value = "description", required = false) String description,
             @RequestParam("price") Double price,
-            @RequestParam(value = "category", required = false) String category,
-            @RequestParam(value = "stock", required = false) Integer stock,
-            @RequestParam("image") MultipartFile image
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "image") MultipartFile image,
+            @RequestParam(value = "sizeGuideId", required = false) Long sizeGuideId,
+            @RequestParam(value = "sizeIds", required = false) List<Long> sizeIds,
+            @RequestParam(value = "colorIds", required = false) List<Long> colorIds
     ) {
         ProductResponse response = productService.createProduct(
-                name, description, price, category, stock, image
+                name, description, price, categoryId, image,
+                sizeGuideId, sizeIds, colorIds
         );
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
@@ -77,12 +80,15 @@ public class ProductController {
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "price", required = false) Double price,
-            @RequestParam(value = "category", required = false) String category,
-            @RequestParam(value = "stock", required = false) Integer stock,
-            @RequestParam(value = "image", required = false) MultipartFile image
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam(value = "sizeGuideId", required = false) Long sizeGuideId,
+            @RequestParam(value = "sizeIds", required = false) List<Long> sizeIds,
+            @RequestParam(value = "colorIds", required = false) List<Long> colorIds
     ) {
         ProductResponse response = productService.updateProduct(
-                id, name, description, price, category, stock, image
+                id, name, description, price, categoryId, image,
+                sizeGuideId, sizeIds, colorIds
         );
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),

@@ -21,6 +21,10 @@ public class CartMapper {
                 .productPrice(unitPrice)
                 .quantity(item.getQuantity())
                 .subtotal(subtotal)
+                .sizeId(item.getSize() != null ? item.getSize().getId() : null)
+                .sizeName(item.getSize() != null ? item.getSize().getName() : null)
+                .colorId(item.getColor() != null ? item.getColor().getId() : null)
+                .colorName(item.getColor() != null ? item.getColor().getName() : null)
                 .build();
     }
 

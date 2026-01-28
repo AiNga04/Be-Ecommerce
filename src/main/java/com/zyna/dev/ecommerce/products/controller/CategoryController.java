@@ -21,12 +21,12 @@ public class CategoryController {
 
     // PUBLIC: lấy danh sách category active để filter product
     @GetMapping
-    public ApiResponse<Page<CategoryResponse>> list(
+    public ApiResponse<java.util.List<CategoryResponse>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         Page<CategoryResponse> data = categoryService.list(page, size);
-        return ApiResponse.successfulResponse(
+        return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Fetched categories successfully!",
                 data
@@ -72,7 +72,7 @@ public class CategoryController {
         categoryService.delete(id);
         return ApiResponse.successfulResponseNoData(
                 HttpStatus.OK.value(),
-                "Category deleted (inactive) successfully!"
+                "Category deleted successfully!"
         );
     }
 

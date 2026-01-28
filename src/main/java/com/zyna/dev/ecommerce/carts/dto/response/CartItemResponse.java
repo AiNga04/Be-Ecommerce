@@ -18,4 +18,9 @@ public class CartItemResponse {
 
     private Integer quantity;
     private BigDecimal subtotal;
+
+    private Long sizeId;
+    private String sizeName;
+    private Long colorId;
+    private String colorName;
 }

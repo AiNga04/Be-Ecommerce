@@ -48,12 +48,17 @@ public class ProductServiceImpl implements ProductService {
     private final HttpServletRequest request;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final com.zyna.dev.ecommerce.products.repository.SizeRepository sizeRepository;
+    private final com.zyna.dev.ecommerce.products.repository.ColorRepository colorRepository;
+    private final com.zyna.dev.ecommerce.products.repository.SizeGuideRepository sizeGuideRepository;
 
+    // CREATE PRODUCT (multipart/form-data)
     // CREATE PRODUCT (multipart/form-data)
     @Override
     @Transactional
     public ProductResponse createProduct(String name, String description, Double price,
-                                         String category, Integer stock, MultipartFile image) {
+                                         Long categoryId, MultipartFile image,
+                                         Long sizeGuideId, List<Long> sizeIds, List<Long> colorIds) {
 
         if (productRepository.existsByName(name)) {
             throw new ApplicationException(HttpStatus.CONFLICT, "Product name already exists!");
@@ -61,14 +66,30 @@ public class ProductServiceImpl implements ProductService {
 
         String imageUrl = FileUploadUtil.saveImage(image);
 
-        // category param từ controller mình coi như categoryCode
+        // find category by ID
         Category categoryEntity = null;
-        if (category != null && !category.isBlank()) {
-            categoryEntity = categoryRepository.findByCodeAndIsActiveTrue(category)
+        if (categoryId != null) {
+            categoryEntity = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new ApplicationException(
                             HttpStatus.BAD_REQUEST,
-                            "Category code is invalid or inactive!"
+                            "Category ID not found!"
                     ));
+        }
+
+        com.zyna.dev.ecommerce.products.models.SizeGuide sizeGuide = null;
+        if (sizeGuideId != null) {
+            sizeGuide = sizeGuideRepository.findById(sizeGuideId)
+                    .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "SizeGuide not found!"));
+        }
+
+        List<com.zyna.dev.ecommerce.products.models.Size> sizes = new ArrayList<>();
+        if (sizeIds != null && !sizeIds.isEmpty()) {
+            sizes = sizeRepository.findAllById(sizeIds);
+        }
+
+        List<com.zyna.dev.ecommerce.products.models.Color> colors = new ArrayList<>();
+        if (colorIds != null && !colorIds.isEmpty()) {
+            colors = colorRepository.findAllById(colorIds);
         }
 
         Product product = Product.builder()
@@ -76,10 +97,14 @@ public class ProductServiceImpl implements ProductService {
                 .description(description)
                 .price(price != null ? BigDecimal.valueOf(price) : BigDecimal.ZERO)
                 .imageUrl(imageUrl)
-                .category(categoryEntity)  // ✅
-                .stock(stock != null ? stock : 0)
+                .category(categoryEntity)
+                //.stock(stock != null ? stock : 0) // stock should be managed by Inventory
+                .stock(0) // Default to 0
                 .isActive(true)
                 .createdAt(LocalDateTime.now())
+                .sizeGuide(sizeGuide)
+                .sizes(sizes)
+                .colors(colors)
                 .build();
 
         Product saved = productRepository.save(product);
@@ -165,7 +190,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductResponse updateProduct(Long id, String name, String description, Double price,
-                                         String category, Integer stock, MultipartFile image) {
+                                         Long categoryId, MultipartFile image,
+                                         Long sizeGuideId, List<Long> sizeIds, List<Long> colorIds) {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Product not found!"));
@@ -174,10 +200,13 @@ public class ProductServiceImpl implements ProductService {
             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Product is inactive. Restore before updating!");
         }
 
+        // ... (existing logic for image/user/price omitted for brevity if unchanged, but I need to include context or keep it)
+        // Wait, replace tool needs contextual match. I'll include the start of method up to new logic.
+
         // Lấy email từ JWT (user đang login)
         String email = getCurrentUserEmail();
 
-        // Từ email → User entity (để gán vào changedBy)
+        // Từ email → User entity
         User changedByUser = null;
         if (email != null) {
             changedByUser = userRepository.findByEmail(email)
@@ -193,15 +222,12 @@ public class ProductServiceImpl implements ProductService {
         // Kiểm tra nếu giá thay đổi → lưu vào lịch sử giá
         if (price != null && product.getPrice() != null &&
                 product.getPrice().compareTo(BigDecimal.valueOf(price)) != 0) {
-
-            PriceHistory history = PriceHistory.builder()
+             PriceHistory history = PriceHistory.builder()
                     .product(product)
                     .oldPrice(product.getPrice())
                     .newPrice(BigDecimal.valueOf(price))
-                    // có thể lấy user hiện tại từ SecurityContextHolder (để audit)
                     .changedBy(changedByUser)
                     .build();
-
             priceHistoryRepository.save(history);
             log.info("Price changed for product id={}, {} → {}", id, product.getPrice(), price);
         }
@@ -209,16 +235,36 @@ public class ProductServiceImpl implements ProductService {
         if (name != null) product.setName(name);
         if (description != null) product.setDescription(description);
         if (price != null) product.setPrice(BigDecimal.valueOf(price));
-        if (category != null && !category.isBlank()) {
-            Category categoryEntity = categoryRepository.findByCodeAndIsActiveTrue(category)
+        
+        if (categoryId != null) {
+            Category categoryEntity = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new ApplicationException(
                             HttpStatus.BAD_REQUEST,
-                            "Category code is invalid or inactive!"
+                            "Category ID not found!"
                     ));
             product.setCategory(categoryEntity);
         }
+        
+        // Stock not updated here. Use Inventory.
 
-        if (stock != null) product.setStock(stock);
+        // Update SizeGuide
+        if (sizeGuideId != null) {
+            com.zyna.dev.ecommerce.products.models.SizeGuide sizeGuide = sizeGuideRepository.findById(sizeGuideId)
+                    .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "SizeGuide not found!"));
+            product.setSizeGuide(sizeGuide);
+        }
+
+        // Update Sizes
+        if (sizeIds != null) {
+            List<com.zyna.dev.ecommerce.products.models.Size> sizes = sizeRepository.findAllById(sizeIds);
+            product.setSizes(sizes);
+        }
+
+        // Update Colors
+        if (colorIds != null) {
+            List<com.zyna.dev.ecommerce.products.models.Color> colors = colorRepository.findAllById(colorIds);
+            product.setColors(colors);
+        }
 
         product.setUpdatedAt(LocalDateTime.now());
         Product saved = productRepository.save(product);

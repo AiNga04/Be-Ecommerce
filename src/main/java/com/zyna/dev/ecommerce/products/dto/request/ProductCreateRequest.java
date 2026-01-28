@@ -1,11 +1,15 @@
 package com.zyna.dev.ecommerce.products.dto.request;
 
 import jakarta.validation.constraints.*;
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
 import java.math.BigDecimal;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -19,6 +23,9 @@ public class ProductCreateRequest {
     @Min(value = 0, message = "Stock must be >= 0")
     private Integer stock;
 
+    private Long sizeGuideId;
+    private List<Long> sizeIds;
+    private List<Long> colorIds;
     private String description;
     private String imageUrl;
     private String category;

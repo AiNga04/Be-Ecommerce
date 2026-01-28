@@ -40,4 +40,10 @@ public class OrderItem {
     // thành tiền
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
+
+    @Column
+    private String size;
+
+    @Column
+    private String color;
 }

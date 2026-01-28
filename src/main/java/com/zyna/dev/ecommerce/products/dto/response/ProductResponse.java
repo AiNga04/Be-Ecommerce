@@ -1,10 +1,10 @@
 package com.zyna.dev.ecommerce.products.dto.response;
 
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import com.zyna.dev.ecommerce.products.dto.response.GalleryImageResponse;
 
 @Getter
 @Setter
@@ -26,4 +26,8 @@ public class ProductResponse {
     private LocalDateTime updatedAt;
 
     private List<GalleryImageResponse> gallery;
+
+    private SizeGuideResponse sizeGuide;
+    private List<SizeResponse> sizes;
+    private List<ColorResponse> colors;
 }

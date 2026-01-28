@@ -54,6 +54,8 @@ public class OrderServiceImpl implements OrderService {
     private final ShipmentRepository shipmentRepository;
     private final VoucherService voucherService;
     private final NotificationService notificationService;
+    private final com.zyna.dev.ecommerce.products.repository.SizeRepository sizeRepository;
+    private final com.zyna.dev.ecommerce.products.repository.ColorRepository colorRepository;
     @Value("${app.inventory.low-stock.threshold:5}")
     private int lowStockThreshold;
 
@@ -92,11 +94,27 @@ public class OrderServiceImpl implements OrderService {
             BigDecimal unitPrice = product.getPrice();
             BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(requestedQty));
 
+            String sizeName = null;
+            if (itemReq.getSizeId() != null) {
+                var sizeObj = sizeRepository.findById(itemReq.getSizeId())
+                        .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Size not found"));
+                sizeName = sizeObj.getName();
+            }
+
+            String colorName = null;
+            if (itemReq.getColorId() != null) {
+                var colorObj = colorRepository.findById(itemReq.getColorId())
+                        .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Color not found"));
+                colorName = colorObj.getName();
+            }
+
             OrderItem orderItem = OrderItem.builder()
                     .product(product)
                     .quantity(requestedQty)
                     .unitPrice(unitPrice)
                     .subtotal(subtotal)
+                    .size(sizeName)
+                    .color(colorName)
                     .build();
 
             orderItems.add(orderItem);
@@ -365,11 +383,16 @@ public class OrderServiceImpl implements OrderService {
             BigDecimal unitPrice = product.getPrice();
             BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(requestedQty));
 
+            String sizeName = cartItem.getSize() != null ? cartItem.getSize().getName() : null;
+            String colorName = cartItem.getColor() != null ? cartItem.getColor().getName() : null;
+
             OrderItem orderItem = OrderItem.builder()
                     .product(product)
                     .quantity(requestedQty)
                     .unitPrice(unitPrice)
                     .subtotal(subtotal)
+                    .size(sizeName)
+                    .color(colorName)
                     .build();
 
             orderItems.add(orderItem);

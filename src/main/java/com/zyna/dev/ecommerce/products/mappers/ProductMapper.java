@@ -4,6 +4,9 @@ import com.zyna.dev.ecommerce.products.dto.request.ProductCreateRequest;
 import com.zyna.dev.ecommerce.products.dto.request.ProductUpdateRequest;
 import com.zyna.dev.ecommerce.products.dto.response.GalleryImageResponse;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
+import com.zyna.dev.ecommerce.products.dto.response.SizeResponse;
+import com.zyna.dev.ecommerce.products.dto.response.ColorResponse;
+import com.zyna.dev.ecommerce.products.dto.response.SizeGuideResponse;
 import com.zyna.dev.ecommerce.products.models.Category;
 import com.zyna.dev.ecommerce.products.models.Product;
 import com.zyna.dev.ecommerce.products.models.ProductImage;
@@ -79,6 +82,31 @@ public class ProductMapper {
                 .reviewCount(entity.getReviewCount())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .sizeGuide(entity.getSizeGuide() != null ?
+                        SizeGuideResponse.builder()
+                                .id(entity.getSizeGuide().getId())
+                                .name(entity.getSizeGuide().getName())
+                                .description(entity.getSizeGuide().getDescription())
+                                .imageUrl(entity.getSizeGuide().getImageUrl())
+                                .build() : null)
+                .sizes(entity.getSizes() != null ?
+                        entity.getSizes().stream()
+                                .map(s -> SizeResponse.builder()
+                                        .id(s.getId())
+                                        .name(s.getName())
+                                        .code(s.getCode())
+                                        .description(s.getDescription())
+                                        .build())
+                                .toList() : Collections.emptyList())
+                .colors(entity.getColors() != null ?
+                        entity.getColors().stream()
+                                .map(c -> ColorResponse.builder()
+                                        .id(c.getId())
+                                        .name(c.getName())
+                                        .code(c.getCode())
+                                        .description(c.getDescription())
+                                        .build())
+                                .toList() : Collections.emptyList())
                 .build();
     }
 
@@ -102,6 +130,31 @@ public class ProductMapper {
                 .reviewCount(entity.getReviewCount())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .sizeGuide(entity.getSizeGuide() != null ?
+                        SizeGuideResponse.builder()
+                                .id(entity.getSizeGuide().getId())
+                                .name(entity.getSizeGuide().getName())
+                                .description(entity.getSizeGuide().getDescription())
+                                .imageUrl(entity.getSizeGuide().getImageUrl())
+                                .build() : null)
+                .sizes(entity.getSizes() != null ?
+                        entity.getSizes().stream()
+                                .map(s -> SizeResponse.builder()
+                                        .id(s.getId())
+                                        .name(s.getName())
+                                        .code(s.getCode())
+                                        .description(s.getDescription())
+                                        .build())
+                                .toList() : Collections.emptyList())
+                .colors(entity.getColors() != null ?
+                        entity.getColors().stream()
+                                .map(c -> ColorResponse.builder()
+                                        .id(c.getId())
+                                        .name(c.getName())
+                                        .code(c.getCode())
+                                        .description(c.getDescription())
+                                        .build())
+                                .toList() : Collections.emptyList())
                 .gallery(
                         entity.getGallery() == null
                                 ? Collections.emptyList()

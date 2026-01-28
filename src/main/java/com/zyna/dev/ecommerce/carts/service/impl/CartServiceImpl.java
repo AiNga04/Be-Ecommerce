@@ -26,6 +26,8 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final com.zyna.dev.ecommerce.products.repository.SizeRepository sizeRepository;
+    private final com.zyna.dev.ecommerce.products.repository.ColorRepository colorRepository;
     private final CartMapper cartMapper;
 
     @Override
@@ -45,10 +47,18 @@ public class CartServiceImpl implements CartService {
                         HttpStatus.NOT_FOUND, "Product not found"
                 ));
 
-        CartItem cartItem = cartItemRepository.findByUserAndProduct(user, product)
+        com.zyna.dev.ecommerce.products.models.Size size = sizeRepository.findById(request.getSizeId())
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Size not found linked to id: " + request.getSizeId()));
+
+        com.zyna.dev.ecommerce.products.models.Color color = colorRepository.findById(request.getColorId())
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Color not found linked to id: " + request.getColorId()));
+
+        CartItem cartItem = cartItemRepository.findByUserAndProductAndSizeAndColor(user, product, size, color)
                 .orElse(CartItem.builder()
                         .user(user)
                         .product(product)
+                        .size(size)
+                        .color(color)
                         .quantity(0)
                         .build());
 

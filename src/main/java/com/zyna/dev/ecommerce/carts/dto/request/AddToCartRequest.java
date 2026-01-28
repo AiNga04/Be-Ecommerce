@@ -15,4 +15,10 @@ public class AddToCartRequest {
     @NotNull
     @Min(1)
     private Integer quantity;
+
+    @NotNull
+    private Long sizeId;
+
+    @NotNull
+    private Long colorId;
 }
