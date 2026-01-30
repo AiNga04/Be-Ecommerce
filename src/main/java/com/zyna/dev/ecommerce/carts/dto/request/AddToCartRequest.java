@@ -18,7 +18,4 @@ public class AddToCartRequest {
 
     @NotNull
     private Long sizeId;
-
-    @NotNull
-    private Long colorId;
 }

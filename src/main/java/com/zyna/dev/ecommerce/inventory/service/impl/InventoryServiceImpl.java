@@ -48,6 +48,8 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryAuditLogRepository auditLogRepository;
     private final InventoryMapper inventoryMapper;
     private final NotificationService notificationService;
+    private final com.zyna.dev.ecommerce.products.repository.ProductSizeRepository productSizeRepository;
+    private final com.zyna.dev.ecommerce.products.repository.SizeRepository sizeRepository;
 
     @Value("${app.inventory.low-stock.threshold:5}")
     private int lowStockThreshold;
@@ -74,7 +76,17 @@ public class InventoryServiceImpl implements InventoryService {
 
         User admin = getCurrentUser();
 
-        int oldStock = product.getStock() == null ? 0 : product.getStock();
+        // Validate Size
+        if (request.getSizeId() == null) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Size ID is required for adjustment");
+        }
+        com.zyna.dev.ecommerce.products.models.Size size = sizeRepository.findById(request.getSizeId())
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Size not found linked to id: " + request.getSizeId()));
+
+        com.zyna.dev.ecommerce.products.models.ProductSize productSize = productSizeRepository.findByProductAndSize(product, size)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "Product variant unavailable"));
+
+        int oldStock = productSize.getQuantity() == null ? 0 : productSize.getQuantity();
         int delta = request.getQuantityChange();
 
         int newStock = oldStock + delta;
@@ -87,10 +99,10 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         // cập nhật tồn kho: oldStock -> newStock = oldStock + delta
-        product.setStock(newStock);
-        productRepository.save(product);
+        productSize.setQuantity(newStock);
+        productSizeRepository.save(productSize);
 
-        checkLowStockAndNotify(product, newStock);
+        checkLowStockAndNotify(productSize);
 
         // tạo audit log
         InventoryAuditLog log = InventoryAuditLog.builder()
@@ -100,6 +112,10 @@ public class InventoryServiceImpl implements InventoryService {
                 .newStock(newStock)
                 .reason(request.getReason())
                 .build();
+        // Note: Audit Log might need to support Size/Variant info? 
+        // For now, we log the product change. The schema for AuditLog might not have size column.
+        // We will stick to logging per product but maybe append info to reason?
+        log.setReason((request.getReason() != null ? request.getReason() : "") + " [Size: " + size.getName() + "]");
 
         log = auditLogRepository.save(log);
 
@@ -331,8 +347,9 @@ public class InventoryServiceImpl implements InventoryService {
         }
     }
 
-    private void checkLowStockAndNotify(Product product, int currentStock) {
-        if (currentStock >= lowStockThreshold) {
+    private void checkLowStockAndNotify(com.zyna.dev.ecommerce.products.models.ProductSize productSize) {
+        Integer stock = productSize.getQuantity();
+        if (stock == null || stock >= lowStockThreshold) {
             return;
         }
 
@@ -351,8 +368,8 @@ public class InventoryServiceImpl implements InventoryService {
                 NotificationType.LOW_STOCK_ALERT,
                 emails,
                 java.util.Map.of(
-                        "productName", product.getName(),
-                        "stock", currentStock
+                        "productName", productSize.getProduct().getName() + " (Size: " + productSize.getSize().getName() + ")",
+                        "stock", stock
                 )
         );
     }

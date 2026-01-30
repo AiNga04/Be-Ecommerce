@@ -62,6 +62,7 @@ public class Review {
     private Set<User> reporters = new HashSet<>();
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean hidden = false;
 
     @CreationTimestamp

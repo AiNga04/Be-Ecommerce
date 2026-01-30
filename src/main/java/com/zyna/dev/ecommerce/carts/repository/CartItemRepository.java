@@ -4,7 +4,6 @@ import com.zyna.dev.ecommerce.carts.models.CartItem;
 import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.products.models.Product;
 import com.zyna.dev.ecommerce.products.models.Size;
-import com.zyna.dev.ecommerce.products.models.Color;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -16,7 +15,7 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
     Optional<CartItem> findByUserAndProduct(User user, Product product);
 
-    Optional<CartItem> findByUserAndProductAndSizeAndColor(User user, Product product, Size size, Color color);
+    Optional<CartItem> findByUserAndProductAndSize(User user, Product product, Size size);
 
     void deleteByUser(User user);
 }

@@ -16,6 +16,8 @@ public class AdjustStockRequest {
     @NotNull
     private Integer quantityChange;
 
+    private Long sizeId;
+
     // lý do điều chỉnh: nhập hàng, kiểm kê, hàng hư, ...
     private String reason;
 }

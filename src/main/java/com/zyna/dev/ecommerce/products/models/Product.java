@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import com.zyna.dev.ecommerce.products.models.Size;
-import com.zyna.dev.ecommerce.products.models.Color;
 import com.zyna.dev.ecommerce.products.models.SizeGuide;
 
 @Getter
@@ -43,42 +42,33 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @Column(nullable = false)
-    private Integer stock = 0;
-
     @OneToMany(mappedBy = "product",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             fetch = FetchType.LAZY)
+    @Builder.Default
     private List<ProductImage> gallery = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "size_guide_id")
     private SizeGuide sizeGuide;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "product_sizes",
-            joinColumns = @JoinColumn(name = "product_id"),
-            inverseJoinColumns = @JoinColumn(name = "size_id")
-    )
-    private List<Size> sizes = new ArrayList<>();
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<ProductSize> productSizes = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "product_colors",
-            joinColumns = @JoinColumn(name = "product_id"),
-            inverseJoinColumns = @JoinColumn(name = "color_id")
-    )
-    private List<Color> colors = new ArrayList<>();
+    // Color removed
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean isActive = true;
 
     @Column(precision = 3, scale = 2)
+    @Builder.Default
     private BigDecimal ratingAverage = BigDecimal.ZERO;
 
     @Column
+    @Builder.Default
     private Integer reviewCount = 0;
 
     @CreationTimestamp
@@ -88,4 +78,11 @@ public class Product {
     private LocalDateTime updatedAt;
 
     private LocalDateTime deletedAt;
+
+    public Integer getTotalStock() {
+        if (productSizes == null || productSizes.isEmpty()) {
+            return 0;
+        }
+        return productSizes.stream().mapToInt(ProductSize::getQuantity).sum();
+    }
 }

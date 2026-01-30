@@ -16,6 +16,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zyna.dev.ecommerce.products.dto.request.ProductVariantDto;
+import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
+import java.util.ArrayList;
+
 @RestController
 @RequestMapping("/products")
 @RequiredArgsConstructor
@@ -57,12 +63,11 @@ public class ProductController {
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "image") MultipartFile image,
             @RequestParam(value = "sizeGuideId", required = false) Long sizeGuideId,
-            @RequestParam(value = "sizeIds", required = false) List<Long> sizeIds,
-            @RequestParam(value = "colorIds", required = false) List<Long> colorIds
+            @RequestParam(value = "sizeIds", required = false) List<Long> sizeIds
     ) {
         ProductResponse response = productService.createProduct(
                 name, description, price, categoryId, image,
-                sizeGuideId, sizeIds, colorIds
+                sizeGuideId, sizeIds
         );
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
@@ -83,12 +88,11 @@ public class ProductController {
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "image", required = false) MultipartFile image,
             @RequestParam(value = "sizeGuideId", required = false) Long sizeGuideId,
-            @RequestParam(value = "sizeIds", required = false) List<Long> sizeIds,
-            @RequestParam(value = "colorIds", required = false) List<Long> colorIds
+            @RequestParam(value = "sizeIds", required = false) List<Long> sizeIds
     ) {
         ProductResponse response = productService.updateProduct(
                 id, name, description, price, categoryId, image,
-                sizeGuideId, sizeIds, colorIds
+                sizeGuideId, sizeIds
         );
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),

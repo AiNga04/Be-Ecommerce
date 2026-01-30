@@ -53,6 +53,8 @@ public class OrderMapper {
                 .quantity(item.getQuantity())
                 .unitPrice(item.getUnitPrice())
                 .subtotal(item.getSubtotal())
+                .size(item.getSize())
+                .image(item.getProduct() != null ? item.getProduct().getImageUrl() : null)
                 .build();
     }
 }

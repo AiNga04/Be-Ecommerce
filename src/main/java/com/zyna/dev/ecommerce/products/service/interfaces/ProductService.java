@@ -11,14 +11,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+import com.zyna.dev.ecommerce.products.dto.request.ProductVariantDto;
+
 public interface ProductService {
     ProductResponse createProduct(String name, String description, Double price,
                                   Long categoryId, MultipartFile image,
-                                  Long sizeGuideId, List<Long> sizeIds, List<Long> colorIds);
+                                  Long sizeGuideId, List<Long> sizeIds);
 
     ProductResponse updateProduct(Long id, String name, String description, Double price,
                                   Long categoryId, MultipartFile image,
-                                  Long sizeGuideId, List<Long> sizeIds, List<Long> colorIds);
+                                  Long sizeGuideId, List<Long> sizeIds);
     ProductResponse getProductById(Long id);
     List<PriceHistoryResponse> getPriceHistory(Long productId);
     Page<ProductResponse> searchProducts(ProductCriteria criteria, int page, int size);

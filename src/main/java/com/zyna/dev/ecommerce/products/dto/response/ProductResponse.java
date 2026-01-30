@@ -28,6 +28,5 @@ public class ProductResponse {
     private List<GalleryImageResponse> gallery;
 
     private SizeGuideResponse sizeGuide;
-    private List<SizeResponse> sizes;
-    private List<ColorResponse> colors;
+    private List<ProductSizeResponse> variants;
 }

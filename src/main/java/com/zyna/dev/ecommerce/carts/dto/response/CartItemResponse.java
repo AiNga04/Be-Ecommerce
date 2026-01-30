@@ -21,6 +21,5 @@ public class CartItemResponse {
 
     private Long sizeId;
     private String sizeName;
-    private Long colorId;
-    private String colorName;
+    private String image;
 }

@@ -16,5 +16,4 @@ public class CheckoutItemRequest {
     @Min(1)
     private Integer quantity;
     private Long sizeId;
-    private Long colorId;
 }

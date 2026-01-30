@@ -27,7 +27,7 @@ public class CartServiceImpl implements CartService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final com.zyna.dev.ecommerce.products.repository.SizeRepository sizeRepository;
-    private final com.zyna.dev.ecommerce.products.repository.ColorRepository colorRepository;
+    private final com.zyna.dev.ecommerce.products.repository.ProductSizeRepository productSizeRepository;
     private final CartMapper cartMapper;
 
     @Override
@@ -50,15 +50,11 @@ public class CartServiceImpl implements CartService {
         com.zyna.dev.ecommerce.products.models.Size size = sizeRepository.findById(request.getSizeId())
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Size not found linked to id: " + request.getSizeId()));
 
-        com.zyna.dev.ecommerce.products.models.Color color = colorRepository.findById(request.getColorId())
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Color not found linked to id: " + request.getColorId()));
-
-        CartItem cartItem = cartItemRepository.findByUserAndProductAndSizeAndColor(user, product, size, color)
+        CartItem cartItem = cartItemRepository.findByUserAndProductAndSize(user, product, size)
                 .orElse(CartItem.builder()
                         .user(user)
                         .product(product)
                         .size(size)
-                        .color(color)
                         .quantity(0)
                         .build());
 
@@ -67,11 +63,14 @@ public class CartServiceImpl implements CartService {
             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Quantity must be > 0");
         }
 
-        // OPTIONAL: check không cho vượt stock hiện tại
-        if (product.getStock() != null && newQty > product.getStock()) {
+        // Check Stock using ProductSize
+        com.zyna.dev.ecommerce.products.models.ProductSize productSize = productSizeRepository.findByProductAndSize(product, size)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "Product variant (Size) invalid"));
+
+        if (newQty > productSize.getQuantity()) {
             throw new ApplicationException(
                     HttpStatus.BAD_REQUEST,
-                    "Quantity exceeds available stock"
+                    "Quantity exceeds available stock for this size"
             );
         }
 
@@ -98,11 +97,13 @@ public class CartServiceImpl implements CartService {
             return null; // FE có thể hiểu là "đã xoá"
         }
 
-        if (item.getProduct().getStock() != null
-                && request.getQuantity() > item.getProduct().getStock()) {
+        com.zyna.dev.ecommerce.products.models.ProductSize productSize = productSizeRepository.findByProductAndSize(item.getProduct(), item.getSize())
+                .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "Product variant definition missing"));
+
+        if (request.getQuantity() > productSize.getQuantity()) {
             throw new ApplicationException(
                     HttpStatus.BAD_REQUEST,
-                    "Quantity exceeds available stock"
+                    "Quantity exceeds available stock for this size"
             );
         }
 

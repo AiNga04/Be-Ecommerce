@@ -2,7 +2,6 @@ package com.zyna.dev.ecommerce.carts.models;
 
 import com.zyna.dev.ecommerce.products.models.Product;
 import com.zyna.dev.ecommerce.products.models.Size;
-import com.zyna.dev.ecommerce.products.models.Color;
 import com.zyna.dev.ecommerce.users.models.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,7 +14,7 @@ import lombok.*;
 @Entity
 @Table(
         name = "cart_items",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "product_id", "size_id", "color_id"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "product_id", "size_id"})
 )
 public class CartItem {
 
@@ -36,10 +35,6 @@ public class CartItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "size_id")
     private Size size;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "color_id")
-    private Color color;
 
     // số lượng trong giỏ
     @Column(nullable = false)

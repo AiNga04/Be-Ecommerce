@@ -42,6 +42,13 @@ public class MailService {
         sendHtmlEmail(recipients, subject, wrapPlainText(body));
     }
 
+    public void sendFormattedEmail(String[] recipients, String subject, String htmlBody) {
+        if (recipients == null || recipients.length == 0) {
+            return;
+        }
+        sendHtmlEmail(recipients, subject, baseTemplate(subject, htmlBody));
+    }
+
     public void sendPasswordResetOtp(User user, String otpCode) {
         sendHtmlEmail(
                 new String[]{user.getEmail()},

@@ -43,7 +43,4 @@ public class OrderItem {
 
     @Column
     private String size;
-
-    @Column
-    private String color;
 }

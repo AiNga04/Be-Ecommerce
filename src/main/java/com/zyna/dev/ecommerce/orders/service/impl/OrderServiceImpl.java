@@ -55,7 +55,7 @@ public class OrderServiceImpl implements OrderService {
     private final VoucherService voucherService;
     private final NotificationService notificationService;
     private final com.zyna.dev.ecommerce.products.repository.SizeRepository sizeRepository;
-    private final com.zyna.dev.ecommerce.products.repository.ColorRepository colorRepository;
+    private final com.zyna.dev.ecommerce.products.repository.ProductSizeRepository productSizeRepository;
     @Value("${app.inventory.low-stock.threshold:5}")
     private int lowStockThreshold;
 
@@ -79,34 +79,34 @@ public class OrderServiceImpl implements OrderService {
                             "Product not found: " + itemReq.getProductId()
                     ));
 
+            if (itemReq.getSizeId() == null) {
+                // Assuming all products must have a size chosen if sizes exist. 
+                // Simplification for now: require Size.
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Size is required for product: " + product.getName());
+            }
+
+            var sizeObj = sizeRepository.findById(itemReq.getSizeId())
+                        .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Size not found"));
+
+            com.zyna.dev.ecommerce.products.models.ProductSize productSize = productSizeRepository.findByProductAndSize(product, sizeObj)
+                    .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "Product variant unavailable"));
+
             int requestedQty = itemReq.getQuantity();
             if (requestedQty <= 0) {
                 throw new ApplicationException(HttpStatus.BAD_REQUEST, "Quantity must be > 0");
             }
 
-            if (product.getStock() == null || product.getStock() < requestedQty) {
+            if (productSize.getQuantity() < requestedQty) {
                 throw new ApplicationException(
                         HttpStatus.BAD_REQUEST,
-                        "Not enough stock for product: " + product.getName()
+                        "Not enough stock for product: " + product.getName() + " (Size: " + sizeObj.getName() + ")"
                 );
             }
 
             BigDecimal unitPrice = product.getPrice();
             BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(requestedQty));
 
-            String sizeName = null;
-            if (itemReq.getSizeId() != null) {
-                var sizeObj = sizeRepository.findById(itemReq.getSizeId())
-                        .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Size not found"));
-                sizeName = sizeObj.getName();
-            }
-
-            String colorName = null;
-            if (itemReq.getColorId() != null) {
-                var colorObj = colorRepository.findById(itemReq.getColorId())
-                        .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Color not found"));
-                colorName = colorObj.getName();
-            }
+            String sizeName = sizeObj.getName();
 
             OrderItem orderItem = OrderItem.builder()
                     .product(product)
@@ -114,7 +114,6 @@ public class OrderServiceImpl implements OrderService {
                     .unitPrice(unitPrice)
                     .subtotal(subtotal)
                     .size(sizeName)
-                    .color(colorName)
                     .build();
 
             orderItems.add(orderItem);
@@ -278,12 +277,20 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setItems(orderItems);
 
-        // 4. Giảm stock
-        for (OrderItem oi : orderItems) {
-            Product p = oi.getProduct();
-            int newStock = p.getStock() - oi.getQuantity();
-            p.setStock(newStock);
-            checkLowStockAndNotify(p);
+        // 4. Giảm stock (ProductSize)
+        for (CheckoutItemRequest itemReq : request.getItems()) {
+             // Re-fetch to lock? Assuming transaction handles optimistic locking or we accept race conditions for MVP.
+             // We need to find the correct ProductSize again to deduct.
+             Product p = productRepository.getReferenceById(itemReq.getProductId());
+             var s = sizeRepository.getReferenceById(itemReq.getSizeId());
+             
+             var ps = productSizeRepository.findByProductAndSize(p, s)
+                     .orElseThrow(); // Should exist as checked above
+             
+             ps.setQuantity(ps.getQuantity() - itemReq.getQuantity());
+             productSizeRepository.save(ps);
+             
+             checkLowStockAndNotify(ps);
         }
 
         // 5. Lưu order
@@ -292,6 +299,15 @@ public class OrderServiceImpl implements OrderService {
         createShipmentIfMissing(order);
 
         // 6. Notification
+        List<java.util.Map<String, Object>> itemDetails = orderItems.stream().map(item -> java.util.Map.<String, Object>of(
+                "productName", item.getProduct().getName(),
+                "size", item.getSize(),
+                "quantity", item.getQuantity(),
+                "price", item.getUnitPrice(),
+                "subtotal", item.getSubtotal(),
+                "image", item.getProduct().getImageUrl() != null ? item.getProduct().getImageUrl() : ""
+        )).toList();
+
         notificationService.sendEmail(
                 NotificationType.ORDER_PLACED,
                 user,
@@ -301,7 +317,10 @@ public class OrderServiceImpl implements OrderService {
                         "paymentMethod", order.getPaymentMethod(),
                         "shippingName", order.getShippingName(),
                         "shippingPhone", order.getShippingPhone(),
-                        "shippingAddress", order.getShippingAddress()
+                        "shippingAddress", order.getShippingAddress(),
+                        "items", itemDetails,
+                        "discountAmount", order.getDiscountAmount(),
+                        "shippingFee", order.getShippingFee()
                 )
         );
 
@@ -373,18 +392,26 @@ public class OrderServiceImpl implements OrderService {
 
             if (requestedQty <= 0) continue;
 
-            if (product.getStock() == null || product.getStock() < requestedQty) {
+            com.zyna.dev.ecommerce.products.models.Size size = cartItem.getSize();
+            if (size == null) {
+                // Should not happen for valid cart items but safeguard
+                 throw new ApplicationException(HttpStatus.BAD_REQUEST, "Cart Item missing size");
+            }
+
+            com.zyna.dev.ecommerce.products.models.ProductSize productSize = productSizeRepository.findByProductAndSize(product, size)
+                    .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "Product variant unavailable for " + product.getName()));
+
+            if (productSize.getQuantity() < requestedQty) {
                 throw new ApplicationException(
                         HttpStatus.BAD_REQUEST,
-                        "Not enough stock for product: " + product.getName()
+                        "Not enough stock for product: " + product.getName() + " (Size: " + size.getName() + ")"
                 );
             }
 
             BigDecimal unitPrice = product.getPrice();
             BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(requestedQty));
 
-            String sizeName = cartItem.getSize() != null ? cartItem.getSize().getName() : null;
-            String colorName = cartItem.getColor() != null ? cartItem.getColor().getName() : null;
+            String sizeName = size.getName();
 
             OrderItem orderItem = OrderItem.builder()
                     .product(product)
@@ -392,7 +419,6 @@ public class OrderServiceImpl implements OrderService {
                     .unitPrice(unitPrice)
                     .subtotal(subtotal)
                     .size(sizeName)
-                    .color(colorName)
                     .build();
 
             orderItems.add(orderItem);
@@ -530,11 +556,16 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setItems(orderItems);
 
-        // trừ stock
-        for (OrderItem oi : orderItems) {
-            Product p = oi.getProduct();
-            p.setStock(p.getStock() - oi.getQuantity());
-            checkLowStockAndNotify(p);
+        // trừ stock (ProductSize)
+        for (CartItem cartItem : selectedItems) {
+             Product p = cartItem.getProduct();
+             var s = cartItem.getSize();
+             var ps = productSizeRepository.findByProductAndSize(p, s)
+                     .orElseThrow(); 
+             
+             ps.setQuantity(ps.getQuantity() - cartItem.getQuantity());
+             productSizeRepository.save(ps);
+             checkLowStockAndNotify(ps);
         }
 
         order = orderRepository.save(order);
@@ -633,8 +664,8 @@ public class OrderServiceImpl implements OrderService {
         return "ORD-" + System.currentTimeMillis();
     }
 
-    private void checkLowStockAndNotify(Product product) {
-        Integer stock = product.getStock();
+    private void checkLowStockAndNotify(com.zyna.dev.ecommerce.products.models.ProductSize productSize) {
+        Integer stock = productSize.getQuantity();
         if (stock == null || stock >= lowStockThreshold) {
             return;
         }
@@ -654,7 +685,7 @@ public class OrderServiceImpl implements OrderService {
                 NotificationType.LOW_STOCK_ALERT,
                 emails,
                 java.util.Map.of(
-                        "productName", product.getName(),
+                        "productName", productSize.getProduct().getName() + " (Size: " + productSize.getSize().getName() + ")",
                         "stock", stock
                 )
         );

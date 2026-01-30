@@ -5,7 +5,6 @@ import com.zyna.dev.ecommerce.products.dto.request.ProductUpdateRequest;
 import com.zyna.dev.ecommerce.products.dto.response.GalleryImageResponse;
 import com.zyna.dev.ecommerce.products.dto.response.ProductResponse;
 import com.zyna.dev.ecommerce.products.dto.response.SizeResponse;
-import com.zyna.dev.ecommerce.products.dto.response.ColorResponse;
 import com.zyna.dev.ecommerce.products.dto.response.SizeGuideResponse;
 import com.zyna.dev.ecommerce.products.models.Category;
 import com.zyna.dev.ecommerce.products.models.Product;
@@ -26,7 +25,6 @@ public class ProductMapper {
                 .price(dto.getPrice())
                 .imageUrl(dto.getImageUrl())
                 .category(category)         // ✅
-                .stock(dto.getStock())
                 .isActive(true)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -49,9 +47,7 @@ public class ProductMapper {
         if (category != null) {
             target.setCategory(category);
         }
-        if (dto.getStock() != null) {
-            target.setStock(dto.getStock());
-        }
+        // Stock update handled separately via variants
         if (dto.getIsActive() != null) {
             target.setIsActive(dto.getIsActive());
             if (!dto.getIsActive()) {
@@ -75,8 +71,8 @@ public class ProductMapper {
                 .description(entity.getDescription())
                 .price(entity.getPrice())
                 .imageUrl(entity.getImageUrl())
-                .category(categoryName)   // ✅ giờ là name/code từ Category
-                .stock(entity.getStock())
+                .category(categoryName)
+                .stock(entity.getTotalStock())
                 .isActive(entity.getIsActive())
                 .ratingAverage(entity.getRatingAverage())
                 .reviewCount(entity.getReviewCount())
@@ -89,22 +85,14 @@ public class ProductMapper {
                                 .description(entity.getSizeGuide().getDescription())
                                 .imageUrl(entity.getSizeGuide().getImageUrl())
                                 .build() : null)
-                .sizes(entity.getSizes() != null ?
-                        entity.getSizes().stream()
-                                .map(s -> SizeResponse.builder()
-                                        .id(s.getId())
-                                        .name(s.getName())
-                                        .code(s.getCode())
-                                        .description(s.getDescription())
-                                        .build())
-                                .toList() : Collections.emptyList())
-                .colors(entity.getColors() != null ?
-                        entity.getColors().stream()
-                                .map(c -> ColorResponse.builder()
-                                        .id(c.getId())
-                                        .name(c.getName())
-                                        .code(c.getCode())
-                                        .description(c.getDescription())
+                .variants(entity.getProductSizes() != null ?
+                        entity.getProductSizes().stream()
+                                .map(ps -> com.zyna.dev.ecommerce.products.dto.response.ProductSizeResponse.builder()
+                                        .id(ps.getId())
+                                        .sizeId(ps.getSize().getId())
+                                        .sizeName(ps.getSize().getName())
+                                        .sizeCode(ps.getSize().getCode())
+                                        .quantity(ps.getQuantity())
                                         .build())
                                 .toList() : Collections.emptyList())
                 .build();
@@ -123,8 +111,8 @@ public class ProductMapper {
                 .description(entity.getDescription())
                 .price(entity.getPrice())
                 .imageUrl(entity.getImageUrl())
-                .category(categoryName)   // ✅ giờ là name/code từ Category
-                .stock(entity.getStock())
+                .category(categoryName)
+                .stock(entity.getTotalStock())
                 .isActive(entity.getIsActive())
                 .ratingAverage(entity.getRatingAverage())
                 .reviewCount(entity.getReviewCount())
@@ -137,22 +125,14 @@ public class ProductMapper {
                                 .description(entity.getSizeGuide().getDescription())
                                 .imageUrl(entity.getSizeGuide().getImageUrl())
                                 .build() : null)
-                .sizes(entity.getSizes() != null ?
-                        entity.getSizes().stream()
-                                .map(s -> SizeResponse.builder()
-                                        .id(s.getId())
-                                        .name(s.getName())
-                                        .code(s.getCode())
-                                        .description(s.getDescription())
-                                        .build())
-                                .toList() : Collections.emptyList())
-                .colors(entity.getColors() != null ?
-                        entity.getColors().stream()
-                                .map(c -> ColorResponse.builder()
-                                        .id(c.getId())
-                                        .name(c.getName())
-                                        .code(c.getCode())
-                                        .description(c.getDescription())
+                .variants(entity.getProductSizes() != null ?
+                        entity.getProductSizes().stream()
+                                .map(ps -> com.zyna.dev.ecommerce.products.dto.response.ProductSizeResponse.builder()
+                                        .id(ps.getId())
+                                        .sizeId(ps.getSize().getId())
+                                        .sizeName(ps.getSize().getName())
+                                        .sizeCode(ps.getSize().getCode())
+                                        .quantity(ps.getQuantity())
                                         .build())
                                 .toList() : Collections.emptyList())
                 .gallery(

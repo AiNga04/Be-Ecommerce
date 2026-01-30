@@ -43,6 +43,7 @@ public class Category {
     private String description;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean isActive = true;
 
     @CreationTimestamp
