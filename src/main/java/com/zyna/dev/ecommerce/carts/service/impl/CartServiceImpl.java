@@ -2,6 +2,7 @@ package com.zyna.dev.ecommerce.carts.service.impl;
 
 import com.zyna.dev.ecommerce.carts.CartMapper;
 import com.zyna.dev.ecommerce.carts.dto.request.AddToCartRequest;
+import com.zyna.dev.ecommerce.carts.dto.request.RemoveCartItemsRequest;
 import com.zyna.dev.ecommerce.carts.dto.request.UpdateCartItemRequest;
 import com.zyna.dev.ecommerce.carts.dto.response.CartItemResponse;
 import com.zyna.dev.ecommerce.carts.models.CartItem;
@@ -125,6 +126,24 @@ public class CartServiceImpl implements CartService {
         }
 
         cartItemRepository.delete(item);
+    }
+
+    @Override
+    @Transactional
+    public void removeCartItems(Long userId, RemoveCartItemsRequest request) {
+        User user = getUser(userId);
+        List<CartItem> items = cartItemRepository.findAllById(request.getCartItemIds());
+
+        // Filter items that belong to the user
+        List<CartItem> userItems = items.stream()
+                .filter(item -> item.getUser().getId().equals(user.getId()))
+                .toList();
+        
+        if (userItems.isEmpty()) {
+            return;
+        }
+
+        cartItemRepository.deleteAll(userItems);
     }
 
     @Override

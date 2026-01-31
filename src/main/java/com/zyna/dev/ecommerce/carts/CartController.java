@@ -1,6 +1,7 @@
 package com.zyna.dev.ecommerce.carts;
 
 import com.zyna.dev.ecommerce.carts.dto.request.AddToCartRequest;
+import com.zyna.dev.ecommerce.carts.dto.request.RemoveCartItemsRequest;
 import com.zyna.dev.ecommerce.carts.dto.request.UpdateCartItemRequest;
 import com.zyna.dev.ecommerce.carts.dto.response.CartItemResponse;
 import com.zyna.dev.ecommerce.carts.service.interfaces.CartService;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/cart")
+@RequestMapping("/carts")
 @RequiredArgsConstructor
 public class CartController {
 
@@ -91,6 +92,23 @@ public class CartController {
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
                 "Removed cart item successfully!"
+        );
+    }
+
+    // Xoá nhiều item khỏi giỏ
+    @DeleteMapping("/items")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('ORDER_WRITE')")
+    public ApiResponse<Void> removeCartItems(
+            Authentication authentication,
+            @Valid @RequestBody RemoveCartItemsRequest request
+    ) {
+        Long userId = getCurrentUserId(authentication);
+        cartService.removeCartItems(userId, request);
+
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Removed cart items successfully!"
         );
     }
 

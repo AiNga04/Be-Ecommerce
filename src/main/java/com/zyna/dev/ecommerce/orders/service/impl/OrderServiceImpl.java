@@ -575,6 +575,16 @@ public class OrderServiceImpl implements OrderService {
         // xoá chỉ các cart item đã checkout
         cartItemRepository.deleteAll(selectedItems);
 
+        // 6. Notification
+        List<java.util.Map<String, Object>> itemDetails = orderItems.stream().map(item -> java.util.Map.<String, Object>of(
+                "productName", item.getProduct().getName(),
+                "size", item.getSize(),
+                "quantity", item.getQuantity(),
+                "price", item.getUnitPrice(),
+                "subtotal", item.getSubtotal(),
+                "image", item.getProduct().getImageUrl() != null ? item.getProduct().getImageUrl() : ""
+        )).toList();
+
         notificationService.sendEmail(
                 NotificationType.ORDER_PLACED,
                 user,
@@ -584,7 +594,10 @@ public class OrderServiceImpl implements OrderService {
                         "paymentMethod", order.getPaymentMethod(),
                         "shippingName", order.getShippingName(),
                         "shippingPhone", order.getShippingPhone(),
-                        "shippingAddress", order.getShippingAddress()
+                        "shippingAddress", order.getShippingAddress(),
+                        "items", itemDetails,
+                        "discountAmount", order.getDiscountAmount(),
+                        "shippingFee", order.getShippingFee()
                 )
         );
 

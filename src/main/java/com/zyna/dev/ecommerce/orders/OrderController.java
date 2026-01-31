@@ -47,7 +47,7 @@ public class OrderController {
     }
 
     // USER CHECKOUT TỪ GIỎ HÀNG
-    @PostMapping("/checkout/cart")
+    @PostMapping("/checkout/carts")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('ORDER_WRITE')")
     public ApiResponse<OrderResponse> checkoutFromCart(
@@ -55,6 +55,26 @@ public class OrderController {
             @Valid @RequestBody CheckoutFromCartRequest request
     ) {
         Long userId = getCurrentUserId(authentication);
+        OrderResponse response = orderService.checkoutFromCart(userId, request);
+        return ApiResponse.successfulResponse(
+                HttpStatus.CREATED.value(),
+                "Order " + displayCode(response) + " created successfully!",
+                response
+        );
+    }
+
+    // USER CHECKOUT TẤT CẢ GIỎ HÀNG
+    @PostMapping("/checkout/carts/all")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('ORDER_WRITE')")
+    public ApiResponse<OrderResponse> checkoutAllFromCart(
+            Authentication authentication,
+            @Valid @RequestBody CheckoutFromCartRequest request
+    ) {
+        Long userId = getCurrentUserId(authentication);
+        // Force null/empty list to ensure all items are selected
+        request.setCartItemIds(null);
+        
         OrderResponse response = orderService.checkoutFromCart(userId, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
