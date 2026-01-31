@@ -3,10 +3,14 @@ package com.zyna.dev.ecommerce.payments.vnpay;
 import com.zyna.dev.ecommerce.common.ApiResponse;
 import com.zyna.dev.ecommerce.payments.vnpay.dto.VnPayReturnResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,8 +36,7 @@ public class VnPayPaymentController {
     }
 
     @GetMapping("/return")
-    @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<VnPayReturnResponse> handleReturn(HttpServletRequest req) {
+    public void handleReturn(HttpServletRequest req, HttpServletResponse response) throws IOException {
 
         // Lọc các param bắt đầu bằng vnp_
         Map<String, String[]> raw = req.getParameterMap();
@@ -44,12 +47,28 @@ public class VnPayPaymentController {
             }
         });
 
-        VnPayReturnResponse data = vnPayService.handleReturn(vnpParams);
+        try {
+            VnPayReturnResponse data = vnPayService.handleReturn(vnpParams);
+            
+            // Redirect về Frontend kèm status
+            String frontendUrl = "http://localhost:3000/checkout/vnpay-return";
+            String redirectUrl = frontendUrl + 
+                "?status=" + (data.getMessage().contains("thành công") ? "success" : "error") +
+                "&message=" + URLEncoder.encode(data.getMessage(), StandardCharsets.UTF_8) +
+                "&orderCode=" + data.getOrderCode() +
+                "&vnp_ResponseCode=" + data.getVnpResponseCode() +
+                "&vnp_TransactionStatus=" + data.getVnpTransactionStatus();
+                
+            response.sendRedirect(redirectUrl);
 
-        return ApiResponse.successfulResponse(
-                HttpStatus.OK.value(),
-                "VNPay payment result",
-                data
-        );
+        } catch (Exception e) {
+            // Redirect về FE báo lỗi
+            String feUrl = "http://localhost:3000/checkout/vnpay-return";
+            String redirectUrl = feUrl + "?" +
+                    "status=error" +
+                    "&message=" + URLEncoder.encode(e.getMessage() != null ? e.getMessage() : "Unknown error", StandardCharsets.UTF_8);
+             
+            response.sendRedirect(redirectUrl);
+        }
     }
 }
