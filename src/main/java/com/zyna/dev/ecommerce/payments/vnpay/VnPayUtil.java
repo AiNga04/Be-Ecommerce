@@ -29,14 +29,15 @@ public class VnPayUtil {
     }
 
     public static String generateQuery(Map<String, String> params, boolean encodeKey) {
-        return params.entrySet().stream()
+        String query = params.entrySet().stream()
                 .filter(p -> p.getValue() != null && !p.getValue().isBlank())
                 .sorted(Map.Entry.comparingByKey())
                 .map(p -> (encodeKey
-                        ? URLEncoder.encode(p.getKey(), StandardCharsets.US_ASCII)
+                        ? URLEncoder.encode(p.getKey(), StandardCharsets.UTF_8)
                         : p.getKey()
                 ) + "=" +
-                        URLEncoder.encode(p.getValue(), StandardCharsets.US_ASCII))
+                        URLEncoder.encode(p.getValue(), StandardCharsets.UTF_8))
                 .collect(Collectors.joining("&"));
+        return query.replace("+", "%20");
     }
 }
