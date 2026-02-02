@@ -1,6 +1,8 @@
 package com.zyna.dev.ecommerce.orders.service.interfaces;
 
 import com.zyna.dev.ecommerce.common.enums.OrderStatus;
+import com.zyna.dev.ecommerce.common.enums.PaymentStatus;
+import com.zyna.dev.ecommerce.common.enums.ShipmentStatus;
 import com.zyna.dev.ecommerce.orders.dto.request.CheckoutFromCartRequest;
 import com.zyna.dev.ecommerce.orders.dto.request.CheckoutRequest;
 import com.zyna.dev.ecommerce.orders.dto.response.OrderResponse;
@@ -14,7 +16,7 @@ public interface OrderService {
 
     OrderResponse getOrderByIdForUser(Long userId, Long orderId);
 
-    Page<OrderResponse> getMyOrders(Long userId, int page, int size);
+    Page<OrderResponse> getMyOrders(Long userId, int page, int size, OrderStatus status, PaymentStatus paymentStatus, ShipmentStatus shipmentStatus);
 
     OrderResponse updateOrderStatus(Long orderId, OrderStatus newStatus);
 

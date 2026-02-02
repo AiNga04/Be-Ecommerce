@@ -619,11 +619,11 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrderResponse> getMyOrders(Long userId, int page, int size) {
+    public Page<OrderResponse> getMyOrders(Long userId, int page, int size, OrderStatus status, PaymentStatus paymentStatus, ShipmentStatus shipmentStatus) {
         User user = getUser(userId);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Order> orders = orderRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+        Page<Order> orders = orderRepository.findMyOrders(user, status, paymentStatus, shipmentStatus, pageable);
 
         // dùng mapper, không tự map trong service nữa
         return orders.map(orderMapper::toOrderResponse);

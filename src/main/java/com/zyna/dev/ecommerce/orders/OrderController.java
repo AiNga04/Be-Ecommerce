@@ -1,6 +1,9 @@
 package com.zyna.dev.ecommerce.orders;
 
 import com.zyna.dev.ecommerce.common.ApiResponse;
+import com.zyna.dev.ecommerce.common.enums.OrderStatus;
+import com.zyna.dev.ecommerce.common.enums.PaymentStatus;
+import com.zyna.dev.ecommerce.common.enums.ShipmentStatus;
 import com.zyna.dev.ecommerce.orders.dto.request.CheckoutFromCartRequest;
 import com.zyna.dev.ecommerce.orders.dto.request.CheckoutRequest;
 import com.zyna.dev.ecommerce.orders.dto.request.UpdateOrderStatusRequest;
@@ -90,10 +93,13 @@ public class OrderController {
     public ApiResponse<List<OrderResponse>> getMyOrders(
             Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(required = false) PaymentStatus paymentStatus,
+            @RequestParam(required = false) ShipmentStatus shipmentStatus
     ) {
         Long userId = getCurrentUserId(authentication);
-        Page<OrderResponse> result = orderService.getMyOrders(userId, page, size);
+        Page<OrderResponse> result = orderService.getMyOrders(userId, page, size, status, paymentStatus, shipmentStatus);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get my orders successfully!",
