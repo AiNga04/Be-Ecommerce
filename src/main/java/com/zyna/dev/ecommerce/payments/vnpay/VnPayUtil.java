@@ -38,6 +38,6 @@ public class VnPayUtil {
                 ) + "=" +
                         URLEncoder.encode(p.getValue(), StandardCharsets.UTF_8))
                 .collect(Collectors.joining("&"));
-        return query.replace("+", "%20");
+        return query;
     }
 }

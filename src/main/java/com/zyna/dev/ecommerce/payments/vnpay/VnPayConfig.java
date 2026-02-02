@@ -48,7 +48,7 @@ public class VnPayConfig {
         params.put("vnp_ReturnUrl", returnUrl);
 
         // vnp_CreateDate & vnp_ExpireDate
-        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 
         params.put("vnp_CreateDate", sdf.format(cal.getTime()));
