@@ -36,4 +36,8 @@ public class UserCriteria {
     private Gender gender;
 
     private City city;
+
+    private String email;
+    
+    private com.zyna.dev.ecommerce.common.enums.Status status;
 }

@@ -117,48 +117,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Page<UserResponse> searchUsers(UserCriteria criteria, int page, int size) {
-        Page<User> basePage = userRepository.findAllByIsDeletedFalse(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+        org.springframework.data.jpa.domain.Specification<User> spec = com.zyna.dev.ecommerce.users.repository.UserSpecification.fromCriteria(criteria, false);
+        
+        // Ensure sorting by createdAt DESC
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        // Lọc tiếp bằng criteria (filter in-memory)
-        Predicate<User> matches = u -> {
-            if (criteria.getFirstName() != null &&
-                    !u.getFirstName().toLowerCase().contains(criteria.getFirstName().toLowerCase())) return false;
+        Page<User> userPage = userRepository.findAll(spec, pageRequest);
 
-            if (criteria.getLastName() != null &&
-                    !u.getLastName().toLowerCase().contains(criteria.getLastName().toLowerCase())) return false;
-
-            if (criteria.getRole() != null) {
-                String roleCode = criteria.getRole();
-                if (u.getRoles() == null ||
-                        u.getRoles().stream().noneMatch(r -> r.getCode().equalsIgnoreCase(roleCode))) {
-                    return false;
-                }
-            }
-
-
-            if (criteria.getPhone() != null &&
-                    (u.getPhone() == null || !u.getPhone().contains(criteria.getPhone()))) return false;
-
-            if (criteria.getDateOfBirth() != null &&
-                    (u.getDateOfBirth() == null || !u.getDateOfBirth().isEqual(criteria.getDateOfBirth()))) return false;
-
-            if (criteria.getGender() != null &&
-                    (u.getGender() == null || u.getGender() != criteria.getGender())) return false;
-
-            if (criteria.getCity() != null &&
-                    (u.getCity() == null || u.getCity() != criteria.getCity())) return false;
-
-            return true;
-        };
-
-        var filters = basePage.getContent().stream()
-                .filter(matches)
-                .map(userMapper::toUserResponse)
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(
-                filters, basePage.getPageable(), filters.size()
-        );
+        return userPage.map(userMapper::toUserResponse);
     }
 
     @Override
@@ -339,38 +305,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Page<UserResponse> getDeletedUsers(UserCriteria criteria, int page, int size) {
-        Page<User> basePage = userRepository.findAllByIsDeletedTrue(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+        org.springframework.data.jpa.domain.Specification<User> spec = com.zyna.dev.ecommerce.users.repository.UserSpecification.fromCriteria(criteria, true);
 
-        Predicate<User> matches = u -> {
-            if (criteria.getFirstName() != null && !u.getFirstName().toLowerCase().contains(criteria.getFirstName().toLowerCase()))
-                return false;
-            if (criteria.getLastName() != null && !u.getLastName().toLowerCase().contains(criteria.getLastName().toLowerCase()))
-                return false;
-            if (criteria.getRole() != null) {
-                String roleCode = criteria.getRole();
-                if (u.getRoles() == null ||
-                        u.getRoles().stream()
-                                .noneMatch(r -> r.getCode().equalsIgnoreCase(roleCode))) {
-                    return false;
-                }
-            }
-            if (criteria.getPhone() != null && (u.getPhone() == null || !u.getPhone().contains(criteria.getPhone())))
-                return false;
-            if (criteria.getDateOfBirth() != null && (u.getDateOfBirth() == null || !u.getDateOfBirth().isEqual(criteria.getDateOfBirth())))
-                return false;
-            if (criteria.getGender() != null && (u.getGender() == null || u.getGender() != criteria.getGender()))
-                return false;
-            if (criteria.getCity() != null && (u.getCity() == null || u.getCity() != criteria.getCity()))
-                return false;
-            return true;
-        };
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        var filtered = basePage.getContent().stream()
-                .filter(matches)
-                .map(userMapper::toUserResponse)
-                .collect(Collectors.toList());
+        Page<User> userPage = userRepository.findAll(spec, pageRequest);
 
-        return new PageImpl<>(filtered, basePage.getPageable(), basePage.getTotalElements());
+        return userPage.map(userMapper::toUserResponse);
     }
 
     @Override
