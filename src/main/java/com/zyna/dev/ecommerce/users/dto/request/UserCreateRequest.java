@@ -43,6 +43,7 @@ public class UserCreateRequest {
     private String password;
 
     private Set<String> roles;
+    private String role; // Support for singular role input
 
     @Pattern(regexp = "^\\+?[0-9]{9,15}$", message = "Invalid phone number format")
     private String phone;

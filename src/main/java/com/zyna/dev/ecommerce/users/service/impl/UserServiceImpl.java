@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -68,10 +69,18 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(createRequest.getPassword()));
 
         // Gán ROLE
+        Set<String> rolesToAssign = new HashSet<>();
         if (createRequest.getRoles() != null && !createRequest.getRoles().isEmpty()) {
-            var roles = appRoleRepository.findAllByCodeIn(createRequest.getRoles());
+            rolesToAssign.addAll(createRequest.getRoles());
+        }
+        if (createRequest.getRole() != null && !createRequest.getRole().isEmpty()) {
+            rolesToAssign.add(createRequest.getRole());
+        }
 
-            if (roles.size() != createRequest.getRoles().size()) {
+        if (!rolesToAssign.isEmpty()) {
+            var roles = appRoleRepository.findAllByCodeIn(rolesToAssign);
+
+            if (roles.size() != rolesToAssign.size()) {
                 throw new ApplicationException(
                         HttpStatus.BAD_REQUEST,
                         "Some roles are invalid!"
@@ -323,6 +332,10 @@ public class UserServiceImpl implements UserService {
         // thời điểm tạo
         var now = java.time.LocalDateTime.now();
 
+        // Pre-fetch default USER role to avoid repeated DB calls if possible, 
+        // but for batch it might be better to just do it inside loop or cache it.
+        // Let's stick to the logic for now.
+
         request.getUsers().forEach(item -> {
             try {
                 // check email trùng giống createUser()
@@ -346,6 +359,38 @@ public class UserServiceImpl implements UserService {
 
                 // encode password giống createUser()
                 user.setPassword(passwordEncoder.encode(item.getPassword()));
+
+                // Gán ROLE
+                Set<String> rolesInput = new HashSet<>();
+                if (item.getRoles() != null) rolesInput.addAll(item.getRoles());
+                if (item.getRole() != null && !item.getRole().isEmpty()) rolesInput.add(item.getRole());
+                
+                if (!rolesInput.isEmpty()) {
+                    var roles = appRoleRepository.findAllByCodeIn(rolesInput);
+
+                    if (roles.size() != rolesInput.size()) {
+                        failedList.add(
+                                UserBatchCreateResponse.FailedUser.builder()
+                                        .email(item.getEmail())
+                                        .reason("One or more roles are invalid: " + rolesInput)
+                                        .build()
+                        );
+                        return;
+                    }
+
+                    user.setRoles(new HashSet<>(roles));
+                } else {
+                    // fallback: ROLE USER mặc định
+                    var userRole = appRoleRepository.findByCode("USER")
+                            .orElseThrow(() -> new ApplicationException(
+                                    HttpStatus.INTERNAL_SERVER_ERROR,
+                                    "Default role USER is not configured!"
+                            ));
+                    if (user.getRoles() == null) {
+                       user.setRoles(new HashSet<>());
+                    }
+                    user.getRoles().add(userRole);
+                }
 
                 // set các field audit nếu cần (tùy bạn, vì @CreationTimestamp tự set)
                 user.setCreatedAt(now);
