@@ -459,6 +459,27 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    public UserResponse updateStatus(Long id, com.zyna.dev.ecommerce.common.enums.Status status) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+        
+        user.setStatus(status);
+
+        if (status == com.zyna.dev.ecommerce.common.enums.Status.DELETED) {
+             user.setDeleted(true);
+             user.setDeletedAt(LocalDateTime.now());
+        } else if (user.isDeleted() && status != com.zyna.dev.ecommerce.common.enums.Status.DELETED) {
+             user.setDeleted(false);
+             user.setDeletedAt(null);
+        }
+
+        User saved = userRepository.save(user);
+        log.info("Updated status for user id={} to {}", id, status);
+        return userMapper.toUserResponse(saved);
+    }
+
+    @Override
+    @Transactional
     public UserResponse updateAvatarByAdmin(Long targetUserId, MultipartFile image) {
         if (image == null || image.isEmpty()) {
             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Image file is required");

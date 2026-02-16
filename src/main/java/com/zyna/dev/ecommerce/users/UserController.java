@@ -169,6 +169,21 @@ public class UserController {
         );
     }
 
+    @PatchMapping("/{id}/status")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('USER_WRITE')")
+    public ApiResponse<UserResponse> updateUserStatus(
+            @PathVariable Long id,
+            @RequestBody @Valid com.zyna.dev.ecommerce.users.dto.request.UserStatusUpdateRequest request
+    ) {
+        UserResponse userResponse = userService.updateStatus(id, request.getStatus());
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Update user status successfully!",
+                userResponse
+        );
+    }
+
     // SOFT DELETE
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)

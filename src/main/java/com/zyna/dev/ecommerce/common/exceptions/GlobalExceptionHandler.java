@@ -115,7 +115,21 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // fallback - lỗi không đoán trước
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<String>> handleTypeMismatch(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex) {
+        String name = ex.getName();
+        String type = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
+        Object value = ex.getValue();
+        String message = String.format("Parameter '%s' should be of type '%s'", name, type);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                ApiResponse.failedResponse(
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Invalid Argument Type",
+                        message
+                )
+        );
+    }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<String>> handleUnexpected(Exception ex) {
         ex.printStackTrace();

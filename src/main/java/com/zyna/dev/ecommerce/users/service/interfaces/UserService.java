@@ -43,5 +43,7 @@ public interface UserService {
 
     UserResponse updateAvatarByAdmin(Long targetUserId, org.springframework.web.multipart.MultipartFile image);
 
+    UserResponse updateStatus(Long id, com.zyna.dev.ecommerce.common.enums.Status status);
+
     UserResponse updateMyInfo(Long userId, com.zyna.dev.ecommerce.users.dto.request.UserUpdateProfileRequest request);
 }
