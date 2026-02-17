@@ -102,7 +102,7 @@ public class UserServiceImpl implements UserService {
         }
 
         User saved = userRepository.save(user);
-        accountActivationService.sendActivationToken(saved, getCurrentActorEmail(), createRequest.getPassword());
+        accountActivationService.sendActivationToken(saved, getCurrentActorEmail(), createRequest.getPassword(), com.zyna.dev.ecommerce.common.enums.ActivationType.ADMIN_CREATE);
         return userMapper.toUserResponse(saved);
     }
 
@@ -232,8 +232,12 @@ public class UserServiceImpl implements UserService {
         // but requirement says 'pending' on restore)
         user.setStatus(Status.PENDING);
 
-        userRepository.save(user);
-        log.info("Restored user id={} and set status to PENDING", id);
+        User saved = userRepository.save(user);
+        
+        // Gửi lại email kích hoạt
+        accountActivationService.sendActivationToken(saved, getCurrentActorEmail(), com.zyna.dev.ecommerce.common.enums.ActivationType.RESTORE);
+        
+        log.info("Restored user id={} and set status to PENDING. Activation email sent.", id);
     }
 
     @Override
@@ -297,6 +301,10 @@ public class UserServiceImpl implements UserService {
         });
 
         userRepository.saveAll(toRestore);
+
+        // Gửi lại email kích hoạt cho từng user
+        String actorEmail = getCurrentActorEmail();
+        toRestore.forEach(u -> accountActivationService.sendActivationToken(u, actorEmail, com.zyna.dev.ecommerce.common.enums.ActivationType.RESTORE));
 
         List<Long> restoredIds = toRestore.stream()
                 .map(User::getId)
@@ -409,7 +417,7 @@ public class UserServiceImpl implements UserService {
                 user.setCreatedAt(now);
 
                 User saved = userRepository.save(user);
-                accountActivationService.sendActivationToken(saved, actorEmail, item.getPassword());
+                accountActivationService.sendActivationToken(saved, actorEmail, item.getPassword(), com.zyna.dev.ecommerce.common.enums.ActivationType.ADMIN_CREATE);
 
                 createdList.add(userMapper.toUserResponse(saved)); // :contentReference[oaicite:11]{index=11}
             } catch (Exception e) {

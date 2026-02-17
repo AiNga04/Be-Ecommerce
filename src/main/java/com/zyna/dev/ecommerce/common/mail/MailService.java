@@ -19,22 +19,51 @@ public class MailService {
     @Value("${app.mail.from:no-reply@zyna.dev}")
     private String defaultFrom;
 
-    public void sendActivationEmail(User user, String activationLink) {
+    public void sendActivationEmail(User user, String activationLink, com.zyna.dev.ecommerce.common.enums.ActivationType type) {
+        String subject;
+        String htmlContent;
+
+        switch (type) {
+            case RESTORE -> {
+                subject = "Khôi phục tài khoản thành công";
+                htmlContent = buildActivationRestoreHtml(user, activationLink);
+            }
+            case ADMIN_CREATE -> {
+                // Should not happen here usually, as password is required for admin create, handled by overloaded method
+                subject = "Kích hoạt tài khoản";
+                htmlContent = buildActivationHtml(user, activationLink);
+            }
+            default -> { // REGISTRATION
+                subject = "Kích hoạt tài khoản của bạn";
+                htmlContent = buildActivationHtml(user, activationLink);
+            }
+        }
+
         sendHtmlEmail(
                 new String[]{user.getEmail()},
-                "Kích hoạt tài khoản của bạn",
-                buildActivationHtml(user, activationLink)
+                subject,
+                htmlContent
         );
     }
 
-    public void sendActivationEmail(User user, String activationLink, String rawPassword) {
+    public void sendActivationEmail(User user, String activationLink, String rawPassword, com.zyna.dev.ecommerce.common.enums.ActivationType type) {
+        String subject = "Thông tin tài khoản mới";
+        String htmlContent;
+
+        if (type == com.zyna.dev.ecommerce.common.enums.ActivationType.ADMIN_CREATE) {
+             htmlContent = buildActivationWithPasswordHtml(user, activationLink, rawPassword);
+        } else {
+             // Fallback
+             htmlContent = buildActivationHtml(user, activationLink);
+        }
+
         sendHtmlEmail(
                 new String[]{user.getEmail()},
-                "Kích hoạt tài khoản của bạn",
-                buildActivationWithPasswordHtml(user, activationLink, rawPassword)
+                subject,
+                htmlContent
         );
     }
-
+    
     public void sendTemplateEmail(String[] recipients, String subject, String body) {
         if (recipients == null || recipients.length == 0) {
             return;
@@ -98,12 +127,28 @@ public class MailService {
                 : "Xin chào,";
         return baseTemplate(
                 greeting,
-                "<p>Cảm ơn bạn đã đăng ký. Nhấn vào nút dưới đây để kích hoạt tài khoản:</p>"
+                "<p>Cảm ơn bạn đã đăng ký tài khoản tại Zyna. Vui lòng xác minh địa chỉ email của bạn để bắt đầu mua sắm:</p>"
                         + "<p style=\"text-align:center;margin:24px 0;\">"
                         + "<a href=\"" + activationLink + "\" style=\"background:#2563eb;color:#fff;"
-                        + "padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block;\">Kích hoạt tài khoản</a>"
+                        + "padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block;\">Xác minh Email</a>"
                         + "</p>"
-                        + "<p>Nếu bạn không tạo tài khoản, hãy bỏ qua email này.</p>"
+                        + "<p>Email này có hiệu lực trong 24 giờ via.</p>"
+        );
+    }
+
+    private String buildActivationRestoreHtml(User user, String activationLink) {
+        String greeting = StringUtils.hasText(user.getFirstName())
+                ? "Xin chào " + user.getFirstName() + ","
+                : "Xin chào,";
+        return baseTemplate(
+                greeting,
+                "<p>Tài khoản của bạn đã được khôi phục thành công trên hệ thống Zyna.</p>"
+                        + "<p>Để đảm bảo bảo mật, vui lòng xác minh lại email của bạn để kích hoạt lại tài khoản:</p>"
+                        + "<p style=\"text-align:center;margin:24px 0;\">"
+                        + "<a href=\"" + activationLink + "\" style=\"background:#10b981;color:#fff;"
+                        + "padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block;\">Kích hoạt lại tài khoản</a>"
+                        + "</p>"
+                        + "<p>Nếu bạn không yêu cầu khôi phục, vui lòng liên hệ bộ phận hỗ trợ ngay lập tức.</p>"
         );
     }
 

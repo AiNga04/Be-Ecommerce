@@ -27,23 +27,31 @@ public class AccountActivationService {
     private String activationBaseUrl;
 
     public void sendActivationToken(User user, String actorEmail) {
-        sendActivationToken(user, actorEmail, null);
+        sendActivationToken(user, actorEmail, null, com.zyna.dev.ecommerce.common.enums.ActivationType.REGISTRATION);
+    }
+
+    public void sendActivationToken(User user, String actorEmail, com.zyna.dev.ecommerce.common.enums.ActivationType type) {
+        sendActivationToken(user, actorEmail, null, type);
     }
 
     public void sendActivationToken(User user, String actorEmail, String rawPassword) {
+        sendActivationToken(user, actorEmail, rawPassword, com.zyna.dev.ecommerce.common.enums.ActivationType.REGISTRATION);
+    }
+
+    public void sendActivationToken(User user, String actorEmail, String rawPassword, com.zyna.dev.ecommerce.common.enums.ActivationType type) {
         String token = activationTokenProvider.generate(user);
         String activationLink = buildActivationLink(token);
         if (StringUtils.hasText(rawPassword)) {
-            mailService.sendActivationEmail(user, activationLink, rawPassword);
+            mailService.sendActivationEmail(user, activationLink, rawPassword, type);
         } else {
-            mailService.sendActivationEmail(user, activationLink);
+            mailService.sendActivationEmail(user, activationLink, type);
         }
 
         userAuditService.record(
                 user,
                 actorEmail,
                 UserAuditAction.CREATE_USER,
-                "Account created; activation email sent"
+                "Account created; activation email sent (" + type + ")"
         );
     }
 
