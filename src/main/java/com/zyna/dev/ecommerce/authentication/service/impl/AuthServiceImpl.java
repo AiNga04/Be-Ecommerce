@@ -76,8 +76,14 @@ public class AuthServiceImpl implements AuthService {
             throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
-        if (user.getStatus() != null && user.getStatus() != Status.ACTIVE) {
-            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Account is not active. Please check your email for the activation link.");
+        if (user.getStatus() == Status.PENDING) {
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Vui lòng xác minh email");
+        }
+        if (user.getStatus() == Status.DISABLED) {
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Tài khoản đã bị khóa");
+        }
+        if (user.getStatus() != Status.ACTIVE) {
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Tài khoản không khả dụng");
         }
 
         rateLimiter.resetAttempts(email);

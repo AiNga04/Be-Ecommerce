@@ -196,18 +196,22 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
+    @Transactional
     public void softDeleteUser(Long id) {
         User user = userRepository.findByIdAndIsDeletedFalse(id).orElseThrow(
                 () -> new ApplicationException(HttpStatus.NOT_FOUND, "User with id " + id + " not found or already deleted")
         );
         user.setDeleted(true);
         user.setDeletedAt(LocalDateTime.now());
+        // Force status to DELETED
+        user.setStatus(Status.DELETED);
 
         userRepository.save(user);
-        log.info("Soft deleted user id={}", id);
+        log.info("Soft deleted user id={} and set status to DELETED", id);
     }
 
     @Override
+    @Transactional
     public void restoreUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(
@@ -224,12 +228,16 @@ public class UserServiceImpl implements UserService {
 
         user.setDeleted(false);
         user.setDeletedAt(null);
+        // Force status to PENDING (users must re-verify or admin must re-approve if needed, 
+        // but requirement says 'pending' on restore)
+        user.setStatus(Status.PENDING);
 
         userRepository.save(user);
-        log.info("Restored user id={}", id);
+        log.info("Restored user id={} and set status to PENDING", id);
     }
 
     @Override
+    @Transactional
     public void hardDeleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(
@@ -242,6 +250,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public List<Long> softDeleteUsers(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyList();
@@ -254,6 +263,7 @@ public class UserServiceImpl implements UserService {
         users.forEach(u -> {
             u.setDeleted(true);
             u.setDeletedAt(now);
+            u.setStatus(Status.DELETED);
         });
 
         userRepository.saveAll(users);
@@ -267,6 +277,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public List<Long> restoreUsers(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyList();
@@ -282,6 +293,7 @@ public class UserServiceImpl implements UserService {
         toRestore.forEach(u -> {
             u.setDeleted(false);
             u.setDeletedAt(null);
+            u.setStatus(Status.PENDING);
         });
 
         userRepository.saveAll(toRestore);
@@ -295,6 +307,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public List<Long> hardDeleteUsers(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyList();
@@ -459,22 +472,56 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserResponse updateStatus(Long id, com.zyna.dev.ecommerce.common.enums.Status status) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
-        
-        user.setStatus(status);
-
-        if (status == com.zyna.dev.ecommerce.common.enums.Status.DELETED) {
-             user.setDeleted(true);
-             user.setDeletedAt(LocalDateTime.now());
-        } else if (user.isDeleted() && status != com.zyna.dev.ecommerce.common.enums.Status.DELETED) {
-             user.setDeleted(false);
-             user.setDeletedAt(null);
+    public UserResponse updateStatus(Long id, com.zyna.dev.ecommerce.common.enums.Status newStatus) {
+        // 1. Chỉ cho phép admin chỉnh tay sang ACTIVE hoặc DISABLED
+        if (newStatus != Status.ACTIVE && newStatus != Status.DISABLED) {
+            throw new ApplicationException(
+                    HttpStatus.BAD_REQUEST,
+                    "Manual update to status " + newStatus + " is not allowed. Only ACTIVE or DISABLED can be set manually."
+            );
         }
 
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (user.isDeleted()) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Cannot update status of a deleted user. Restore first!");
+        }
+
+        Status currentStatus = user.getStatus();
+
+        // 2. Validate State Transitions (Strict State Machine)
+        switch (currentStatus) {
+            case PENDING -> {
+                 // PENDING -> ACTIVE: Blocked (System only via email verification)
+                if (newStatus == Status.ACTIVE) {
+                    throw new ApplicationException(
+                            HttpStatus.BAD_REQUEST,
+                            "Cannot manually activate a PENDING user. User must verify email!"
+                    );
+                }
+                // PENDING -> DISABLED: Allowed (Admin ban)
+            }
+            case ACTIVE -> {
+                // ACTIVE -> DISABLED: Allowed (Admin ban)
+                // ACTIVE -> PENDING: Blocked (Invalid transition) - prevented by check #1
+            }
+            case DISABLED -> {
+                // DISABLED -> ACTIVE: Allowed (Admin unban)
+                // DISABLED -> PENDING: Blocked (Invalid transition) - prevented by check #1
+            }
+            case DELETED -> throw new ApplicationException(
+                    HttpStatus.BAD_REQUEST,
+                    "User is DELETED. Cannot change status manually. Use restore function."
+            );
+            default -> throw new ApplicationException(HttpStatus.BAD_REQUEST, "Unknown current status");
+        }
+
+        // Apply update
+        user.setStatus(newStatus);
+
         User saved = userRepository.save(user);
-        log.info("Updated status for user id={} to {}", id, status);
+        log.info("Updated status for user id={} from {} to {}", id, currentStatus, newStatus);
         return userMapper.toUserResponse(saved);
     }
 
