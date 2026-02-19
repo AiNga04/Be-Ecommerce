@@ -133,11 +133,49 @@ public class ProductServiceImpl implements ProductService {
                 priceHistoryRepository.findByProductIdOrderByChangedAtDesc(productId);
 
         return histories.stream()
-                .map(h -> PriceHistoryResponse.builder()
-                        .oldPrice(h.getOldPrice())
-                        .newPrice(h.getNewPrice())
-                        .changedAt(h.getChangedAt())
-                        .build())
+                .map(h -> {
+                    BigDecimal oldP = h.getOldPrice();
+                    BigDecimal newP = h.getNewPrice();
+                    double percent = 0.0;
+                    String type = "NONE";
+
+                    if (oldP != null && oldP.compareTo(BigDecimal.ZERO) > 0) {
+                        BigDecimal diff = newP.subtract(oldP);
+                        // (new - old) / old * 100
+                         percent = diff.divide(oldP, 2, java.math.RoundingMode.HALF_UP)
+                                .multiply(BigDecimal.valueOf(100)).doubleValue();
+                        
+                        if (diff.compareTo(BigDecimal.ZERO) > 0) {
+                            type = "INCREASE";
+                        } else if (diff.compareTo(BigDecimal.ZERO) < 0) {
+                            type = "DECREASE";
+                        }
+                    } else if (oldP != null && oldP.compareTo(BigDecimal.ZERO) == 0 && newP.compareTo(BigDecimal.ZERO) > 0) {
+                        percent = 100.0; // 0 -> something is 100% increase effectively (or infinite, but 100 is simpler for UI)
+                        type = "INCREASE";
+                    }
+
+                    String changedBy = "Unknown";
+                    if (h.getChangedBy() != null) {
+                         // Prefer name, fallback to email
+                        String fName = h.getChangedBy().getFirstName();
+                        String lName = h.getChangedBy().getLastName();
+                        if (fName != null && lName != null) {
+                            changedBy = fName + " " + lName;
+                        } else {
+                            changedBy = h.getChangedBy().getEmail();
+                        }
+                    }
+
+                    return PriceHistoryResponse.builder()
+                            .oldPrice(oldP)
+                            .newPrice(newP)
+                            .changedAt(h.getChangedAt())
+                            .changedBy(changedBy)
+                            .percentChange(percent)
+                            .changeType(type)
+                            .build();
+                })
                 .toList();
     }
 

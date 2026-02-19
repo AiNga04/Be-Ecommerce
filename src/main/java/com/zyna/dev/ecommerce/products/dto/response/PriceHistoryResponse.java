@@ -13,4 +13,7 @@ public class PriceHistoryResponse {
     private BigDecimal oldPrice;
     private BigDecimal newPrice;
     private LocalDateTime changedAt;
+    private String changedBy;
+    private Double percentChange;
+    private String changeType; // INCREASE, DECREASE, NONE
 }
