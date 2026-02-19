@@ -252,4 +252,18 @@ public class ProductController {
                 response
         );
     }
+
+    // GET GLOBAL PRICE HISTORY (All products)
+    @GetMapping("/global-price-history")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
+    public ApiResponse<List<PriceHistoryResponse>> getGlobalPriceHistory(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ApiResponse.successfulPageResponse(
+                "Fetched global price history!",
+                productService.getAllPriceHistory(page, size)
+        );
+    }
 }

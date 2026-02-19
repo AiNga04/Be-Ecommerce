@@ -23,6 +23,7 @@ public interface ProductService {
                                   Long sizeGuideId, List<Long> sizeIds);
     ProductResponse getProductById(Long id);
     List<PriceHistoryResponse> getPriceHistory(Long productId);
+    Page<PriceHistoryResponse> getAllPriceHistory(int page, int size);
     Page<ProductResponse> searchProducts(ProductCriteria criteria, int page, int size);
     void softDeleteProduct(Long id);
     void restoreProduct(Long id);

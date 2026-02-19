@@ -16,4 +16,9 @@ public class PriceHistoryResponse {
     private String changedBy;
     private Double percentChange;
     private String changeType; // INCREASE, DECREASE, NONE
+
+    // Product info for global list
+    private Long productId;
+    private String productName;
+    private String productImage;
 }

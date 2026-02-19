@@ -179,6 +179,59 @@ public class ProductServiceImpl implements ProductService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PriceHistoryResponse> getAllPriceHistory(int page, int size) {
+        Page<PriceHistory> pageResult = priceHistoryRepository.findAll(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "changedAt"))
+        );
+
+        return pageResult.map(h -> {
+            BigDecimal oldP = h.getOldPrice();
+            BigDecimal newP = h.getNewPrice();
+            double percent = 0.0;
+            String type = "NONE";
+
+            if (oldP != null && oldP.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal diff = newP.subtract(oldP);
+                 percent = diff.divide(oldP, 2, java.math.RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100)).doubleValue();
+                
+                if (diff.compareTo(BigDecimal.ZERO) > 0) {
+                    type = "INCREASE";
+                } else if (diff.compareTo(BigDecimal.ZERO) < 0) {
+                    type = "DECREASE";
+                }
+            } else if (oldP != null && oldP.compareTo(BigDecimal.ZERO) == 0 && newP.compareTo(BigDecimal.ZERO) > 0) {
+                percent = 100.0;
+                type = "INCREASE";
+            }
+
+            String changedBy = "Unknown";
+            if (h.getChangedBy() != null) {
+                String fName = h.getChangedBy().getFirstName();
+                String lName = h.getChangedBy().getLastName();
+                if (fName != null && lName != null) {
+                    changedBy = fName + " " + lName;
+                } else {
+                    changedBy = h.getChangedBy().getEmail();
+                }
+            }
+
+            return PriceHistoryResponse.builder()
+                    .oldPrice(oldP)
+                    .newPrice(newP)
+                    .changedAt(h.getChangedAt())
+                    .changedBy(changedBy)
+                    .percentChange(percent)
+                    .changeType(type)
+                    .productId(h.getProduct().getId())
+                    .productName(h.getProduct().getName())
+                    .productImage(h.getProduct().getImageUrl())
+                    .build();
+        });
+    }
+
     // SEARCH PRODUCTS (filter, pagination, sorting)
     @Override
     @Transactional(readOnly = true)
