@@ -255,11 +255,37 @@ public class ProductServiceImpl implements ProductService {
                         "%" + criteria.getName().toLowerCase() + "%"));
             }
 
-            if (criteria.getCategory() != null && !criteria.getCategory().isBlank()) {
-                predicates.add(cb.equal(
-                        cb.lower(root.get("category").get("code")),
-                        criteria.getCategory().toLowerCase()
-                ));
+            if (criteria.getCategory() != null && !criteria.getCategory().isEmpty()) {
+                List<String> rawCategories = criteria.getCategory().stream()
+                        .filter(c -> c != null && !c.isBlank())
+                        .toList();
+
+                if (!rawCategories.isEmpty()) {
+                    List<Long> categoryIds = new ArrayList<>();
+                    List<String> categoryCodes = new ArrayList<>();
+
+                    for (String cat : rawCategories) {
+                        try {
+                            // Try to parse as ID
+                            categoryIds.add(Long.parseLong(cat));
+                        } catch (NumberFormatException e) {
+                            // Not a number, treat as Code
+                            categoryCodes.add(cat.toLowerCase());
+                        }
+                    }
+
+                    List<Predicate> catPredicates = new ArrayList<>();
+                    if (!categoryIds.isEmpty()) {
+                        catPredicates.add(root.get("category").get("id").in(categoryIds));
+                    }
+                    if (!categoryCodes.isEmpty()) {
+                        catPredicates.add(cb.lower(root.get("category").get("code")).in(categoryCodes));
+                    }
+                    
+                    if (!catPredicates.isEmpty()) {
+                        predicates.add(cb.or(catPredicates.toArray(new Predicate[0])));
+                    }
+                }
             }
 
             if (criteria.getMinPrice() != null) {

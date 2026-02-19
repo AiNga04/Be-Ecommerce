@@ -46,6 +46,7 @@ public class CategoryMapper {
                 .isActive(entity.getIsActive())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .productCount(entity.getProductCount() != null ? entity.getProductCount() : 0L)
                 .build();
     }
 }

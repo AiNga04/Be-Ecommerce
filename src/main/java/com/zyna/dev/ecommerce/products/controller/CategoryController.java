@@ -24,9 +24,10 @@ public class CategoryController {
     public ApiResponse<java.util.List<CategoryResponse>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "true") boolean activeOnly
+            @RequestParam(defaultValue = "true") boolean activeOnly,
+            @RequestParam(required = false) String keyword
     ) {
-        Page<CategoryResponse> data = categoryService.list(page, size, activeOnly);
+        Page<CategoryResponse> data = categoryService.list(page, size, activeOnly, keyword);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Fetched categories successfully!",

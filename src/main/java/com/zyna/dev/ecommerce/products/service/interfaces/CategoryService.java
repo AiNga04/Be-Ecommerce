@@ -15,6 +15,6 @@ public interface CategoryService {
 
     CategoryResponse getById(Long id);
 
-    Page<CategoryResponse> list(int page, int size, boolean onlyActive);
+    Page<CategoryResponse> list(int page, int size, boolean onlyActive, String keyword);
 
 }

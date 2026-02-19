@@ -51,4 +51,7 @@ public class Category {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @org.hibernate.annotations.Formula("(SELECT count(*) FROM products p WHERE p.category_id = id)")
+    private Long productCount;
 }

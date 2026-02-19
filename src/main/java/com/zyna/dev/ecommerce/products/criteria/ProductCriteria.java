@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class ProductCriteria {
     private String name;
-    private String category;
+    private java.util.List<String> category;
 
     @DecimalMin(value = "0.0", message = "Min price must be >= 0")
     private BigDecimal minPrice;

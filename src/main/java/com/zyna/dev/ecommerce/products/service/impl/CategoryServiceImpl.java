@@ -72,11 +72,13 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Page<CategoryResponse> list(int page, int size, boolean onlyActive) {
+    public Page<CategoryResponse> list(int page, int size, boolean onlyActive, String keyword) {
         Page<Category> pageData;
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
         
-        if (onlyActive) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            pageData = categoryRepository.search(keyword.trim(), onlyActive, pageable);
+        } else if (onlyActive) {
             pageData = categoryRepository.findAllByIsActiveTrue(pageable);
         } else {
             pageData = categoryRepository.findAll(pageable);
