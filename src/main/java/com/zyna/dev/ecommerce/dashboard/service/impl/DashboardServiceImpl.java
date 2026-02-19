@@ -4,6 +4,8 @@ import com.zyna.dev.ecommerce.common.enums.OrderStatus;
 import com.zyna.dev.ecommerce.common.enums.Status;
 import com.zyna.dev.ecommerce.dashboard.dto.*;
 import com.zyna.dev.ecommerce.dashboard.service.DashboardService;
+
+import java.math.BigDecimal;
 import com.zyna.dev.ecommerce.orders.repository.OrderItemRepository;
 import com.zyna.dev.ecommerce.orders.repository.OrderRepository;
 import com.zyna.dev.ecommerce.products.models.ProductSize;
@@ -31,39 +33,74 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RevenueStatResponse> getRevenueStats(LocalDate from, LocalDate to) {
+    public RevenueDashboardResponse getRevenueStats(LocalDate from, LocalDate to) {
         LocalDateTime start = from.atStartOfDay();
         LocalDateTime end = to.atTime(LocalTime.MAX);
-        // Count PAID orders only (can adjust to include CONFIRMED etc if needed)
-        // For revenue, usually PAID or DELIVERED is best.
-        // Let's use PAID status if payment status is reliable, or status = DELIVERED.
-        // In this query we use status IN (...) to be safer if paymentStatus is not always set for COD.
-        // Actually OrderRepository query uses status IN list.
+        
         List<OrderStatus> statuses = Arrays.asList(
                 OrderStatus.CONFIRMED, OrderStatus.SHIPPING, OrderStatus.DELIVERED
         );
-        // Note: COMPLETED might not exist in enum, check first.
         
-        return orderRepository.getRevenueStats(statuses, start, end);
+        List<RevenueStatResponse> stats = orderRepository.getRevenueStats(statuses, start, end);
+        
+            BigDecimal totalRevenue = stats.stream()
+                .map(RevenueStatResponse::getRevenue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Growth Rate Calculation
+        long daysDiff = java.time.temporal.ChronoUnit.DAYS.between(from, to) + 1;
+        LocalDateTime prevStart = start.minusDays(daysDiff);
+        LocalDateTime prevEnd = start.minusNanos(1); // End right before current start
+
+        List<RevenueStatResponse> prevStats = orderRepository.getRevenueStats(statuses, prevStart, prevEnd);
+        BigDecimal prevRevenue = prevStats.stream()
+                .map(RevenueStatResponse::getRevenue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Double growthRate = 0.0;
+        if (prevRevenue.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal diff = totalRevenue.subtract(prevRevenue);
+             growthRate = diff.divide(prevRevenue, 4, java.math.RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100)).doubleValue();
+        } else if (totalRevenue.compareTo(BigDecimal.ZERO) > 0) {
+            growthRate = 100.0;
+        }
+
+        return RevenueDashboardResponse.builder()
+                .totalRevenue(totalRevenue)
+                .growthRate(growthRate)
+                .dailyStats(stats)
+                .build();
     }
 
     @Override
     @Transactional(readOnly = true)
     public OrderStatResponse getOrderStats() {
+        List<Object[]> rawStats = orderRepository.countOrdersByStatus();
+        java.util.Map<String, Long> byStatus = new java.util.HashMap<>();
+        long total = 0;
+
+        for (Object[] row : rawStats) {
+            OrderStatus status = (OrderStatus) row[0];
+            Long count = (Long) row[1];
+            byStatus.put(status.name(), count);
+            total += count;
+        }
+        
+        // Ensure all statuses are present
+        for (OrderStatus status : OrderStatus.values()) {
+            byStatus.putIfAbsent(status.name(), 0L);
+        }
+
         return OrderStatResponse.builder()
-                .pending(orderRepository.countByStatus(OrderStatus.PENDING))
-                .confirmed(orderRepository.countByStatus(OrderStatus.CONFIRMED))
-                .shipping(orderRepository.countByStatus(OrderStatus.SHIPPING))
-                .delivered(orderRepository.countByStatus(OrderStatus.DELIVERED))
-                .canceled(orderRepository.countByStatus(OrderStatus.CANCELED))
-                .totalOrders(orderRepository.count())
+                .totalOrders(total)
+                .byStatus(byStatus)
                 .build();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<TopProductResponse> getTopSellingProducts(int limit) {
-        // Only count valid orders
         List<OrderStatus> validStatuses = Arrays.asList(
                 OrderStatus.CONFIRMED, OrderStatus.SHIPPING, OrderStatus.DELIVERED
         );
@@ -92,10 +129,6 @@ public class DashboardServiceImpl implements DashboardService {
         long total = userRepository.count();
         long active = userRepository.countByStatus(Status.ACTIVE);
         long pending = userRepository.countByStatus(Status.PENDING);
-        // Locked/Disabled? Status might be LOCKED or DISABLED.
-        // Using countByStatusNot(ACTIVE) - pending?
-        // Or just count specific status if enum has it.
-        // Enum: PENDING, ACTIVE, DISABLED, DELETED.
         long disabled = userRepository.countByStatus(Status.DISABLED); 
         
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
@@ -106,7 +139,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .totalUsers(total)
                 .activeUsers(active)
                 .pendingUsers(pending)
-                .lockedUsers(disabled)
+                .disabledUsers(disabled)
                 .newUsersToday(newToday)
                 .build();
     }

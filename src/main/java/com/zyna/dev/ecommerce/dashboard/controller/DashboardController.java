@@ -22,7 +22,7 @@ public class DashboardController {
     // REVENUE
     @GetMapping("/revenue")
     @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN')")
-    public ApiResponse<List<RevenueStatResponse>> getRevenueStats(
+    public ApiResponse<RevenueDashboardResponse> getRevenueStats(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {

@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class UserStatResponse {
     private long totalUsers;
     private long activeUsers;
-    private long lockedUsers; // or DISABLED
+    private long disabledUsers; // Matches Status.DISABLED
     private long pendingUsers;
     private long newUsersToday;
 }

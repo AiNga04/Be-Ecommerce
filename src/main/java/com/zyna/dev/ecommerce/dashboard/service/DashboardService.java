@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface DashboardService {
-    List<RevenueStatResponse> getRevenueStats(LocalDate from, LocalDate to);
+    RevenueDashboardResponse getRevenueStats(LocalDate from, LocalDate to);
 
     OrderStatResponse getOrderStats();
 
