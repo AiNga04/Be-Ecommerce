@@ -19,13 +19,14 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
-    // PUBLIC: lấy danh sách category active để filter product
+    // PUBLIC: lấy danh sách category active để filter product (hoặc ADMIN lấy tất cả)
     @GetMapping
     public ApiResponse<java.util.List<CategoryResponse>> list(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "true") boolean activeOnly
     ) {
-        Page<CategoryResponse> data = categoryService.list(page, size);
+        Page<CategoryResponse> data = categoryService.list(page, size, activeOnly);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Fetched categories successfully!",

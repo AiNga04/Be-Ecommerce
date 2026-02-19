@@ -11,4 +11,5 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     Optional<Category> findByCodeAndIsActiveTrue(String code);
 
+    org.springframework.data.domain.Page<Category> findAllByIsActiveTrue(org.springframework.data.domain.Pageable pageable);
 }

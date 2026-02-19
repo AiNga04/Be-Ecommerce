@@ -52,6 +52,11 @@ public class CategoryServiceImpl implements CategoryService {
     public void delete(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Category not found!"));
+                
+        // Check if category has products
+        if (productRepository.existsByCategoryId(id)) {
+            throw new ApplicationException(HttpStatus.CONFLICT, "Cannot delete category containing products. Please move or delete products first.");
+        }
 
         // soft delete: inactive
         category.setIsActive(false);
@@ -67,10 +72,15 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Page<CategoryResponse> list(int page, int size) {
-        Page<Category> pageData = categoryRepository.findAll(
-                PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"))
-        );
+    public Page<CategoryResponse> list(int page, int size, boolean onlyActive) {
+        Page<Category> pageData;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+        
+        if (onlyActive) {
+            pageData = categoryRepository.findAllByIsActiveTrue(pageable);
+        } else {
+            pageData = categoryRepository.findAll(pageable);
+        }
 
         // map từng entity -> response bằng mapper
         return pageData.map(categoryMapper::toResponse);

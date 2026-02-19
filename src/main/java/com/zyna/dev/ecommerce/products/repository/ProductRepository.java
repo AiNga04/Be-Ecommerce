@@ -23,4 +23,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
            where p.id = :id and p.isActive = true
            """)
     Optional<Product> findActiveByIdWithGallery(@Param("id") Long id);
+
+    boolean existsByCategoryId(Long categoryId);
 }
