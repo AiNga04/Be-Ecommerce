@@ -19,4 +19,16 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     boolean existsPurchased(@Param("product") Product product,
                             @Param("user") User user,
                             @Param("excludedStatus") OrderStatus excludedStatus);
+
+    @Query("SELECT new com.zyna.dev.ecommerce.dashboard.dto.TopProductResponse(" +
+            "oi.product.id, oi.product.name, oi.product.imageUrl, " +
+            "CAST(SUM(oi.quantity) AS long), SUM(oi.subtotal)) " +
+            "FROM OrderItem oi " +
+            "WHERE oi.order.status IN :statuses " +
+            "GROUP BY oi.product.id, oi.product.name, oi.product.imageUrl " +
+            "ORDER BY SUM(oi.quantity) DESC")
+    java.util.List<com.zyna.dev.ecommerce.dashboard.dto.TopProductResponse> findTopSellingProducts(
+            @Param("statuses") java.util.List<OrderStatus> statuses,
+            org.springframework.data.domain.Pageable pageable
+    );
 }

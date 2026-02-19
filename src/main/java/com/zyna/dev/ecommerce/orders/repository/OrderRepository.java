@@ -29,5 +29,19 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                              @Param("shipmentStatus") ShipmentStatus shipmentStatus,
                              Pageable pageable);
 
-    Optional<Order> findByCode(String code);
+    java.util.Optional<Order> findByCode(String code);
+
+    long countByStatus(OrderStatus status);
+
+    @Query("SELECT new com.zyna.dev.ecommerce.dashboard.dto.RevenueStatResponse(" +
+           "CAST(function('to_char', o.createdAt, 'YYYY-MM-DD') AS string), SUM(o.totalPrice)) " +
+           "FROM Order o " +
+           "WHERE o.status IN :statuses " +
+           "AND o.createdAt BETWEEN :startDate AND :endDate " +
+           "GROUP BY function('to_char', o.createdAt, 'YYYY-MM-DD') " +
+           "ORDER BY function('to_char', o.createdAt, 'YYYY-MM-DD') ASC")
+    java.util.List<com.zyna.dev.ecommerce.dashboard.dto.RevenueStatResponse> getRevenueStats(
+            @Param("statuses") java.util.List<OrderStatus> statuses,
+            @Param("startDate") java.time.LocalDateTime startDate, 
+            @Param("endDate") java.time.LocalDateTime endDate);
 }

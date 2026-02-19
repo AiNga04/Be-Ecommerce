@@ -40,4 +40,8 @@ public interface UserRepository extends JpaRepository<User, Long>, org.springfra
     List<User> findByBirthDayMonthDay(int month, int day);
 
     List<User> findAllByRoles_CodeIgnoreCaseAndIsDeletedFalse(String roleCode);
+
+    long countByStatus(com.zyna.dev.ecommerce.common.enums.Status status);
+    long countByStatusNot(com.zyna.dev.ecommerce.common.enums.Status status);
+    long countByCreatedAtBetween(java.time.LocalDateTime start, java.time.LocalDateTime end);
 }

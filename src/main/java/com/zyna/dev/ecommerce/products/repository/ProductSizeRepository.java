@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface ProductSizeRepository extends JpaRepository<ProductSize, Long> {
     Optional<ProductSize> findByProductAndSize(Product product, Size size);
     Optional<ProductSize> findByProductIdAndSizeId(Long productId, Long sizeId);
+
+    java.util.List<ProductSize> findByQuantityLessThan(Integer quantity);
 }
