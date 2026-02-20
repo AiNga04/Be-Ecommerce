@@ -17,5 +17,5 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     @org.springframework.data.jpa.repository.Query("SELECT c FROM Category c WHERE " +
             "(:keyword IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(c.code) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND (:activeOnly = false OR c.isActive = true)")
-    org.springframework.data.domain.Page<Category> search(@Param("keyword") String keyword, @Param("activeOnly") boolean activeOnly, org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<Category> search(@Param("keyword") String keyword, @   Param("activeOnly") boolean activeOnly, org.springframework.data.domain.Pageable pageable);
 }
