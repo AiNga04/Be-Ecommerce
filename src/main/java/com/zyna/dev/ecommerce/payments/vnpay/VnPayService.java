@@ -139,10 +139,6 @@ public class VnPayService {
                     paidAmount != null ? paidAmount : order.getTotalPrice(),
                     vnpParams.toString()
             );
-
-            if (order.getStatus() == OrderStatus.PENDING) {
-                order.setStatus(OrderStatus.CONFIRMED);
-            }
         } else {
             order.markPaymentFailed("VNPAY", rspCode, vnpParams.toString());
         }

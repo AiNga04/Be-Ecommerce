@@ -42,17 +42,18 @@ public class ShipmentServiceImpl implements ShipmentService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Order not found"));
 
-        if (order.getStatus() == OrderStatus.PENDING) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Order must be confirmed before assignment");
-        }
-        if (order.getStatus() == OrderStatus.CANCELED) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Order is no longer eligible for shipping assignment");
+        if (order.getStatus() != OrderStatus.CONFIRMED) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Đơn hàng phải ở trạng thái CONFIRMED (Đã xác nhận) trước khi gán người giao hàng");
         }
 
-        Shipment shipment = getOrCreateShipment(order);
-        if (shipment.getStatus() == ShipmentStatus.DELIVERED
-                || shipment.getStatus() == ShipmentStatus.RETURNED) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipment is already closed");
+        Shipment shipment = shipmentRepository.findByOrder(order).orElse(null);
+        if (shipment == null) {
+            shipment = Shipment.builder()
+                .order(order)
+                .status(ShipmentStatus.PENDING_ASSIGN)
+                .build();
+        } else if (shipment.getShipper() != null) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipment đã được gán Shipper");
         }
 
         User shipper = userRepository.findById(shipperId)
@@ -60,6 +61,10 @@ public class ShipmentServiceImpl implements ShipmentService {
 
         if (!isShipper(shipper)) {
             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Provided user is not a shipper");
+        }
+
+        if (shipper.getStatus() != com.zyna.dev.ecommerce.common.enums.Status.ACTIVE) {
+             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Provided shipper is inactive");
         }
 
         shipment.setShipper(shipper);
@@ -72,6 +77,10 @@ public class ShipmentServiceImpl implements ShipmentService {
         shipment.setCarrier(carrier);
         shipment.setTrackingCode(carrier + "-" + String.format("%06d", order.getId()));
 
+        // Chuyển order sang SHIPPING vì đã có người đi giao
+        order.setStatus(OrderStatus.SHIPPING);
+        order.setShippedAt(LocalDateTime.now());
+        
         syncOrderShipping(order, shipment);
         shipment = shipmentRepository.save(shipment);
         orderRepository.save(order);
@@ -91,9 +100,6 @@ public class ShipmentServiceImpl implements ShipmentService {
         ship.setPickedUpAt(now);
 
         Order order = ship.getOrder();
-        if (order.getStatus() == OrderStatus.PENDING) {
-            order.setStatus(OrderStatus.CONFIRMED);
-        }
         order.setShippedAt(now);
         syncOrderShipping(order, ship);
 
@@ -113,9 +119,6 @@ public class ShipmentServiceImpl implements ShipmentService {
 
         Order order = ship.getOrder();
         if (order.getStatus() != OrderStatus.CANCELED && order.getShippedAt() == null) {
-            if (order.getStatus() == OrderStatus.PENDING) {
-                order.setStatus(OrderStatus.CONFIRMED);
-            }
             order.setShippedAt(now);
         }
         syncOrderShipping(order, ship);
@@ -162,9 +165,6 @@ public class ShipmentServiceImpl implements ShipmentService {
         ship.setNote(reason);
 
         Order order = ship.getOrder();
-        if (order.getStatus() == OrderStatus.PENDING) {
-            order.setStatus(OrderStatus.CONFIRMED);
-        }
         if (order.getShippedAt() == null) {
             order.setShippedAt(now);
         }

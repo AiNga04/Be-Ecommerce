@@ -296,8 +296,6 @@ public class OrderServiceImpl implements OrderService {
         // 5. Lưu order
         order = orderRepository.save(order);
 
-        createShipmentIfMissing(order);
-
         // 6. Notification
         List<java.util.Map<String, Object>> itemDetails = orderItems.stream().map(item -> java.util.Map.<String, Object>of(
                 "productName", item.getProduct().getName(),
@@ -334,26 +332,39 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Order not found"));
 
+        OrderStatus currentStatus = order.getStatus();
+
+        // 1. Validate status transition
+        boolean validTransition = false;
+        if (currentStatus == OrderStatus.PENDING) {
+            validTransition = (newStatus == OrderStatus.CONFIRMED || newStatus == OrderStatus.CANCELED);
+        }
+
+        if (!validTransition) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, 
+                "Chỉ được chuyển trạng thái từ PENDING sang CONFIRMED hoặc CANCELED. Các trạng thái khác sẽ do luồng giao nhận xử lý.");
+        }
+
         order.setStatus(newStatus);
 
         LocalDateTime now = LocalDateTime.now();
         if (newStatus == OrderStatus.CONFIRMED) {
             order.setConfirmedAt(now);
+        } else if (newStatus == OrderStatus.SHIPPING) {
+            order.setShippedAt(now);
+        } else if (newStatus == OrderStatus.DELIVERED) {
+            order.setDeliveredAt(now);
         } else if (newStatus == OrderStatus.CANCELED) {
             order.setCanceledAt(now);
         }
 
-        Shipment shipment = null;
-        if (newStatus == OrderStatus.CONFIRMED || newStatus == OrderStatus.CANCELED) {
-            shipment = ensureShipmentForOrder(order);
-            if (newStatus == OrderStatus.CONFIRMED && shipment.getStatus() == null) {
-                shipment.setStatus(ShipmentStatus.PENDING_ASSIGN);
-            }
-            if (newStatus == OrderStatus.CANCELED) {
-                shipment.setStatus(ShipmentStatus.RETURNED);
-                shipment.setReturnedAt(now);
-            }
-            shipmentRepository.save(shipment);
+        // 2. Handle Shipment status when CANCELED
+        if (newStatus == OrderStatus.CANCELED) {
+             shipmentRepository.findByOrder(order).ifPresent(shipment -> {
+                 shipment.setStatus(ShipmentStatus.RETURNED);
+                 shipment.setReturnedAt(now);
+                 shipmentRepository.save(shipment);
+             });
         }
 
         order = orderRepository.save(order);
@@ -569,8 +580,6 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order = orderRepository.save(order);
-
-        createShipmentIfMissing(order);
 
         // xoá chỉ các cart item đã checkout
         cartItemRepository.deleteAll(selectedItems);
