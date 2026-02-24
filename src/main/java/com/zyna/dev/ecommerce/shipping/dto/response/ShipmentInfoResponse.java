@@ -21,6 +21,16 @@ public class ShipmentInfoResponse {
     private String carrier;
     private String trackingCode;
 
+    // ---- Shipper Info ----
+    private Long shipperId;
+    private String shipperName;
+    private String shipperPhone;
+
+    // ---- Order Shipping Address ----
+    private String shippingName;
+    private String shippingPhone;
+    private String shippingAddress;
+
     private String note;
     private Integer attempts;
     private Boolean returnRequested;

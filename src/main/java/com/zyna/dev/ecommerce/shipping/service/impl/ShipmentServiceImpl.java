@@ -94,6 +94,7 @@ public class ShipmentServiceImpl implements ShipmentService {
     @Transactional
     public ShipmentInfoResponse markPickedUp(Long shipmentId) {
         Shipment ship = getShipmentForCurrentShipper(shipmentId);
+        validateTransition(ship.getStatus(), ShipmentStatus.PICKED_UP);
 
         LocalDateTime now = LocalDateTime.now();
         ship.setStatus(ShipmentStatus.PICKED_UP);
@@ -113,6 +114,7 @@ public class ShipmentServiceImpl implements ShipmentService {
     @Transactional
     public ShipmentInfoResponse markOutForDelivery(Long shipmentId) {
         Shipment ship = getShipmentForCurrentShipper(shipmentId);
+        validateTransition(ship.getStatus(), ShipmentStatus.IN_DELIVERY);
 
         LocalDateTime now = LocalDateTime.now();
         ship.setStatus(ShipmentStatus.IN_DELIVERY);
@@ -133,12 +135,14 @@ public class ShipmentServiceImpl implements ShipmentService {
     @Transactional
     public ShipmentInfoResponse markDelivered(Long shipmentId) {
         Shipment ship = getShipmentForCurrentShipper(shipmentId);
+        validateTransition(ship.getStatus(), ShipmentStatus.DELIVERED);
 
         LocalDateTime now = LocalDateTime.now();
         ship.setStatus(ShipmentStatus.DELIVERED);
         ship.setDeliveredAt(now);
 
         Order order = ship.getOrder();
+        order.setStatus(OrderStatus.DELIVERED);
         order.setDeliveredAt(now);
         syncOrderShipping(order, ship);
 
@@ -157,6 +161,7 @@ public class ShipmentServiceImpl implements ShipmentService {
     @Transactional
     public ShipmentInfoResponse markFailed(Long shipmentId, String reason) {
         Shipment ship = getShipmentForCurrentShipper(shipmentId);
+        validateTransition(ship.getStatus(), ShipmentStatus.FAILED);
 
         LocalDateTime now = LocalDateTime.now();
         ship.setStatus(ShipmentStatus.FAILED);
@@ -180,6 +185,7 @@ public class ShipmentServiceImpl implements ShipmentService {
     @Transactional
     public ShipmentInfoResponse markReturned(Long shipmentId, String reason) {
         Shipment ship = getShipmentForCurrentShipper(shipmentId);
+        validateTransition(ship.getStatus(), ShipmentStatus.RETURNED);
 
         LocalDateTime now = LocalDateTime.now();
         ship.setStatus(ShipmentStatus.RETURNED);
@@ -270,6 +276,37 @@ public class ShipmentServiceImpl implements ShipmentService {
                 .map(this::toResponse);
     }
 
+    // ================= ADMIN =================
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ShipmentInfoResponse> getAllShipments(int page, int size, ShipmentStatus status) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        Page<Shipment> shipments;
+        if (status != null) {
+            shipments = shipmentRepository.findByStatus(status, pageable);
+        } else {
+            shipments = shipmentRepository.findAll(pageable);
+        }
+        return shipments.map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ShipmentInfoResponse getShipmentById(Long shipmentId) {
+        Shipment shipment = shipmentRepository.findById(shipmentId)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Shipment not found"));
+        return toResponse(shipment);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ShipmentInfoResponse getShipmentByOrderId(Long orderId) {
+        Shipment shipment = shipmentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Shipment not found for order " + orderId));
+        return toResponse(shipment);
+    }
+
     // ================= Helper =================
 
     private Shipment getShipmentForCurrentShipper(Long shipmentId) {
@@ -320,14 +357,46 @@ public class ShipmentServiceImpl implements ShipmentService {
                 .anyMatch(r -> r.getCode() != null && "SHIPPER".equalsIgnoreCase(r.getCode().trim()));
     }
 
+    /**
+     * Validate shipment status transition:
+     *   ASSIGNED      → PICKED_UP
+     *   PICKED_UP     → IN_DELIVERY
+     *   IN_DELIVERY   → DELIVERED, FAILED
+     *   PICKED_UP     → FAILED
+     *   FAILED        → RETURNED
+     *   DELIVERED     → RETURNED (user return request approved)
+     */
+    private void validateTransition(ShipmentStatus current, ShipmentStatus target) {
+        boolean valid = switch (target) {
+            case PICKED_UP     -> current == ShipmentStatus.ASSIGNED;
+            case IN_DELIVERY   -> current == ShipmentStatus.PICKED_UP;
+            case DELIVERED      -> current == ShipmentStatus.IN_DELIVERY;
+            case FAILED         -> current == ShipmentStatus.PICKED_UP || current == ShipmentStatus.IN_DELIVERY;
+            case RETURNED       -> current == ShipmentStatus.FAILED || current == ShipmentStatus.DELIVERED;
+            default             -> false;
+        };
+        if (!valid) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST,
+                    "Không thể chuyển trạng thái từ " + current + " sang " + target);
+        }
+    }
+
     private ShipmentInfoResponse toResponse(Shipment ship) {
+        User shipper = ship.getShipper();
+        Order order = ship.getOrder();
         return ShipmentInfoResponse.builder()
                 .shipmentId(ship.getId())
-                .orderId(ship.getOrder().getId())
-                .orderCode(ship.getOrder().getCode())
+                .orderId(order.getId())
+                .orderCode(order.getCode())
                 .status(ship.getStatus())
                 .carrier(ship.getCarrier())
                 .trackingCode(ship.getTrackingCode())
+                .shipperId(shipper != null ? shipper.getId() : null)
+                .shipperName(shipper != null ? shipper.getFirstName() + " " + shipper.getLastName() : null)
+                .shipperPhone(shipper != null ? shipper.getPhone() : null)
+                .shippingName(order.getShippingName())
+                .shippingPhone(order.getShippingPhone())
+                .shippingAddress(order.getShippingAddress())
                 .attempts(ship.getAttempts())
                 .note(ship.getNote())
                 .returnRequested(ship.isReturnRequested())

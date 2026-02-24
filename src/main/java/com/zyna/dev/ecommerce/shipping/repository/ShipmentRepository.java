@@ -21,4 +21,8 @@ public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
     Page<Shipment> findByShipper(User shipper, Pageable pageable);
 
     Page<Shipment> findByShipperAndStatusNotIn(User shipper, java.util.Collection<com.zyna.dev.ecommerce.common.enums.ShipmentStatus> statuses, Pageable pageable);
+
+    Page<Shipment> findByStatus(com.zyna.dev.ecommerce.common.enums.ShipmentStatus status, Pageable pageable);
+
+    Optional<Shipment> findByOrderId(Long orderId);
 }

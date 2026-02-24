@@ -142,6 +142,55 @@ public class ShipmentController {
         );
     }
 
+    // ======================== ADMIN / STAFF ========================
+
+    /**
+     * Danh sách tất cả shipment (phân trang, lọc theo status)
+     */
+    @GetMapping("/admin")
+    @PreAuthorize("hasAuthority('ORDER_MANAGE')")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<List<ShipmentInfoResponse>> getAllShipments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) com.zyna.dev.ecommerce.common.enums.ShipmentStatus status
+    ) {
+        Page<ShipmentInfoResponse> result = shipmentService.getAllShipments(page, size, status);
+        return ApiResponse.successfulPageResponse(
+                HttpStatus.OK.value(),
+                "Get all shipments successfully",
+                result
+        );
+    }
+
+    /**
+     * Chi tiết 1 shipment theo ID
+     */
+    @GetMapping("/admin/{shipmentId}")
+    @PreAuthorize("hasAuthority('ORDER_MANAGE')")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<ShipmentInfoResponse> getShipmentById(@PathVariable Long shipmentId) {
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Get shipment successfully",
+                shipmentService.getShipmentById(shipmentId)
+        );
+    }
+
+    /**
+     * Shipment theo orderId
+     */
+    @GetMapping("/admin/order/{orderId}")
+    @PreAuthorize("hasAuthority('ORDER_MANAGE')")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<ShipmentInfoResponse> getShipmentByOrderId(@PathVariable Long orderId) {
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Get shipment by order successfully",
+                shipmentService.getShipmentByOrderId(orderId)
+        );
+    }
+
     // SHIPPER xem list shipment của mình
     @GetMapping("/my")
     @PreAuthorize("hasAuthority('SHIPPING_MANAGE')")

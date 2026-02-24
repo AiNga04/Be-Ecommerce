@@ -350,6 +350,8 @@ public class OrderServiceImpl implements OrderService {
         LocalDateTime now = LocalDateTime.now();
         if (newStatus == OrderStatus.CONFIRMED) {
             order.setConfirmedAt(now);
+            // Tự động tạo Shipment khi order được xác nhận
+            createShipmentIfMissing(order);
         } else if (newStatus == OrderStatus.SHIPPING) {
             order.setShippedAt(now);
         } else if (newStatus == OrderStatus.DELIVERED) {

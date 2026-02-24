@@ -11,6 +11,7 @@ import java.util.List;
 import com.zyna.dev.ecommerce.common.enums.OrderStatus;
 import com.zyna.dev.ecommerce.common.enums.PaymentMethod;
 import com.zyna.dev.ecommerce.common.enums.PaymentStatus;
+import com.zyna.dev.ecommerce.common.enums.ShipmentStatus;
 
 @Getter
 @Setter
@@ -34,6 +35,13 @@ public class OrderResponse {
     private String shippingAddress;
     private String shippingTrackingCode;
     private String shippingCarrier;
+
+    // ---- Shipment Info ----
+    private Long shipmentId;
+    private ShipmentStatus shipmentStatus;
+    private String shipperName;
+    private String shipperPhone;
+    private Boolean returnRequested;
 
     private LocalDateTime createdAt;
     private LocalDateTime confirmedAt;

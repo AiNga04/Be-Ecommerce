@@ -4,15 +4,25 @@ import com.zyna.dev.ecommerce.orders.dto.response.OrderItemResponse;
 import com.zyna.dev.ecommerce.orders.dto.response.OrderResponse;
 import com.zyna.dev.ecommerce.orders.models.Order;
 import com.zyna.dev.ecommerce.orders.models.OrderItem;
+import com.zyna.dev.ecommerce.shipping.models.Shipment;
+import com.zyna.dev.ecommerce.shipping.repository.ShipmentRepository;
+import com.zyna.dev.ecommerce.users.models.User;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class OrderMapper {
+
+    private final ShipmentRepository shipmentRepository;
 
     public OrderResponse toOrderResponse(Order order) {
         List<OrderItemResponse> items = toOrderItemResponses(order.getItems());
+
+        Shipment shipment = shipmentRepository.findByOrder(order).orElse(null);
+        User shipper = shipment != null ? shipment.getShipper() : null;
 
         return OrderResponse.builder()
                 .id(order.getId())
@@ -31,6 +41,12 @@ public class OrderMapper {
                 .shippingAddress(order.getShippingAddress())
                 .shippingTrackingCode(order.getShippingTrackingCode())
                 .shippingCarrier(order.getShippingCarrier())
+                // Shipment info
+                .shipmentId(shipment != null ? shipment.getId() : null)
+                .shipmentStatus(shipment != null ? shipment.getStatus() : null)
+                .shipperName(shipper != null ? shipper.getFirstName() + " " + shipper.getLastName() : null)
+                .shipperPhone(shipper != null ? shipper.getPhone() : null)
+                .returnRequested(shipment != null ? shipment.isReturnRequested() : null)
                 .createdAt(order.getCreatedAt())
                 .confirmedAt(order.getConfirmedAt())
                 .shippedAt(order.getShippedAt())
@@ -58,3 +74,4 @@ public class OrderMapper {
                 .build();
     }
 }
+
