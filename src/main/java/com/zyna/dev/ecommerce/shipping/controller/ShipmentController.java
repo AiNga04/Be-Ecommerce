@@ -191,15 +191,16 @@ public class ShipmentController {
         );
     }
 
-    // SHIPPER xem list shipment của mình (chưa hoàn tất)
+    // SHIPPER xem list shipment của mình (mặc định chưa hoàn tất, hoặc theo status)
     @GetMapping("/my")
     @PreAuthorize("hasAuthority('SHIPPING_MANAGE')")
     @ResponseStatus(HttpStatus.OK)
     public ApiResponse<List<ShipmentInfoResponse>> getMyShipments(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) com.zyna.dev.ecommerce.common.enums.ShipmentStatus status
     ) {
-        Page<ShipmentInfoResponse> result = shipmentService.getMyShipments(page, size);
+        Page<ShipmentInfoResponse> result = shipmentService.getMyShipments(page, size, status);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get my shipments successfully",
@@ -225,9 +226,10 @@ public class ShipmentController {
     @ResponseStatus(HttpStatus.OK)
     public ApiResponse<List<ShipmentInfoResponse>> getMyHistory(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) com.zyna.dev.ecommerce.common.enums.ShipmentStatus status
     ) {
-        Page<ShipmentInfoResponse> result = shipmentService.getMyHistory(page, size);
+        Page<ShipmentInfoResponse> result = shipmentService.getMyHistory(page, size, status);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get shipment history successfully",

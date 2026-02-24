@@ -164,15 +164,32 @@ public class ShipmentServiceImpl implements ShipmentService {
         validateTransition(ship.getStatus(), ShipmentStatus.FAILED);
 
         LocalDateTime now = LocalDateTime.now();
-        ship.setStatus(ShipmentStatus.FAILED);
-        ship.setFailedAt(now);
-        ship.setAttempts((ship.getAttempts() == null ? 0 : ship.getAttempts()) + 1);
+        int currentAttempts = (ship.getAttempts() == null ? 0 : ship.getAttempts()) + 1;
+        ship.setAttempts(currentAttempts);
         ship.setNote(reason);
 
         Order order = ship.getOrder();
         if (order.getShippedAt() == null) {
             order.setShippedAt(now);
         }
+
+        if (currentAttempts >= 3) {
+            // Quá 3 lần giao thất bại -> Tự động CHUYỂN HOÀN (RETURNED)
+            ship.setStatus(ShipmentStatus.RETURNED);
+            ship.setReturnedAt(now);
+            ship.setNote(reason + " (Tự động chuyển hoàn do giao thất bại " + currentAttempts + " lần)");
+            
+            order.setStatus(OrderStatus.CANCELED);
+            order.setCanceledAt(now);
+            
+            // Xóa logic failed ở các fields nếu trước đó có gọi để đảm bảo chuẩn
+            ship.setFailedAt(now); 
+        } else {
+            // Chưa tới 3 lần -> Lưu trạng thái FAILED
+            ship.setStatus(ShipmentStatus.FAILED);
+            ship.setFailedAt(now);
+        }
+
         syncOrderShipping(order, ship);
 
         shipmentRepository.save(ship);
@@ -267,9 +284,15 @@ public class ShipmentServiceImpl implements ShipmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ShipmentInfoResponse> getMyShipments(int page, int size) {
+    public Page<ShipmentInfoResponse> getMyShipments(int page, int size, ShipmentStatus status) {
         User current = getCurrentUser();
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "assignedAt").and(Sort.by("id")));
+        
+        if (status != null) {
+            return shipmentRepository.findByShipperAndStatus(current, status, pageable)
+                    .map(this::toResponse);
+        }
+
         // Mặc định chỉ trả các shipment chưa hoàn tất (không gồm RETURNED/DELIVERED)
         var excluded = java.util.List.of(ShipmentStatus.RETURNED, ShipmentStatus.DELIVERED);
         return shipmentRepository.findByShipperAndStatusNotIn(current, excluded, pageable)
@@ -303,9 +326,15 @@ public class ShipmentServiceImpl implements ShipmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ShipmentInfoResponse> getMyHistory(int page, int size) {
+    public Page<ShipmentInfoResponse> getMyHistory(int page, int size, ShipmentStatus status) {
         User current = getCurrentUser();
-        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt").and(Sort.by("id")));
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        
+        if (status != null) {
+            return shipmentRepository.findByShipperAndStatus(current, status, pageable)
+                    .map(this::toResponse);
+        }
+
         // Lịch sử = Đã có kết quả cuối cùng ở lần giao này
         var historyStatuses = java.util.List.of(ShipmentStatus.DELIVERED, ShipmentStatus.FAILED, ShipmentStatus.RETURNED);
         return shipmentRepository.findByShipperAndStatusIn(current, historyStatuses, pageable)
@@ -405,10 +434,10 @@ public class ShipmentServiceImpl implements ShipmentService {
     private void validateTransition(ShipmentStatus current, ShipmentStatus target) {
         boolean valid = switch (target) {
             case PICKED_UP     -> current == ShipmentStatus.ASSIGNED;
-            case IN_DELIVERY   -> current == ShipmentStatus.PICKED_UP;
+            case IN_DELIVERY   -> current == ShipmentStatus.PICKED_UP || current == ShipmentStatus.FAILED; // Cho phép giao lại từ FAILED (số lần < 3)
             case DELIVERED      -> current == ShipmentStatus.IN_DELIVERY;
             case FAILED         -> current == ShipmentStatus.PICKED_UP || current == ShipmentStatus.IN_DELIVERY;
-            case RETURNED       -> current == ShipmentStatus.FAILED || current == ShipmentStatus.DELIVERED;
+            case RETURNED       -> current == ShipmentStatus.FAILED || current == ShipmentStatus.DELIVERED || current == ShipmentStatus.PICKED_UP || current == ShipmentStatus.IN_DELIVERY; // Giao ko được (lần 3) tự nhảy RETURNED
             default             -> false;
         };
         if (!valid) {
