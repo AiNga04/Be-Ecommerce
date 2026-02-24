@@ -367,6 +367,7 @@ public class OrderServiceImpl implements OrderService {
                  shipment.setReturnedAt(now);
                  shipmentRepository.save(shipment);
              });
+             restoreStock(order);
         }
 
         order = orderRepository.save(order);
@@ -713,5 +714,18 @@ public class OrderServiceImpl implements OrderService {
                         "stock", stock
                 )
         );
+    }
+
+    private void restoreStock(Order order) {
+        if (order.getItems() == null) return;
+        for (OrderItem item : order.getItems()) {
+            if (item.getSize() == null) continue;
+            sizeRepository.findByName(item.getSize()).ifPresent(sizeObj -> {
+                productSizeRepository.findByProductAndSize(item.getProduct(), sizeObj).ifPresent(ps -> {
+                    ps.setQuantity(ps.getQuantity() + item.getQuantity());
+                    productSizeRepository.save(ps);
+                });
+            });
+        }
     }
 }

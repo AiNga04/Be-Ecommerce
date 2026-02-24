@@ -13,6 +13,9 @@ import com.zyna.dev.ecommerce.shipping.repository.ShipmentRepository;
 import com.zyna.dev.ecommerce.shipping.service.interfaces.ShipmentService;
 import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.users.UserRepository;
+import com.zyna.dev.ecommerce.products.repository.SizeRepository;
+import com.zyna.dev.ecommerce.products.repository.ProductSizeRepository;
+import com.zyna.dev.ecommerce.orders.models.OrderItem;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
@@ -33,6 +36,8 @@ public class ShipmentServiceImpl implements ShipmentService {
     private final ShipmentRepository shipmentRepository;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    private final SizeRepository sizeRepository;
+    private final ProductSizeRepository productSizeRepository;
 
     // ================= ADMIN / STAFF =================
 
@@ -181,6 +186,7 @@ public class ShipmentServiceImpl implements ShipmentService {
             
             order.setStatus(OrderStatus.CANCELED);
             order.setCanceledAt(now);
+            restoreStock(order);
             
             // Xóa logic failed ở các fields nếu trước đó có gọi để đảm bảo chuẩn
             ship.setFailedAt(now); 
@@ -213,6 +219,7 @@ public class ShipmentServiceImpl implements ShipmentService {
         Order order = ship.getOrder();
         order.setStatus(OrderStatus.CANCELED);
         order.setCanceledAt(now);
+        restoreStock(order);
         syncOrderShipping(order, ship);
 
         shipmentRepository.save(ship);
@@ -271,6 +278,7 @@ public class ShipmentServiceImpl implements ShipmentService {
         Order order = ship.getOrder();
         order.setStatus(OrderStatus.CANCELED);
         order.setCanceledAt(now);
+        restoreStock(order);
         if (order.getPaymentStatus() == PaymentStatus.PAID) {
             order.setPaymentStatus(PaymentStatus.REFUNDED);
         }
@@ -471,5 +479,18 @@ public class ShipmentServiceImpl implements ShipmentService {
                 .failedAt(ship.getFailedAt())
                 .returnedAt(ship.getReturnedAt())
                 .build();
+    }
+
+    private void restoreStock(Order order) {
+        if (order.getItems() == null) return;
+        for (OrderItem item : order.getItems()) {
+            if (item.getSize() == null) continue;
+            sizeRepository.findByName(item.getSize()).ifPresent(sizeObj -> {
+                productSizeRepository.findByProductAndSize(item.getProduct(), sizeObj).ifPresent(ps -> {
+                    ps.setQuantity(ps.getQuantity() + item.getQuantity());
+                    productSizeRepository.save(ps);
+                });
+            });
+        }
     }
 }
