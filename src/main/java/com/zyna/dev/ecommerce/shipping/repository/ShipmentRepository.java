@@ -44,4 +44,14 @@ public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
            "WHERE s.shipper = :shipper AND s.status = 'DELIVERED' " +
            "AND o.paymentMethod = 'CASH_ON_DELIVERY' AND s.deliveredAt >= :startOfDay")
     java.math.BigDecimal sumCodCollectedSince(@org.springframework.data.repository.query.Param("shipper") User shipper, @org.springframework.data.repository.query.Param("startOfDay") java.time.LocalDateTime startOfDay);
+
+    // LIFETIME
+    long countByShipperAndStatus(User shipper, com.zyna.dev.ecommerce.common.enums.ShipmentStatus status);
+
+    // 7 DAYS CHART DATA
+    @org.springframework.data.jpa.repository.Query("SELECT s FROM Shipment s WHERE s.shipper = :shipper AND s.status IN :statuses AND " +
+           "(s.deliveredAt >= :since OR s.failedAt >= :since OR s.returnedAt >= :since)")
+    List<Shipment> findRecentHistoryByShipper(@org.springframework.data.repository.query.Param("shipper") User shipper, 
+                                              @org.springframework.data.repository.query.Param("statuses") java.util.Collection<com.zyna.dev.ecommerce.common.enums.ShipmentStatus> statuses, 
+                                              @org.springframework.data.repository.query.Param("since") java.time.LocalDateTime since);
 }

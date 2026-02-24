@@ -323,13 +323,67 @@ public class ShipmentServiceImpl implements ShipmentService {
             codCollected = java.math.BigDecimal.ZERO;
         }
 
+        long totalDelivered = shipmentRepository.countByShipperAndStatus(current, ShipmentStatus.DELIVERED);
+        long totalFailed = shipmentRepository.countByShipperAndStatus(current, ShipmentStatus.FAILED);
+        long totalReturned = shipmentRepository.countByShipperAndStatus(current, ShipmentStatus.RETURNED);
+
         return com.zyna.dev.ecommerce.shipping.dto.response.ShipperDashboardStatsResponse.builder()
                 .pendingPickups(pendingPickups)
                 .inProgress(inProgress)
                 .deliveredToday(deliveredToday)
                 .failedToday(failedToday)
                 .codCollectedToday(codCollected)
+                .totalDelivered(totalDelivered)
+                .totalFailed(totalFailed)
+                .totalReturned(totalReturned)
+                .chartData(buildChartData(current))
                 .build();
+    }
+
+    private java.util.List<com.zyna.dev.ecommerce.shipping.dto.response.ShipperChartData> buildChartData(User shipper) {
+        java.util.List<com.zyna.dev.ecommerce.shipping.dto.response.ShipperChartData> result = new java.util.ArrayList<>();
+        LocalDateTime sevenDaysAgo = java.time.LocalDate.now().minusDays(6).atStartOfDay();
+
+        java.util.List<Shipment> recentShipments = shipmentRepository.findRecentHistoryByShipper(
+                shipper,
+                java.util.List.of(ShipmentStatus.DELIVERED, ShipmentStatus.FAILED, ShipmentStatus.RETURNED),
+                sevenDaysAgo
+        );
+
+        for (int i = 6; i >= 0; i--) {
+            java.time.LocalDate targetDate = java.time.LocalDate.now().minusDays(i);
+            String dateString = targetDate.toString();
+
+            long deliveredCount = 0;
+            long failedCount = 0;
+            long returnedCount = 0;
+            java.math.BigDecimal codCollected = java.math.BigDecimal.ZERO;
+
+            for (Shipment s : recentShipments) {
+                if (s.getStatus() == ShipmentStatus.DELIVERED && s.getDeliveredAt() != null && s.getDeliveredAt().toLocalDate().equals(targetDate)) {
+                    deliveredCount++;
+                    if (s.getOrder() != null && "CASH_ON_DELIVERY".equals(s.getOrder().getPaymentMethod().name())) {
+                        codCollected = codCollected.add(s.getOrder().getTotalPrice());
+                    }
+                }
+                if (s.getStatus() == ShipmentStatus.FAILED && s.getFailedAt() != null && s.getFailedAt().toLocalDate().equals(targetDate)) {
+                    failedCount++;
+                }
+                if (s.getStatus() == ShipmentStatus.RETURNED && s.getReturnedAt() != null && s.getReturnedAt().toLocalDate().equals(targetDate)) {
+                    returnedCount++;
+                }
+            }
+
+            result.add(com.zyna.dev.ecommerce.shipping.dto.response.ShipperChartData.builder()
+                    .date(dateString)
+                    .deliveredCount(deliveredCount)
+                    .failedCount(failedCount)
+                    .returnedCount(returnedCount)
+                    .codCollected(codCollected)
+                    .build());
+        }
+
+        return result;
     }
 
     @Override
