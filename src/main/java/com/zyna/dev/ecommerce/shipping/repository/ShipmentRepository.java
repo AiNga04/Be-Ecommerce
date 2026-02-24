@@ -25,7 +25,15 @@ public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
     Page<Shipment> findByShipperAndStatus(User shipper, com.zyna.dev.ecommerce.common.enums.ShipmentStatus status, Pageable pageable);
 
     // ADMIN
-    Page<Shipment> findByStatus(com.zyna.dev.ecommerce.common.enums.ShipmentStatus status, Pageable pageable);
+    @org.springframework.data.jpa.repository.Query("SELECT s FROM Shipment s WHERE " +
+           "(:status IS NULL OR s.status = :status) AND " +
+           "(:shipperId IS NULL OR s.shipper.id = :shipperId) AND " +
+           "(:returnRequested IS NULL OR s.returnRequested = :returnRequested)")
+    Page<Shipment> findByAdminFilters(@org.springframework.data.repository.query.Param("status") com.zyna.dev.ecommerce.common.enums.ShipmentStatus status,
+                                      @org.springframework.data.repository.query.Param("shipperId") Long shipperId,
+                                      @org.springframework.data.repository.query.Param("returnRequested") Boolean returnRequested,
+                                      Pageable pageable);
+
     Optional<Shipment> findByOrderId(Long orderId);
 
     // SHIPPER DASHBOARD

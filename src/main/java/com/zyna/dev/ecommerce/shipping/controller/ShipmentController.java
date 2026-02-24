@@ -153,9 +153,11 @@ public class ShipmentController {
     public ApiResponse<List<ShipmentInfoResponse>> getAllShipments(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) com.zyna.dev.ecommerce.common.enums.ShipmentStatus status
+            @RequestParam(required = false) com.zyna.dev.ecommerce.common.enums.ShipmentStatus status,
+            @RequestParam(required = false) Long shipperId,
+            @RequestParam(required = false) Boolean returnRequested
     ) {
-        Page<ShipmentInfoResponse> result = shipmentService.getAllShipments(page, size, status);
+        Page<ShipmentInfoResponse> result = shipmentService.getAllShipments(page, size, status, shipperId, returnRequested);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get all shipments successfully",

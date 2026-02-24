@@ -18,7 +18,7 @@ public interface ShipmentService {
     org.springframework.data.domain.Page<ShipmentInfoResponse> getMyHistory(int page, int size, com.zyna.dev.ecommerce.common.enums.ShipmentStatus status);
 
     // Admin
-    org.springframework.data.domain.Page<ShipmentInfoResponse> getAllShipments(int page, int size, com.zyna.dev.ecommerce.common.enums.ShipmentStatus status);
+    org.springframework.data.domain.Page<ShipmentInfoResponse> getAllShipments(int page, int size, com.zyna.dev.ecommerce.common.enums.ShipmentStatus status, Long shipperId, Boolean returnRequested);
     ShipmentInfoResponse getShipmentById(Long shipmentId);
     ShipmentInfoResponse getShipmentByOrderId(Long orderId);
 }

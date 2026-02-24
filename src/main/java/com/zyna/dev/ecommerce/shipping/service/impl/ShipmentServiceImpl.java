@@ -220,6 +220,9 @@ public class ShipmentServiceImpl implements ShipmentService {
         order.setStatus(OrderStatus.CANCELED);
         order.setCanceledAt(now);
         restoreStock(order);
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+            order.setPaymentStatus(PaymentStatus.REFUNDED);
+        }
         syncOrderShipping(order, ship);
 
         shipmentRepository.save(ship);
@@ -270,18 +273,11 @@ public class ShipmentServiceImpl implements ShipmentService {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        ship.setStatus(ShipmentStatus.RETURNED);
-        ship.setReturnedAt(now);
-        ship.setNote(reason);
+        ship.setStatus(ShipmentStatus.RETURN_APPROVED);
+        ship.setNote(reason != null ? reason : "Admin đã duyệt trả hàng");
         ship.setReturnRequested(false);
 
         Order order = ship.getOrder();
-        order.setStatus(OrderStatus.CANCELED);
-        order.setCanceledAt(now);
-        restoreStock(order);
-        if (order.getPaymentStatus() == PaymentStatus.PAID) {
-            order.setPaymentStatus(PaymentStatus.REFUNDED);
-        }
         syncOrderShipping(order, ship);
 
         shipmentRepository.save(ship);
@@ -407,14 +403,9 @@ public class ShipmentServiceImpl implements ShipmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ShipmentInfoResponse> getAllShipments(int page, int size, ShipmentStatus status) {
+    public Page<ShipmentInfoResponse> getAllShipments(int page, int size, ShipmentStatus status, Long shipperId, Boolean returnRequested) {
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
-        Page<Shipment> shipments;
-        if (status != null) {
-            shipments = shipmentRepository.findByStatus(status, pageable);
-        } else {
-            shipments = shipmentRepository.findAll(pageable);
-        }
+        Page<Shipment> shipments = shipmentRepository.findByAdminFilters(status, shipperId, returnRequested, pageable);
         return shipments.map(this::toResponse);
     }
 
@@ -486,20 +477,20 @@ public class ShipmentServiceImpl implements ShipmentService {
 
     /**
      * Validate shipment status transition:
-     *   ASSIGNED      → PICKED_UP
-     *   PICKED_UP     → IN_DELIVERY
-     *   IN_DELIVERY   → DELIVERED, FAILED
-     *   PICKED_UP     → FAILED
-     *   FAILED        → RETURNED
-     *   DELIVERED     → RETURNED (user return request approved)
+     *   ASSIGNED        → PICKED_UP
+     *   PICKED_UP       → IN_DELIVERY
+     *   IN_DELIVERY     → DELIVERED, FAILED
+     *   PICKED_UP       → FAILED
+     *   FAILED          → IN_DELIVERY (giao lại), RETURNED (auto 3 lần)
+     *   RETURN_APPROVED  → RETURNED (shipper lấy hàng về)
      */
     private void validateTransition(ShipmentStatus current, ShipmentStatus target) {
         boolean valid = switch (target) {
             case PICKED_UP     -> current == ShipmentStatus.ASSIGNED;
-            case IN_DELIVERY   -> current == ShipmentStatus.PICKED_UP || current == ShipmentStatus.FAILED; // Cho phép giao lại từ FAILED (số lần < 3)
+            case IN_DELIVERY   -> current == ShipmentStatus.PICKED_UP || current == ShipmentStatus.FAILED;
             case DELIVERED      -> current == ShipmentStatus.IN_DELIVERY;
             case FAILED         -> current == ShipmentStatus.PICKED_UP || current == ShipmentStatus.IN_DELIVERY;
-            case RETURNED       -> current == ShipmentStatus.FAILED || current == ShipmentStatus.DELIVERED || current == ShipmentStatus.PICKED_UP || current == ShipmentStatus.IN_DELIVERY; // Giao ko được (lần 3) tự nhảy RETURNED
+            case RETURNED       -> current == ShipmentStatus.RETURN_APPROVED || current == ShipmentStatus.FAILED || current == ShipmentStatus.PICKED_UP || current == ShipmentStatus.IN_DELIVERY;
             default             -> false;
         };
         if (!valid) {

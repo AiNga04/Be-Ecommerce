@@ -7,5 +7,6 @@ public enum ShipmentStatus {
     IN_DELIVERY,      // Đang giao hàng
     DELIVERED,        // Giao thành công
     FAILED,           // Giao thất bại
-    RETURNED          // Trả hàng về
+    RETURN_APPROVED,  // Admin đã duyệt trả hàng — chờ Shipper đến lấy lại
+    RETURNED          // Shipper đã lấy hàng về kho
 }
