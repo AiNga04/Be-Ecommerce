@@ -276,6 +276,42 @@ public class ShipmentServiceImpl implements ShipmentService {
                 .map(this::toResponse);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public com.zyna.dev.ecommerce.shipping.dto.response.ShipperDashboardStatsResponse getMyDashboardStats() {
+        User current = getCurrentUser();
+        LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
+
+        long pendingPickups = shipmentRepository.countByShipperAndStatuses(current, java.util.List.of(ShipmentStatus.ASSIGNED));
+        long inProgress = shipmentRepository.countByShipperAndStatuses(current, java.util.List.of(ShipmentStatus.PICKED_UP, ShipmentStatus.IN_DELIVERY));
+        long deliveredToday = shipmentRepository.countDeliveredSince(current, ShipmentStatus.DELIVERED, startOfDay);
+        long failedToday = shipmentRepository.countFailedSince(current, ShipmentStatus.FAILED, startOfDay);
+        java.math.BigDecimal codCollected = shipmentRepository.sumCodCollectedSince(current, startOfDay);
+
+        if (codCollected == null) {
+            codCollected = java.math.BigDecimal.ZERO;
+        }
+
+        return com.zyna.dev.ecommerce.shipping.dto.response.ShipperDashboardStatsResponse.builder()
+                .pendingPickups(pendingPickups)
+                .inProgress(inProgress)
+                .deliveredToday(deliveredToday)
+                .failedToday(failedToday)
+                .codCollectedToday(codCollected)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ShipmentInfoResponse> getMyHistory(int page, int size) {
+        User current = getCurrentUser();
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt").and(Sort.by("id")));
+        // Lịch sử = Đã có kết quả cuối cùng ở lần giao này
+        var historyStatuses = java.util.List.of(ShipmentStatus.DELIVERED, ShipmentStatus.FAILED, ShipmentStatus.RETURNED);
+        return shipmentRepository.findByShipperAndStatusIn(current, historyStatuses, pageable)
+                .map(this::toResponse);
+    }
+
     // ================= ADMIN =================
 
     @Override

@@ -22,7 +22,24 @@ public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
 
     Page<Shipment> findByShipperAndStatusNotIn(User shipper, java.util.Collection<com.zyna.dev.ecommerce.common.enums.ShipmentStatus> statuses, Pageable pageable);
 
+    // ADMIN
     Page<Shipment> findByStatus(com.zyna.dev.ecommerce.common.enums.ShipmentStatus status, Pageable pageable);
-
     Optional<Shipment> findByOrderId(Long orderId);
+
+    // SHIPPER DASHBOARD
+    Page<Shipment> findByShipperAndStatusIn(User shipper, java.util.Collection<com.zyna.dev.ecommerce.common.enums.ShipmentStatus> statuses, Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(s) FROM Shipment s WHERE s.shipper = :shipper AND s.status IN :statuses")
+    long countByShipperAndStatuses(@org.springframework.data.repository.query.Param("shipper") User shipper, @org.springframework.data.repository.query.Param("statuses") java.util.List<com.zyna.dev.ecommerce.common.enums.ShipmentStatus> statuses);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(s) FROM Shipment s WHERE s.shipper = :shipper AND s.status = :status AND s.deliveredAt >= :startOfDay")
+    long countDeliveredSince(@org.springframework.data.repository.query.Param("shipper") User shipper, @org.springframework.data.repository.query.Param("status") com.zyna.dev.ecommerce.common.enums.ShipmentStatus status, @org.springframework.data.repository.query.Param("startOfDay") java.time.LocalDateTime startOfDay);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(s) FROM Shipment s WHERE s.shipper = :shipper AND s.status = :status AND s.failedAt >= :startOfDay")
+    long countFailedSince(@org.springframework.data.repository.query.Param("shipper") User shipper, @org.springframework.data.repository.query.Param("status") com.zyna.dev.ecommerce.common.enums.ShipmentStatus status, @org.springframework.data.repository.query.Param("startOfDay") java.time.LocalDateTime startOfDay);
+
+    @org.springframework.data.jpa.repository.Query("SELECT SUM(o.totalPrice) FROM Shipment s JOIN s.order o " +
+           "WHERE s.shipper = :shipper AND s.status = 'DELIVERED' " +
+           "AND o.paymentMethod = 'CASH_ON_DELIVERY' AND s.deliveredAt >= :startOfDay")
+    java.math.BigDecimal sumCodCollectedSince(@org.springframework.data.repository.query.Param("shipper") User shipper, @org.springframework.data.repository.query.Param("startOfDay") java.time.LocalDateTime startOfDay);
 }

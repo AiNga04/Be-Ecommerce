@@ -191,7 +191,7 @@ public class ShipmentController {
         );
     }
 
-    // SHIPPER xem list shipment của mình
+    // SHIPPER xem list shipment của mình (chưa hoàn tất)
     @GetMapping("/my")
     @PreAuthorize("hasAuthority('SHIPPING_MANAGE')")
     @ResponseStatus(HttpStatus.OK)
@@ -203,6 +203,34 @@ public class ShipmentController {
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
                 "Get my shipments successfully",
+                result
+        );
+    }
+
+    // SHIPPER xem Dashboard Stats
+    @GetMapping("/my/stats")
+    @PreAuthorize("hasAuthority('SHIPPING_MANAGE')")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<com.zyna.dev.ecommerce.shipping.dto.response.ShipperDashboardStatsResponse> getMyDashboardStats() {
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Get shipper dashboard stats successfully",
+                shipmentService.getMyDashboardStats()
+        );
+    }
+
+    // SHIPPER xem Lịch sử giao hàng
+    @GetMapping("/my/history")
+    @PreAuthorize("hasAuthority('SHIPPING_MANAGE')")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<List<ShipmentInfoResponse>> getMyHistory(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<ShipmentInfoResponse> result = shipmentService.getMyHistory(page, size);
+        return ApiResponse.successfulPageResponse(
+                HttpStatus.OK.value(),
+                "Get shipment history successfully",
                 result
         );
     }
