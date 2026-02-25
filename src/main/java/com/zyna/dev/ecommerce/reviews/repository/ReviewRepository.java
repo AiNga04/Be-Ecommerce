@@ -1,6 +1,7 @@
 package com.zyna.dev.ecommerce.reviews.repository;
 
 import com.zyna.dev.ecommerce.reviews.models.Review;
+import com.zyna.dev.ecommerce.orders.models.Order;
 import com.zyna.dev.ecommerce.products.models.Product;
 import com.zyna.dev.ecommerce.users.models.User;
 import org.springframework.data.domain.Page;
@@ -11,9 +12,11 @@ import org.springframework.data.repository.query.Param;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
-    boolean existsByUserAndProduct(User user, Product product);
+    boolean existsByUserAndProductAndOrder(User user, Product product, Order order);
 
     Page<Review> findByProductAndHiddenFalse(Product product, Pageable pageable);
+
+    Page<Review> findByUserAndProductAndHiddenFalse(User user, Product product, Pageable pageable);
 
     Page<Review> findByHiddenFalse(Pageable pageable);
 

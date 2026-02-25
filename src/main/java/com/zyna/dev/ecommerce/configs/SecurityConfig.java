@@ -53,8 +53,8 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
                     ).permitAll()
 
                     .requestMatchers(HttpMethod.GET, "/products", "/products/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/products", "/products/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/categories", "/categories/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/reviews/product/**").permitAll()
                     .requestMatchers("/payments/vnpay/**").permitAll()
 
                     .anyRequest().authenticated()

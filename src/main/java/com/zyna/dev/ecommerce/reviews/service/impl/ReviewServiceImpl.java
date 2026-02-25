@@ -53,10 +53,6 @@ public class ReviewServiceImpl implements ReviewService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Product not found"));
 
-        if (reviewRepository.existsByUserAndProduct(user, product)) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "You have already reviewed this product");
-        }
-
         // verify purchased (any order of user contains this product and is COMPLETED)
         java.util.List<com.zyna.dev.ecommerce.orders.models.OrderItem> purchasedItems = 
                 orderItemRepository.findByProductAndOrder_UserAndOrder_StatusOrderByOrder_CreatedAtDesc(product, user, OrderStatus.COMPLETED);
@@ -84,6 +80,11 @@ public class ReviewServiceImpl implements ReviewService {
         } else {
             // Auto link the most recent completed order
             order = purchasedItems.get(0).getOrder();
+        }
+
+        // Check duplicate: same user + product + order
+        if (reviewRepository.existsByUserAndProductAndOrder(user, product, order)) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "You have already reviewed this product for this order");
         }
 
         Review review = Review.builder()
@@ -134,6 +135,24 @@ public class ReviewServiceImpl implements ReviewService {
                 .averageRating(BigDecimal.valueOf(avg == null ? 0.0 : avg).setScale(2, RoundingMode.HALF_UP))
                 .totalReviews(count != null ? count : 0L)
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> listMyReviewsByProduct(Long userId, Long productId, int page, int size) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Product not found"));
+
+        Page<Review> reviews = reviewRepository.findByUserAndProductAndHiddenFalse(
+                user,
+                product,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+
+        return reviews.map(reviewMapper::toResponse);
     }
 
     @Override

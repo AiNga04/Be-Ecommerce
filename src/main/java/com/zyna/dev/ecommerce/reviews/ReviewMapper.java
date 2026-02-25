@@ -14,6 +14,7 @@ public class ReviewMapper {
         return ReviewResponse.builder()
                 .id(review.getId())
                 .productId(review.getProduct().getId())
+                .orderId(review.getOrder() != null ? review.getOrder().getId() : null)
                 .userId(review.getUser().getId())
                 .userName(review.getUser().getFirstName() + " " + review.getUser().getLastName())
                 .rating(review.getRating())

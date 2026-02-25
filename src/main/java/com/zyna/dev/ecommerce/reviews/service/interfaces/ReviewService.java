@@ -15,6 +15,7 @@ public interface ReviewService {
 
     ReviewListResponse listByProduct(Long productId, int page, int size);
 
+    Page<ReviewResponse> listMyReviewsByProduct(Long userId, Long productId, int page, int size);
     Page<ReviewResponse> listAll(int page, int size);
 
     Page<ReviewResponse> listReported(int page, int size);

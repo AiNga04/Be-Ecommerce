@@ -178,6 +178,24 @@ public class ReviewController {
         );
     }
 
+    @GetMapping("/my/product/{productId}")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('ORDER_READ')")
+    public ApiResponse<List<ReviewResponse>> listMyReviewsByProduct(
+            Authentication authentication,
+            @PathVariable Long productId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Long userId = getCurrentUserId(authentication);
+        Page<ReviewResponse> data = reviewService.listMyReviewsByProduct(userId, productId, page, size);
+        return ApiResponse.successfulPageResponse(
+                HttpStatus.OK.value(),
+                "Get my reviews successfully!",
+                data
+        );
+    }
+
     // ADMIN/STAFF: full list
     @GetMapping
     @ResponseStatus(HttpStatus.OK)

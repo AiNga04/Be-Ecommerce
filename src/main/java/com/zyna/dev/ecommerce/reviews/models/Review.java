@@ -21,7 +21,7 @@ import java.util.Set;
 @Builder
 @Entity
 @Table(name = "reviews", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_review_user_product", columnNames = {"user_id", "product_id"})
+        @UniqueConstraint(name = "uk_review_user_product_order", columnNames = {"user_id", "product_id", "order_id"})
 })
 public class Review {
 
