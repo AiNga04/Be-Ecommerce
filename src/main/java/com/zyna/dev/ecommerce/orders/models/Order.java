@@ -155,6 +155,7 @@ public class Order {
     private LocalDateTime confirmedAt;
     private LocalDateTime shippedAt;
     private LocalDateTime deliveredAt;
+    private LocalDateTime completedAt;
     private LocalDateTime canceledAt;
 
     // ================== ITEMS ==================

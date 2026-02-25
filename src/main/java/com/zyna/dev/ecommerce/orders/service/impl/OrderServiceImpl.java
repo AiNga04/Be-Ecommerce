@@ -657,6 +657,27 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toOrderResponse(order);
     }
 
+    @Override
+    @Transactional
+    public OrderResponse confirmReceived(Long userId, Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        if (!order.getUser().getId().equals(userId)) {
+            throw new ApplicationException(HttpStatus.FORBIDDEN, "You do not own this order");
+        }
+
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Đơn hàng chưa được giao, không thể xác nhận");
+        }
+
+        order.setStatus(OrderStatus.COMPLETED);
+        // Note: We need LocalDateTime for setCompletedAt
+        order.setCompletedAt(java.time.LocalDateTime.now());
+        
+        order = orderRepository.save(order);
+        return orderMapper.toOrderResponse(order);
+    }
 
     // ================== PRIVATE HELPER ==================
 

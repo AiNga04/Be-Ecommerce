@@ -23,4 +23,6 @@ public interface OrderService {
     Page<OrderResponse> getAllOrders(int page, int size);
 
     OrderResponse getOrderByIdForAdmin(Long orderId);
+
+    OrderResponse confirmReceived(Long userId, Long orderId);
 }

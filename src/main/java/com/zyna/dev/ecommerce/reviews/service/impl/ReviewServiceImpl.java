@@ -57,10 +57,12 @@ public class ReviewServiceImpl implements ReviewService {
             throw new ApplicationException(HttpStatus.BAD_REQUEST, "You have already reviewed this product");
         }
 
-        // verify purchased (any order of user contains this product and not canceled)
-        boolean purchased = orderItemRepository.existsPurchased(product, user, OrderStatus.CANCELED);
-        if (!purchased) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "You can only review products you purchased");
+        // verify purchased (any order of user contains this product and is COMPLETED)
+        java.util.List<com.zyna.dev.ecommerce.orders.models.OrderItem> purchasedItems = 
+                orderItemRepository.findByProductAndOrder_UserAndOrder_StatusOrderByOrder_CreatedAtDesc(product, user, OrderStatus.COMPLETED);
+                
+        if (purchasedItems.isEmpty()) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "You can only review products from COMPLETED orders");
         }
 
         Order order = null;
@@ -70,6 +72,18 @@ public class ReviewServiceImpl implements ReviewService {
             if (!order.getUser().getId().equals(userId)) {
                 throw new ApplicationException(HttpStatus.FORBIDDEN, "You do not own this order");
             }
+            if (order.getStatus() != OrderStatus.COMPLETED) {
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Order must be COMPLETED to review");
+            }
+            // Optional: verify that the specified order actually contains the product
+            boolean orderContainsProduct = purchasedItems.stream()
+                    .anyMatch(oi -> oi.getOrder().getId().equals(request.getOrderId()));
+            if (!orderContainsProduct) {
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Product is not found in the specified order");
+            }
+        } else {
+            // Auto link the most recent completed order
+            order = purchasedItems.get(0).getOrder();
         }
 
         Review review = Review.builder()

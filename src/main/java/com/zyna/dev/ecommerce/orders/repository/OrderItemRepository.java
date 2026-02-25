@@ -20,6 +20,9 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
                             @Param("user") User user,
                             @Param("excludedStatus") OrderStatus excludedStatus);
 
+    java.util.List<OrderItem> findByProductAndOrder_UserAndOrder_StatusOrderByOrder_CreatedAtDesc(
+            Product product, User user, OrderStatus status);
+
     @Query("SELECT new com.zyna.dev.ecommerce.dashboard.dto.TopProductResponse(" +
             "oi.product.id, oi.product.name, oi.product.imageUrl, " +
             "CAST(SUM(oi.quantity) AS long), SUM(oi.subtotal)) " +

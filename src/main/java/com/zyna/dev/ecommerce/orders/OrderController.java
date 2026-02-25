@@ -124,6 +124,23 @@ public class OrderController {
         );
     }
 
+    // USER XÁC NHẬN ĐÃ NHẬN HÀNG
+    @PostMapping("/my/{id}/confirm-received")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('ORDER_READ')")
+    public ApiResponse<OrderResponse> confirmReceived(
+            Authentication authentication,
+            @PathVariable Long id
+    ) {
+        Long userId = getCurrentUserId(authentication);
+        OrderResponse response = orderService.confirmReceived(userId, id);
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Order confirmed as received!",
+                response
+        );
+    }
+
     // ================== STAFF / ADMIN – QUẢN LÝ ĐƠN ==================
 
     // LIST TẤT CẢ ĐƠN HÀNG (cho STAFF / ADMIN)
