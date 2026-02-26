@@ -164,7 +164,7 @@ public class ProductController {
 
     // GET LIST SOFT DELETE PRODUCTS
     @GetMapping("/deleted")
-    @PreAuthorize("hasAuthority('PRODUCT_READ')")
+    @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
     public ApiResponse<List<ProductResponse>> getDeleted(
             @Valid ProductCriteria criteria,
             @RequestParam(defaultValue = "0") int page,
