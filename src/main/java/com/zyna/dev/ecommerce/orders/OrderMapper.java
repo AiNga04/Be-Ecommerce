@@ -6,6 +6,7 @@ import com.zyna.dev.ecommerce.orders.models.Order;
 import com.zyna.dev.ecommerce.orders.models.OrderItem;
 import com.zyna.dev.ecommerce.shipping.models.Shipment;
 import com.zyna.dev.ecommerce.shipping.repository.ShipmentRepository;
+import com.zyna.dev.ecommerce.reviews.repository.ReviewRepository;
 import com.zyna.dev.ecommerce.users.models.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,9 +18,10 @@ import java.util.List;
 public class OrderMapper {
 
     private final ShipmentRepository shipmentRepository;
+    private final ReviewRepository reviewRepository;
 
     public OrderResponse toOrderResponse(Order order) {
-        List<OrderItemResponse> items = toOrderItemResponses(order.getItems());
+        List<OrderItemResponse> items = toOrderItemResponses(order);
 
         Shipment shipment = shipmentRepository.findByOrder(order).orElse(null);
         User shipper = shipment != null ? shipment.getShipper() : null;
@@ -56,13 +58,17 @@ public class OrderMapper {
                 .build();
     }
 
-    public List<OrderItemResponse> toOrderItemResponses(List<OrderItem> items) {
-        return items.stream()
-                .map(this::toOrderItemResponse)
+    public List<OrderItemResponse> toOrderItemResponses(Order order) {
+        return order.getItems().stream()
+                .map(item -> toOrderItemResponse(item, order))
                 .toList();
     }
 
-    public OrderItemResponse toOrderItemResponse(OrderItem item) {
+    public OrderItemResponse toOrderItemResponse(OrderItem item, Order order) {
+        boolean isReviewed = reviewRepository.existsByUserAndProductAndOrder(
+                order.getUser(), item.getProduct(), order
+        );
+
         return OrderItemResponse.builder()
                 .productId(item.getProduct().getId())
                 .productName(item.getProduct().getName())
@@ -71,6 +77,7 @@ public class OrderMapper {
                 .subtotal(item.getSubtotal())
                 .size(item.getSize())
                 .image(item.getProduct() != null ? item.getProduct().getImageUrl() : null)
+                .isReviewed(isReviewed)
                 .build();
     }
 }

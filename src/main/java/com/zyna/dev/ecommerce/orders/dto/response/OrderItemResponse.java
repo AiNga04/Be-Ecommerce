@@ -22,4 +22,5 @@ public class OrderItemResponse {
     private BigDecimal subtotal;
     private String size;
     private String image;
+    private Boolean isReviewed;
 }
