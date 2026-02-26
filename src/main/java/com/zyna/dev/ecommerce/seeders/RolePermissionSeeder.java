@@ -34,6 +34,7 @@ public class RolePermissionSeeder implements CommandLineRunner {
 
         addPerm(admin, "PRODUCT_READ");
         addPerm(admin, "PRODUCT_WRITE");
+        addPerm(admin, "DASHBOARD_READ");
 
         addPerm(admin, "USER_READ");
         addPerm(admin, "USER_WRITE");
@@ -62,6 +63,7 @@ public class RolePermissionSeeder implements CommandLineRunner {
         addPerm(staff, "USER_READ");
 
         addPerm(staff, "PRODUCT_READ");
+        addPerm(staff, "DASHBOARD_READ");
 
         addPerm(staff, "INVENTORY_READ");
         addPerm(staff, "INVENTORY_WRITE");

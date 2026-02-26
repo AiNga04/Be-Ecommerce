@@ -46,4 +46,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("endDate") java.time.LocalDateTime endDate);
     @Query("SELECT o.status, COUNT(o) FROM Order o GROUP BY o.status")
     java.util.List<Object[]> countOrdersByStatus();
+
+    @Query("SELECT new com.zyna.dev.ecommerce.dashboard.dto.DailyOrderStatResponse(" +
+           "CAST(function('to_char', o.createdAt, 'YYYY-MM-DD') AS string), COUNT(o)) " +
+           "FROM Order o " +
+           "WHERE o.status IN :statuses " +
+           "AND o.createdAt BETWEEN :startDate AND :endDate " +
+           "GROUP BY function('to_char', o.createdAt, 'YYYY-MM-DD') " +
+           "ORDER BY function('to_char', o.createdAt, 'YYYY-MM-DD') ASC")
+    java.util.List<com.zyna.dev.ecommerce.dashboard.dto.DailyOrderStatResponse> getDailyOrderStats(
+            @Param("statuses") java.util.List<OrderStatus> statuses,
+            @Param("startDate") java.time.LocalDateTime startDate, 
+            @Param("endDate") java.time.LocalDateTime endDate);
 }

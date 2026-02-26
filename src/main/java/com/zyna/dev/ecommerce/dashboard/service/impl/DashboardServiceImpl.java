@@ -143,4 +143,17 @@ public class DashboardServiceImpl implements DashboardService {
                 .newUsersToday(newToday)
                 .build();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DailyOrderStatResponse> getDailyOrderStats(LocalDate from, LocalDate to) {
+        LocalDateTime start = from.atStartOfDay();
+        LocalDateTime end = to.atTime(LocalTime.MAX);
+        
+        List<OrderStatus> statuses = Arrays.asList(
+                OrderStatus.CONFIRMED, OrderStatus.SHIPPING, OrderStatus.DELIVERED
+        );
+        
+        return orderRepository.getDailyOrderStats(statuses, start, end);
+    }
 }

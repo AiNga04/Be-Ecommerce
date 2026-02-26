@@ -50,6 +50,9 @@ public class PermissionSeeder implements CommandLineRunner {
 
         // REVIEWS
         create("REVIEW_MANAGE", "Can hide/unhide reviews");
+
+        // DASHBOARD
+        create("DASHBOARD_READ", "Can view dashboard statistics");
     }
 
     private void create(String name, String desc) {

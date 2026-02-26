@@ -15,4 +15,6 @@ public interface DashboardService {
     List<LowStockResponse> getLowStockProducts(int threshold);
 
     UserStatResponse getUserStats();
+
+    List<DailyOrderStatResponse> getDailyOrderStats(LocalDate from, LocalDate to);
 }

@@ -37,7 +37,7 @@ public class DashboardController {
 
     // ORDERS
     @GetMapping("/orders/summary")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasAuthority('ORDER_READ')")
     public ApiResponse<OrderStatResponse> getOrderStats() {
         return ApiResponse.successfulResponse(
                 "Fetched order stats!",
@@ -47,7 +47,7 @@ public class DashboardController {
 
     // TOP PRODUCTS
     @GetMapping("/top-products")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasAuthority('PRODUCT_READ')")
     public ApiResponse<List<TopProductResponse>> getTopSellingProducts(
             @RequestParam(defaultValue = "5") int limit
     ) {
@@ -59,13 +59,29 @@ public class DashboardController {
 
     // LOW STOCK
     @GetMapping("/low-stock")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasAuthority('INVENTORY_READ')")
     public ApiResponse<List<LowStockResponse>> getLowStockProducts(
             @RequestParam(defaultValue = "10") int threshold
     ) {
         return ApiResponse.successfulResponse(
                 "Fetched low stock products!",
                 dashboardService.getLowStockProducts(threshold)
+        );
+    }
+
+    // DAILY ORDERS CHART
+    @GetMapping("/orders/daily-chart")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasAuthority('ORDER_READ')")
+    public ApiResponse<List<DailyOrderStatResponse>> getDailyOrderStats(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        if (from == null) from = LocalDate.now().minusDays(30);
+        if (to == null) to = LocalDate.now();
+
+        return ApiResponse.successfulResponse(
+                "Fetched daily order stats!",
+                dashboardService.getDailyOrderStats(from, to)
         );
     }
 
