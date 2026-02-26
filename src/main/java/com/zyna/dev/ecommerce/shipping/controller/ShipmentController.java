@@ -239,6 +239,18 @@ public class ShipmentController {
         );
     }
 
+    // SHIPPER xem chi tiết 1 shipment
+    @GetMapping("/my/{shipmentId}")
+    @PreAuthorize("hasAuthority('SHIPPING_MANAGE')")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<ShipmentInfoResponse> getMyShipmentById(@PathVariable Long shipmentId) {
+        return ApiResponse.successfulResponse(
+                HttpStatus.OK.value(),
+                "Get my shipment successfully",
+                shipmentService.getMyShipmentById(shipmentId)
+        );
+    }
+
     private String clean(String input) {
         if (input == null || input.isBlank()) return null;
         String trimmed = input.trim();

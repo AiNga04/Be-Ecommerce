@@ -399,6 +399,22 @@ public class ShipmentServiceImpl implements ShipmentService {
                 .map(this::toResponse);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ShipmentInfoResponse getMyShipmentById(Long shipmentId) {
+        Shipment shipment = shipmentRepository.findById(shipmentId)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Shipment not found"));
+
+        User current = getCurrentUser();
+
+        if (shipment.getShipper() == null ||
+                !shipment.getShipper().getId().equals(current.getId())) {
+            throw new ApplicationException(HttpStatus.FORBIDDEN, "You are not assigned to this shipment");
+        }
+
+        return toResponse(shipment);
+    }
+
     // ================= ADMIN =================
 
     @Override
