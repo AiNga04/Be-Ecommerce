@@ -21,7 +21,7 @@ public class DashboardController {
 
     // REVENUE
     @GetMapping("/revenue")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasAuthority('ORDER_READ')")
     public ApiResponse<RevenueDashboardResponse> getRevenueStats(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
@@ -87,7 +87,7 @@ public class DashboardController {
 
     // USER STATS
     @GetMapping("/users/summary")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasAuthority('USER_READ')")
     public ApiResponse<UserStatResponse> getUserStats() {
         return ApiResponse.successfulResponse(
                 "Fetched user stats!",
