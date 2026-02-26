@@ -52,7 +52,7 @@ public class VoucherController {
     // ADMIN: deactivate / xóa logic (INACTIVE) -> chỉ ADMIN
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('VOUCHER_WRITE')")
+    @PreAuthorize("hasAuthority('VOUCHER_WRITE') or hasRole('STAFF')")
     public ApiResponse<Void> deactivate(@PathVariable Long id) {
         voucherService.deactivate(id);
         return ApiResponse.successfulResponseNoData(
@@ -76,7 +76,7 @@ public class VoucherController {
     // ADMIN + STAFF: xem chi tiết 1 voucher
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('VOUCHER_READ')")
+    @PreAuthorize("hasAuthority('VOUCHER_READ') or hasRole('STAFF')")
     public ApiResponse<VoucherResponse> getById(@PathVariable Long id) {
         VoucherResponse data = voucherService.getById(id);
         return ApiResponse.successfulResponse(
@@ -89,7 +89,7 @@ public class VoucherController {
     // ADMIN + STAFF: xem full list
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('VOUCHER_READ')")
+    @PreAuthorize("hasAuthority('VOUCHER_READ') or hasRole('STAFF')")
     public ApiResponse<List<VoucherResponse>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
