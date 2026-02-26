@@ -126,7 +126,7 @@ public class UserController {
     // READ DETAIL
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('USER_READ') or hasRole('STAFF')")
+    @PreAuthorize("hasAuthority('USER_READ')")
     public ApiResponse<UserResponse> getUserById(@PathVariable Long id) {
         UserResponse userResponse = userService.getUserById(id);
         return ApiResponse.successfulResponse(
@@ -139,7 +139,7 @@ public class UserController {
     // SEARCH (filter + pagination)
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('USER_READ') or hasRole('STAFF')")
+    @PreAuthorize("hasAuthority('USER_READ')")
     public ApiResponse<List<UserResponse>> searchUsers(
             @Valid UserCriteria criteria,
             @RequestParam(defaultValue = "0") int page,
@@ -283,7 +283,7 @@ public class UserController {
     // GET DELETED
     @GetMapping("/deleted")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('USER_READ') or hasRole('STAFF')")
+    @PreAuthorize("hasAuthority('USER_READ')")
     public ApiResponse<List<UserResponse>> getDeletedUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,

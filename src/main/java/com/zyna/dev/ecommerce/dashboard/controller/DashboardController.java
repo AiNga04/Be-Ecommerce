@@ -21,7 +21,7 @@ public class DashboardController {
 
     // REVENUE
     @GetMapping("/revenue")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN') or hasRole('STAFF')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN')")
     public ApiResponse<RevenueDashboardResponse> getRevenueStats(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
@@ -47,7 +47,7 @@ public class DashboardController {
 
     // TOP PRODUCTS
     @GetMapping("/top-products")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN') or hasRole('STAFF')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN')")
     public ApiResponse<List<TopProductResponse>> getTopSellingProducts(
             @RequestParam(defaultValue = "5") int limit
     ) {
@@ -59,7 +59,7 @@ public class DashboardController {
 
     // LOW STOCK
     @GetMapping("/low-stock")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN') or hasRole('STAFF')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN')")
     public ApiResponse<List<LowStockResponse>> getLowStockProducts(
             @RequestParam(defaultValue = "10") int threshold
     ) {
@@ -71,7 +71,7 @@ public class DashboardController {
 
     // USER STATS
     @GetMapping("/users/summary")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN') or hasRole('STAFF')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasRole('ADMIN')")
     public ApiResponse<UserStatResponse> getUserStats() {
         return ApiResponse.successfulResponse(
                 "Fetched user stats!",
