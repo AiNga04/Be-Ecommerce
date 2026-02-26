@@ -164,7 +164,7 @@ public class ProductController {
 
     // GET LIST SOFT DELETE PRODUCTS
     @GetMapping("/deleted")
-    @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
+    @PreAuthorize("hasAuthority('PRODUCT_READ')")
     public ApiResponse<List<ProductResponse>> getDeleted(
             @Valid ProductCriteria criteria,
             @RequestParam(defaultValue = "0") int page,
@@ -241,7 +241,7 @@ public class ProductController {
     // GET HISTORY PRICE PRODUCT
     @GetMapping("/{id}/price-history")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
+    @PreAuthorize("hasAuthority('PRODUCT_READ')")
     public ApiResponse<List<PriceHistoryResponse>> getPriceHistory(
             @PathVariable Long id
     ) {
@@ -256,7 +256,7 @@ public class ProductController {
     // GET GLOBAL PRICE HISTORY (All products)
     @GetMapping("/global-price-history")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
+    @PreAuthorize("hasAuthority('PRODUCT_READ')")
     public ApiResponse<List<PriceHistoryResponse>> getGlobalPriceHistory(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
