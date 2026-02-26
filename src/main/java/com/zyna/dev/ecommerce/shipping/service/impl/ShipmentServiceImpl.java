@@ -305,7 +305,7 @@ public class ShipmentServiceImpl implements ShipmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public com.zyna.dev.ecommerce.shipping.dto.response.ShipperDashboardStatsResponse getMyDashboardStats() {
+    public com.zyna.dev.ecommerce.shipping.dto.response.ShipperDashboardStatsResponse getMyDashboardStats(String from, String to) {
         User current = getCurrentUser();
         LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
 
@@ -332,22 +332,46 @@ public class ShipmentServiceImpl implements ShipmentService {
                 .totalDelivered(totalDelivered)
                 .totalFailed(totalFailed)
                 .totalReturned(totalReturned)
-                .chartData(buildChartData(current))
+                .chartData(buildChartData(current, from, to))
                 .build();
     }
 
-    private java.util.List<com.zyna.dev.ecommerce.shipping.dto.response.ShipperChartData> buildChartData(User shipper) {
+    private java.util.List<com.zyna.dev.ecommerce.shipping.dto.response.ShipperChartData> buildChartData(User shipper, String from, String to) {
         java.util.List<com.zyna.dev.ecommerce.shipping.dto.response.ShipperChartData> result = new java.util.ArrayList<>();
-        LocalDateTime sevenDaysAgo = java.time.LocalDate.now().minusDays(6).atStartOfDay();
+        
+        java.time.LocalDate fromDate;
+        java.time.LocalDate toDate;
+        
+        if (from != null && !from.isBlank() && to != null && !to.isBlank()) {
+            fromDate = java.time.LocalDate.parse(from);
+            toDate = java.time.LocalDate.parse(to);
+        } else {
+            toDate = java.time.LocalDate.now();
+            fromDate = toDate.minusDays(6);
+        }
+
+        if (fromDate.isAfter(toDate)) {
+            java.time.LocalDate temp = fromDate;
+            fromDate = toDate;
+            toDate = temp;
+        }
+
+        LocalDateTime timeFrom = fromDate.atStartOfDay();
 
         java.util.List<Shipment> recentShipments = shipmentRepository.findRecentHistoryByShipper(
                 shipper,
                 java.util.List.of(ShipmentStatus.DELIVERED, ShipmentStatus.FAILED, ShipmentStatus.RETURNED),
-                sevenDaysAgo
+                timeFrom
         );
 
-        for (int i = 6; i >= 0; i--) {
-            java.time.LocalDate targetDate = java.time.LocalDate.now().minusDays(i);
+        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(fromDate, toDate);
+        if (daysBetween > 365) {
+            fromDate = toDate.minusDays(365);
+            daysBetween = 365;
+        }
+
+        for (int i = 0; i <= daysBetween; i++) {
+            java.time.LocalDate targetDate = fromDate.plusDays(i);
             String dateString = targetDate.toString();
 
             long deliveredCount = 0;

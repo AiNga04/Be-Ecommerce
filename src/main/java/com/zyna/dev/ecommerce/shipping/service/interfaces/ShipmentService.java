@@ -14,7 +14,7 @@ public interface ShipmentService {
     ShipmentInfoResponse userRequestReturn(Long orderId, String reason);
     ShipmentInfoResponse approveReturn(Long shipmentId, String reason);
     org.springframework.data.domain.Page<ShipmentInfoResponse> getMyShipments(int page, int size, com.zyna.dev.ecommerce.common.enums.ShipmentStatus status);
-    com.zyna.dev.ecommerce.shipping.dto.response.ShipperDashboardStatsResponse getMyDashboardStats();
+    com.zyna.dev.ecommerce.shipping.dto.response.ShipperDashboardStatsResponse getMyDashboardStats(String from, String to);
     org.springframework.data.domain.Page<ShipmentInfoResponse> getMyHistory(int page, int size, com.zyna.dev.ecommerce.common.enums.ShipmentStatus status);
     ShipmentInfoResponse getMyShipmentById(Long shipmentId);
 

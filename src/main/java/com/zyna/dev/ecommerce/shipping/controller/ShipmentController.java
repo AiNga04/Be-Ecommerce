@@ -214,11 +214,14 @@ public class ShipmentController {
     @GetMapping("/my/stats")
     @PreAuthorize("hasAuthority('SHIPPING_MANAGE')")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<com.zyna.dev.ecommerce.shipping.dto.response.ShipperDashboardStatsResponse> getMyDashboardStats() {
+    public ApiResponse<com.zyna.dev.ecommerce.shipping.dto.response.ShipperDashboardStatsResponse> getMyDashboardStats(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to
+    ) {
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
                 "Get shipper dashboard stats successfully",
-                shipmentService.getMyDashboardStats()
+                shipmentService.getMyDashboardStats(from, to)
         );
     }
 
