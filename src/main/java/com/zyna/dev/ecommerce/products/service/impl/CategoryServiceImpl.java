@@ -25,7 +25,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse create(CategoryCreateRequest request) {
         if (categoryRepository.existsByCode(request.getCode())) {
-            throw new ApplicationException(HttpStatus.CONFLICT, "Category code already exists!");
+            throw new ApplicationException(HttpStatus.CONFLICT, "Mã danh mục đã tồn tại");
         }
 
         // mapper: DTO -> Entity
@@ -39,7 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse update(Long id, CategoryUpdateRequest request) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Category not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy danh mục"));
 
         // mapper: apply update DTO -> Entity
         categoryMapper.applyUpdate(category, request);
@@ -51,11 +51,11 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void delete(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Category not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy danh mục"));
                 
         // Check if category has products
         if (productRepository.existsByCategoryId(id)) {
-            throw new ApplicationException(HttpStatus.CONFLICT, "Cannot delete category containing products. Please move or delete products first.");
+            throw new ApplicationException(HttpStatus.CONFLICT, "Không thể xóa danh mục đang chứa sản phẩm. Vui lòng di chuyển hoặc xóa sản phẩm trước");
         }
 
         // soft delete: inactive
@@ -66,7 +66,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse getById(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Category not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy danh mục"));
 
         return categoryMapper.toResponse(category);
     }

@@ -61,19 +61,19 @@ public class AuthServiceImpl implements AuthService {
         if (rateLimiter.isBlocked(email)) {
             throw new ApplicationException(
                     HttpStatus.TOO_MANY_REQUESTS,
-                    "Too many failed attempts. Please try again later!"
+                    "Quá nhiều lần thử thất bại. Vui lòng thử lại sau"
             );
         }
 
         User user = authRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> {
                     rateLimiter.recordFailedAttempt(email);
-                    return new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+                    return new ApplicationException(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu không hợp lệ");
                 });
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             rateLimiter.recordFailedAttempt(email);
-            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu không hợp lệ");
         }
 
         if (user.getStatus() == Status.PENDING) {
@@ -118,7 +118,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public UserResponse register(RegisterRequest registerRequest) {
         if (authRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new ApplicationException(HttpStatus.CONFLICT, "Email already in use!");
+            throw new ApplicationException(HttpStatus.CONFLICT, "Email đã được sử dụng");
         }
 
         User user = authMapper.toUser(registerRequest);
@@ -127,7 +127,7 @@ public class AuthServiceImpl implements AuthService {
         var userRole = appRoleRepository.findByCode("USER")
                 .orElseThrow(() -> new ApplicationException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Default role USER is not configured!"
+                        "Quyền USER mặc định chưa được cấu hình"
                 ));
         user.getRoles().add(userRole);
 
@@ -149,7 +149,7 @@ public class AuthServiceImpl implements AuthService {
         String email  = jwtUtil.extractUsername(token);
 
         if (!isValid) {
-            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid or expired token!");
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ hoặc đã hết hạn");
         }
 
         return new IntrospectResponse(isValid, email);
@@ -163,11 +163,11 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenStr)
                 .orElseThrow(() -> new ApplicationException(
                         HttpStatus.UNAUTHORIZED,
-                        "Invalid refresh token"
+                        "Refresh token không hợp lệ"
                 ));
 
         if (refreshToken.isRevoked() || refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Refresh token is expired or revoked");
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Refresh token đã hết hạn hoặc bị thu hồi");
         }
 
         User user = refreshToken.getUser();  // 👈 lúc này session còn mở
@@ -227,10 +227,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void resendActivationEmail(String email) {
         User user = authRepository.findByEmailAndIsDeletedFalse(email)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
 
         if (user.getStatus() == Status.ACTIVE) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Account already active");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Tài khoản đã được kích hoạt");
         }
 
         accountActivationService.sendActivationToken(user, email);
@@ -241,16 +241,16 @@ public class AuthServiceImpl implements AuthService {
     public UserResponse changeEmail(ChangeEmailRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Login is required");
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Yêu cầu đăng nhập");
         }
 
         String currentEmail = authentication.getName();
 
         User user = authRepository.findByEmailAndIsDeletedFalse(currentEmail)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
 
         if (authRepository.existsByEmail(request.getNewEmail())) {
-            throw new ApplicationException(HttpStatus.CONFLICT, "New email is already in use");
+            throw new ApplicationException(HttpStatus.CONFLICT, "Email mới đã được sử dụng");
         }
 
         user.setEmail(request.getNewEmail());
@@ -266,15 +266,15 @@ public class AuthServiceImpl implements AuthService {
     public void changePassword(ChangePasswordRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Login is required");
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Yêu cầu đăng nhập");
         }
 
         String currentEmail = authentication.getName();
         User user = authRepository.findByEmailAndIsDeletedFalse(currentEmail)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Mật khẩu hiện tại không chính xác");
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
@@ -284,7 +284,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void forgotPassword(ForgotPasswordRequest request) {
         User user = authRepository.findByEmailAndIsDeletedFalse(request.getEmail())
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
 
         passwordResetService.createAndSendOtp(user);
     }
@@ -293,7 +293,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         User user = authRepository.findByEmailAndIsDeletedFalse(request.getEmail())
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
 
         passwordResetService.validateOtp(user, request.getOtpCode());
 

@@ -21,7 +21,7 @@ public class SizeService {
 
     public Size getSizeById(Long id) {
         return sizeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Size not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy kích thước với id: " + id));
     }
 
     @Transactional
@@ -31,12 +31,12 @@ public class SizeService {
 
         if (sizeRepository.findByCode(code).isPresent()) {
             throw new com.zyna.dev.ecommerce.common.exceptions.ApplicationException(
-                    org.springframework.http.HttpStatus.BAD_REQUEST, "Size code already exists!"
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "Mã kích thước đã tồn tại"
             );
         }
         if (sizeRepository.findByName(name).isPresent()) {
             throw new com.zyna.dev.ecommerce.common.exceptions.ApplicationException(
-                    org.springframework.http.HttpStatus.BAD_REQUEST, "Size name already exists!"
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "Tên kích thước đã tồn tại"
             );
         }
 
@@ -49,7 +49,7 @@ public class SizeService {
             return sizeRepository.save(size);
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             throw new com.zyna.dev.ecommerce.common.exceptions.ApplicationException(
-                    org.springframework.http.HttpStatus.BAD_REQUEST, "Size code or name already exists!"
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "Mã hoặc tên kích thước đã tồn tại"
             );
         }
     }
@@ -62,12 +62,12 @@ public class SizeService {
 
         if (!size.getCode().equals(code) && sizeRepository.findByCode(code).isPresent()) {
             throw new com.zyna.dev.ecommerce.common.exceptions.ApplicationException(
-                    org.springframework.http.HttpStatus.BAD_REQUEST, "Size code already exists!"
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "Mã kích thước đã tồn tại"
             );
         }
         if (!size.getName().equals(name) && sizeRepository.findByName(name).isPresent()) {
             throw new com.zyna.dev.ecommerce.common.exceptions.ApplicationException(
-                    org.springframework.http.HttpStatus.BAD_REQUEST, "Size name already exists!"
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "Tên kích thước đã tồn tại"
             );
         }
 
@@ -78,7 +78,7 @@ public class SizeService {
             return sizeRepository.save(size);
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             throw new com.zyna.dev.ecommerce.common.exceptions.ApplicationException(
-                    org.springframework.http.HttpStatus.BAD_REQUEST, "Size code or name already exists!"
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "Mã hoặc tên kích thước đã tồn tại"
             );
         }
     }
@@ -87,7 +87,7 @@ public class SizeService {
     public void deleteSize(Long id) {
         if (!sizeRepository.existsById(id)) {
             throw new com.zyna.dev.ecommerce.common.exceptions.ApplicationException(
-                    org.springframework.http.HttpStatus.NOT_FOUND, "Size not found!"
+                    org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy kích thước"
             );
         }
         sizeRepository.deleteById(id);

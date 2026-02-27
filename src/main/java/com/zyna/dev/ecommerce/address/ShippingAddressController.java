@@ -37,7 +37,7 @@ public class ShippingAddressController {
         List<ShippingAddressResponse> result = addressService.getMyAddresses(userId);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Get addresses successfully",
+                "Lấy danh sách địa chỉ thành công",
                 result
         );
     }
@@ -53,7 +53,7 @@ public class ShippingAddressController {
         ShippingAddressResponse res = addressService.createAddress(userId, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Create address successfully",
+                "Tạo địa chỉ thành công",
                 res
         );
     }
@@ -70,7 +70,7 @@ public class ShippingAddressController {
         ShippingAddressResponse res = addressService.updateAddress(userId, id, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Update address successfully",
+                "Cập nhật địa chỉ thành công",
                 res
         );
     }
@@ -87,7 +87,7 @@ public class ShippingAddressController {
 
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Address deleted successfully!"
+                "Xóa địa chỉ thành công!"
         );
     }
 
@@ -102,7 +102,7 @@ public class ShippingAddressController {
         ShippingAddressResponse res = addressService.setDefaultAddress(userId, id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Set default address successfully",
+                "Đặt địa chỉ mặc định thành công",
                 res
         );
     }

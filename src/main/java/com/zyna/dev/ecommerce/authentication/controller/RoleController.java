@@ -27,7 +27,7 @@ public class RoleController {
         RoleResponse result = roleService.create(request);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Role created successfully!",
+                "Tạo vai trò thành công",
                 result
         );
     }
@@ -41,7 +41,7 @@ public class RoleController {
         RoleResponse result = roleService.update(id, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Role updated successfully!",
+                "Cập nhật vai trò thành công",
                 result
         );
     }
@@ -52,7 +52,7 @@ public class RoleController {
         roleService.delete(id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Role deleted successfully!"
+                "Xóa vai trò thành công"        
         );
     }
 
@@ -60,7 +60,7 @@ public class RoleController {
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     public ApiResponse<RoleResponse> get(@PathVariable Long id) {
         return ApiResponse.successfulResponse(
-                "Fetched role successfully!",
+                "Lấy thông tin vai trò thành công",
                 roleService.getById(id)
         );
     }
@@ -69,7 +69,7 @@ public class RoleController {
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     public ApiResponse<List<RoleResponse>> getAll() {
         return ApiResponse.successfulResponse(
-                "Fetched role list!",
+                "Lấy danh sách vai trò thành công",
                 roleService.getAll()
         );
     }
@@ -83,7 +83,7 @@ public class RoleController {
         RoleResponse result = roleService.assignPermissions(id, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Assigned permissions to role successfully!",
+                "Gán quyền hạn cho vai trò thành công",
                 result
         );
     }

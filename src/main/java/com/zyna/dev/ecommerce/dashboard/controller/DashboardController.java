@@ -30,7 +30,7 @@ public class DashboardController {
         if (to == null) to = LocalDate.now();
 
         return ApiResponse.successfulResponse(
-                "Fetched revenue stats!",
+                "Lấy thống kê doanh thu thành công!",
                 dashboardService.getRevenueStats(from, to)
         );
     }
@@ -40,7 +40,7 @@ public class DashboardController {
     @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasAuthority('ORDER_READ')")
     public ApiResponse<OrderStatResponse> getOrderStats() {
         return ApiResponse.successfulResponse(
-                "Fetched order stats!",
+                "Lấy thống kê đơn hàng thành công!",
                 dashboardService.getOrderStats()
         );
     }
@@ -52,7 +52,7 @@ public class DashboardController {
             @RequestParam(defaultValue = "5") int limit
     ) {
         return ApiResponse.successfulResponse(
-                "Fetched top selling products!",
+                "Lấy danh sách sản phẩm bán chạy thành công!",
                 dashboardService.getTopSellingProducts(limit)
         );
     }
@@ -64,7 +64,7 @@ public class DashboardController {
             @RequestParam(defaultValue = "10") int threshold
     ) {
         return ApiResponse.successfulResponse(
-                "Fetched low stock products!",
+                "Lấy danh sách sản phẩm sắp hết hàng thành công!",
                 dashboardService.getLowStockProducts(threshold)
         );
     }
@@ -80,7 +80,7 @@ public class DashboardController {
         if (to == null) to = LocalDate.now();
 
         return ApiResponse.successfulResponse(
-                "Fetched daily order stats!",
+                "Lấy thống kê đơn hàng hàng ngày thành công!",
                 dashboardService.getDailyOrderStats(from, to)
         );
     }
@@ -90,7 +90,7 @@ public class DashboardController {
     @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasAuthority('USER_READ')")
     public ApiResponse<UserStatResponse> getUserStats() {
         return ApiResponse.successfulResponse(
-                "Fetched user stats!",
+                "Lấy thống kê người dùng thành công!",
                 dashboardService.getUserStats()
         );
     }

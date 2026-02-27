@@ -28,7 +28,7 @@ public class VoucherController {
         VoucherResponse data = voucherService.create(request);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Voucher created successfully!",
+                "Voucher đã được tạo thành công!",
                 data
         );
     }
@@ -44,7 +44,7 @@ public class VoucherController {
         VoucherResponse data = voucherService.update(id, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Voucher updated successfully!",
+                "Voucher đã được cập nhật thành công!",
                 data
         );
     }
@@ -57,7 +57,7 @@ public class VoucherController {
         voucherService.deactivate(id);
         return ApiResponse.successfulResponseNoData(
                 HttpStatus.OK.value(),
-                "Voucher deactivated successfully!"
+                "Voucher đã được vô hiệu hóa thành công!"
         );
     }
 
@@ -69,7 +69,7 @@ public class VoucherController {
         voucherService.activate(id);
         return ApiResponse.successfulResponseNoData(
                 HttpStatus.OK.value(),
-                "Voucher activated successfully!"
+                "Voucher đã được kích hoạt thành công!"
         );
     }
 
@@ -81,7 +81,7 @@ public class VoucherController {
         VoucherResponse data = voucherService.getById(id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Get voucher successfully!",
+                "Lấy thông tin voucher thành công!",
                 data
         );
     }
@@ -97,7 +97,7 @@ public class VoucherController {
         Page<VoucherResponse> data = voucherService.list(page, size);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get voucher list successfully!",
+                "Lấy danh sách voucher thành công!",
                 data
         );
     }
@@ -113,7 +113,7 @@ public class VoucherController {
         Page<VoucherResponse> data = voucherService.listActive(page, size);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get active voucher list successfully!",
+                "Lấy danh sách voucher đang hoạt động thành công!",
                 data
         );
     }

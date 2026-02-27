@@ -21,7 +21,7 @@ public class SizeController {
     @GetMapping
     public ApiResponse<List<Size>> getAllSizes() {
         return ApiResponse.successfulResponse(
-                "Fetched all sizes!",
+                "Lấy danh sách kích thước thành công",
                 sizeService.getAllSizes()
         );
     }
@@ -29,7 +29,7 @@ public class SizeController {
     @GetMapping("/{id}")
     public ApiResponse<Size> getSizeById(@PathVariable Long id) {
         return ApiResponse.successfulResponse(
-                "Fetched size successfully!",
+                "Lấy thông tin kích thước thành công",
                 sizeService.getSizeById(id)
         );
     }
@@ -40,7 +40,7 @@ public class SizeController {
     public ApiResponse<Size> createSize(@RequestBody SizeRequest request) {
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Size created successfully!",
+                "Tạo kích thước thành công",
                 sizeService.createSize(request)
         );
     }
@@ -50,7 +50,7 @@ public class SizeController {
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
     public ApiResponse<Size> updateSize(@PathVariable Long id, @RequestBody SizeRequest request) {
         return ApiResponse.successfulResponse(
-                "Size updated successfully!",
+                "Cập nhật kích thước thành công",
                 sizeService.updateSize(id, request)
         );
     }
@@ -62,7 +62,7 @@ public class SizeController {
         sizeService.deleteSize(id);
         return ApiResponse.successfulResponseNoData(
                 HttpStatus.OK.value(),
-                "Size deleted successfully!"
+                "Xóa kích thước thành công"
         );
     }
 }

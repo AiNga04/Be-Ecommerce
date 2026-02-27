@@ -36,7 +36,7 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     public VoucherResponse create(VoucherCreateRequest request) {
         if (voucherRepository.existsByCodeIgnoreCase(request.getCode())) {
-            throw new ApplicationException(HttpStatus.CONFLICT, "Voucher code already exists!");
+            throw new ApplicationException(HttpStatus.CONFLICT, "Mã voucher đã tồn tại!");
         }
 
         validateDates(request.getStartDate(), request.getEndDate());
@@ -50,7 +50,7 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     public VoucherResponse update(Long id, VoucherUpdateRequest request) {
         Voucher voucher = voucherRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Voucher not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy voucher!"));
 
         VoucherType typeAfterUpdate = request.getType() != null ? request.getType() : voucher.getType();
         BigDecimal discountAfterUpdate = request.getDiscountValue() != null
@@ -69,7 +69,7 @@ public class VoucherServiceImpl implements VoucherService {
 
         // không cho sửa voucher đã hết hạn
         if (voucher.getStatus() == VoucherStatus.EXPIRED) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Expired voucher cannot be updated!");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Voucher đã hết hạn không thể cập nhật!");
         }
 
         voucherMapper.applyUpdate(voucher, request);
@@ -83,7 +83,7 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     public void deactivate(Long id) {
         Voucher voucher = voucherRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Voucher not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy voucher!"));
 
         voucher.setStatus(VoucherStatus.INACTIVE);
         voucherRepository.save(voucher);
@@ -95,13 +95,13 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     public void activate(Long id) {
         Voucher voucher = voucherRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Voucher not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy voucher!"));
 
         LocalDateTime now = LocalDateTime.now();
         if (voucher.getEndDate() != null && now.isAfter(voucher.getEndDate())) {
             voucher.setStatus(VoucherStatus.EXPIRED);
             voucherRepository.save(voucher);
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Voucher is already expired!");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Voucher đã hết hạn!");
         }
 
         voucher.setStatus(VoucherStatus.ACTIVE);
@@ -175,11 +175,11 @@ public class VoucherServiceImpl implements VoucherService {
         if (voucher.getEndDate() != null && now.isAfter(voucher.getEndDate())) {
             voucher.setStatus(VoucherStatus.EXPIRED);
             voucherRepository.save(voucher);
-            return invalid("Voucher is expired!", request);
+            return invalid("Voucher đã hết hạn!", request);
         }
 
         if (voucher.getStatus() == VoucherStatus.DRAFT || voucher.getStatus() == VoucherStatus.INACTIVE) {
-            return invalid("Voucher is not active!", request);
+            return invalid("Voucher đang bị khóa hoặc ở trạng thái nháp!", request);
         }
 
         if (voucher.getStatus() == VoucherStatus.EXPIRED) {
@@ -188,7 +188,7 @@ public class VoucherServiceImpl implements VoucherService {
 
         // thời gian hiệu lực
         if (voucher.getStartDate() != null && now.isBefore(voucher.getStartDate())) {
-            return invalid("Voucher is not started yet!", request);
+            return invalid("Voucher chưa đến thời gian áp dụng!", request);
         }
 
         try {
@@ -205,7 +205,7 @@ public class VoucherServiceImpl implements VoucherService {
         // đơn tối thiểu
         if (voucher.getMinOrderValue() != null &&
                 cartTotal.compareTo(voucher.getMinOrderValue()) < 0) {
-            return invalid("Order total does not reach minimum value for this voucher!", request);
+            return invalid("Giá trị đơn hàng chưa đạt mức tối thiểu để áp dụng mã này!", request);
         }
 
         // (optional) giới hạn số lần dùng tổng
@@ -213,7 +213,7 @@ public class VoucherServiceImpl implements VoucherService {
         if (voucher.getMaxUsage() != null && currentUsed >= voucher.getMaxUsage()) {
             voucher.setStatus(VoucherStatus.INACTIVE);
             voucherRepository.save(voucher);
-            return invalid("This voucher has reached its maximum usage!", request);
+            return invalid("Voucher này đã đạt số lần sử dụng tối đa!", request);
         }
 
         // TÍNH GIẢM GIÁ
@@ -221,7 +221,7 @@ public class VoucherServiceImpl implements VoucherService {
 
             BigDecimal percent = voucher.getDiscountValue();
             if (percent == null || percent.compareTo(BigDecimal.ZERO) <= 0) {
-                return invalid("Voucher discount is not configured correctly!", request);
+                return invalid("Giảm giá của voucher chưa được cấu hình đúng!", request);
             }
             discountAmount = cartTotal
                     .multiply(percent)
@@ -273,7 +273,7 @@ public class VoucherServiceImpl implements VoucherService {
 
         return VoucherApplyResponse.builder()
                 .valid(true)
-                .message("Voucher applied successfully!")
+                .message("Áp dụng voucher thành công!")
                 .cartTotal(cartTotal)
                 .shippingFee(shippingFee)
                 .discountAmount(discountAmount)
@@ -298,7 +298,7 @@ public class VoucherServiceImpl implements VoucherService {
 
     private void validateDates(LocalDateTime startDate, LocalDateTime endDate) {
         if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "End date must be after start date");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Ngày kết thúc phải sau ngày bắt đầu");
         }
     }
 
@@ -307,17 +307,17 @@ public class VoucherServiceImpl implements VoucherService {
 
         if (type == VoucherType.FREESHIP) {
             if (discountValue != null && discountValue.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipping discount must be greater than 0");
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Giá trị giảm phí vận chuyển phải lớn hơn 0");
             }
             return;
         }
 
         if (discountValue == null || discountValue.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Discount value must be greater than 0");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Giá trị giảm giá phải lớn hơn 0");
         }
 
         if (type == VoucherType.PERCENTAGE && discountValue.compareTo(BigDecimal.valueOf(100)) > 0) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Percentage discount cannot exceed 100");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Giá trị giảm giá theo phần trăm không được quá 100");
         }
     }
 }

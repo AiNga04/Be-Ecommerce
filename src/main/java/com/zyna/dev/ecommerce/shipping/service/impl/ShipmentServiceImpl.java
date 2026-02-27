@@ -45,7 +45,7 @@ public class ShipmentServiceImpl implements ShipmentService {
     @Transactional
     public ShipmentInfoResponse assignShipper(Long orderId, Long shipperId, String carrierCode) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Order not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
 
         if (order.getStatus() != OrderStatus.CONFIRMED) {
             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Đơn hàng phải ở trạng thái CONFIRMED (Đã xác nhận) trước khi gán người giao hàng");
@@ -62,14 +62,14 @@ public class ShipmentServiceImpl implements ShipmentService {
         }
 
         User shipper = userRepository.findById(shipperId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Shipper not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy shipper"));
 
         if (!isShipper(shipper)) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Provided user is not a shipper");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Người dùng được cung cấp không phải là shipper");
         }
 
         if (shipper.getStatus() != com.zyna.dev.ecommerce.common.enums.Status.ACTIVE) {
-             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Provided shipper is inactive");
+             throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipper được cung cấp đang bị khóa");
         }
 
         shipment.setShipper(shipper);
@@ -236,20 +236,20 @@ public class ShipmentServiceImpl implements ShipmentService {
     public ShipmentInfoResponse userRequestReturn(Long orderId, String reason) {
         User user = getCurrentUser();
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Order not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
 
         if (!order.getUser().getId().equals(user.getId())) {
-            throw new ApplicationException(HttpStatus.FORBIDDEN, "You do not own this order");
+            throw new ApplicationException(HttpStatus.FORBIDDEN, "Đơn hàng này không thuộc về bạn");
         }
 
         Shipment shipment = getOrCreateShipment(order);
 
         if (order.getStatus() == OrderStatus.CANCELED || shipment.getStatus() == ShipmentStatus.RETURNED) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Order is already canceled or returned");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Đơn hàng đã được hoàn trả hoặc bị hủy");
         }
 
         if (shipment.isReturnRequested()) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Return request already submitted");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Đã gửi yêu cầu trả hàng trước đó");
         }
 
         shipment.setReturnRequested(true);
@@ -266,10 +266,10 @@ public class ShipmentServiceImpl implements ShipmentService {
     @Transactional
     public ShipmentInfoResponse approveReturn(Long shipmentId, String reason) {
         Shipment ship = shipmentRepository.findById(shipmentId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Shipment not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn giao hàng"));
 
         if (!ship.isReturnRequested()) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipment is not in return-requested state");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Đơn giao hàng không ở trạng thái yêu cầu trả hàng");
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -427,13 +427,13 @@ public class ShipmentServiceImpl implements ShipmentService {
     @Transactional(readOnly = true)
     public ShipmentInfoResponse getMyShipmentById(Long shipmentId) {
         Shipment shipment = shipmentRepository.findById(shipmentId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Shipment not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn giao hàng"));
 
         User current = getCurrentUser();
 
         if (shipment.getShipper() == null ||
                 !shipment.getShipper().getId().equals(current.getId())) {
-            throw new ApplicationException(HttpStatus.FORBIDDEN, "You are not assigned to this shipment");
+            throw new ApplicationException(HttpStatus.FORBIDDEN, "Bạn không được phân công cho đơn giao hàng này");
         }
 
         return toResponse(shipment);
@@ -453,7 +453,7 @@ public class ShipmentServiceImpl implements ShipmentService {
     @Transactional(readOnly = true)
     public ShipmentInfoResponse getShipmentById(Long shipmentId) {
         Shipment shipment = shipmentRepository.findById(shipmentId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Shipment not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn giao hàng"));
         return toResponse(shipment);
     }
 
@@ -480,7 +480,7 @@ public class ShipmentServiceImpl implements ShipmentService {
 
         if (shipment.getStatus() == ShipmentStatus.DELIVERED
                 || shipment.getStatus() == ShipmentStatus.RETURNED) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipment is already completed");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Đơn giao hàng đã hoàn tất");
         }
 
         return shipment;
@@ -501,7 +501,7 @@ public class ShipmentServiceImpl implements ShipmentService {
         String email = auth.getName();
 
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.UNAUTHORIZED, "User not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.UNAUTHORIZED, "Không tìm thấy người dùng"));
     }
 
     private void syncOrderShipping(Order order, Shipment shipment) {

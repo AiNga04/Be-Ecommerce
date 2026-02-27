@@ -20,7 +20,7 @@ public class SizeGuideService {
 
     public SizeGuide getSizeGuideById(Long id) {
         return sizeGuideRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("SizeGuide not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hướng dẫn chọn size với id: " + id));
     }
 
     @Transactional
@@ -59,7 +59,7 @@ public class SizeGuideService {
     public void deleteSizeGuide(Long id) {
         if (!sizeGuideRepository.existsById(id)) {
             throw new com.zyna.dev.ecommerce.common.exceptions.ApplicationException(
-                    org.springframework.http.HttpStatus.NOT_FOUND, "SizeGuide not found!"
+                    org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy hướng dẫn chọn size"
             );
         }
         sizeGuideRepository.deleteById(id);

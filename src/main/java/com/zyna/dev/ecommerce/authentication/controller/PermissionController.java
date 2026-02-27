@@ -26,7 +26,7 @@ public class PermissionController {
         PermissionResponse result = permissionService.create(request);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Permission created successfully!",
+                "Tạo quyền hạn thành công",
                 result
         );
     }
@@ -40,7 +40,7 @@ public class PermissionController {
         PermissionResponse result = permissionService.update(id, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Permission updated successfully!",
+                "Cập nhật quyền hạn thành công",
                 result
         );
     }
@@ -51,7 +51,7 @@ public class PermissionController {
         permissionService.delete(id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Permission deleted successfully!"
+                "Xóa quyền hạn thành công"
         );
     }
 
@@ -59,7 +59,7 @@ public class PermissionController {
     @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
     public ApiResponse<PermissionResponse> get(@PathVariable Long id) {
         return ApiResponse.successfulResponse(
-                "Fetched permission successfully!",
+                "Lấy thông tin quyền hạn thành công",
                 permissionService.getById(id)
         );
     }
@@ -68,7 +68,7 @@ public class PermissionController {
     @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
     public ApiResponse<List<PermissionResponse>> getAll() {
         return ApiResponse.successfulResponse(
-                "Fetched permission list!",
+                "Lấy danh sách quyền hạn thành công",
                 permissionService.getAll()
         );
     }

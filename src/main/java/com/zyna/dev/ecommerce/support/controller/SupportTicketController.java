@@ -30,7 +30,7 @@ public class SupportTicketController {
     @PostMapping("/support/tickets")
     public ResponseEntity<ApiResponse<Void>> submitTicket(@Valid @RequestBody SupportTicketRequest request) {
         ticketService.submitTicket(request);
-        return ResponseEntity.ok(ApiResponse.successfulResponseNoData(HttpStatus.OK.value(), "Ticket submitted successfully"));
+        return ResponseEntity.ok(ApiResponse.successfulResponseNoData(HttpStatus.OK.value(), "Gửi yêu cầu hỗ trợ thành công"));
     }
 
     // Admin/Staff endpoints
@@ -49,13 +49,13 @@ public class SupportTicketController {
         Sort sort = Sort.by(Sort.Direction.fromString(direction), sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<SupportTicketResponse> ticketsPage = ticketService.getAllTickets(subject, status, processedById, keyword, pageable);
-        return ResponseEntity.ok(ApiResponse.successfulPageResponse("Fetched tickets successfully", ticketsPage));
+        return ResponseEntity.ok(ApiResponse.successfulPageResponse("Lấy danh sách yêu cầu hỗ trợ thành công", ticketsPage));
     }
 
     @GetMapping("/admin/support/tickets/{id}")
     @PreAuthorize("hasAuthority('SUPPORT_READ')")
     public ResponseEntity<ApiResponse<SupportTicketResponse>> getTicketById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.successfulResponse("Fetched ticket successfully", ticketService.getTicketById(id)));
+        return ResponseEntity.ok(ApiResponse.successfulResponse("Lấy thông tin yêu cầu hỗ trợ thành công", ticketService.getTicketById(id)));
     }
 
     @PutMapping("/admin/support/tickets/{id}/status")
@@ -65,7 +65,7 @@ public class SupportTicketController {
             @RequestParam SupportStatus status
     ) {
         ticketService.updateTicketStatus(id, status);
-        return ResponseEntity.ok(ApiResponse.successfulResponseNoData(HttpStatus.OK.value(), "Ticket status updated successfully"));
+        return ResponseEntity.ok(ApiResponse.successfulResponseNoData(HttpStatus.OK.value(), "Cập nhật trạng thái yêu cầu hỗ trợ thành công"));
     }
 
     @PutMapping("/admin/support/tickets/{id}/reply")
@@ -75,6 +75,6 @@ public class SupportTicketController {
             @Valid @RequestBody SupportTicketReplyRequest request
     ) {
         ticketService.replyTicket(id, request);
-        return ResponseEntity.ok(ApiResponse.successfulResponseNoData(HttpStatus.OK.value(), "Ticket replied successfully"));
+        return ResponseEntity.ok(ApiResponse.successfulResponseNoData(HttpStatus.OK.value(), "Phản hồi yêu cầu hỗ trợ thành công"));
     }
 }

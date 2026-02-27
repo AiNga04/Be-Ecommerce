@@ -48,34 +48,34 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional
     public ReviewResponse create(Long userId, ReviewCreateRequest request, List<MultipartFile> images) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
 
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Product not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm"));
 
         // verify purchased (any order of user contains this product and is COMPLETED)
         java.util.List<com.zyna.dev.ecommerce.orders.models.OrderItem> purchasedItems = 
                 orderItemRepository.findByProductAndOrder_UserAndOrder_StatusOrderByOrder_CreatedAtDesc(product, user, OrderStatus.COMPLETED);
                 
         if (purchasedItems.isEmpty()) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "You can only review products from COMPLETED orders");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Bạn chỉ có thể đánh giá các sản phẩm từ đơn hàng đã HOÀN THÀNH");
         }
 
         Order order = null;
         if (request.getOrderId() != null) {
             order = orderRepository.findById(request.getOrderId())
-                    .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Order not found"));
+                    .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
             if (!order.getUser().getId().equals(userId)) {
-                throw new ApplicationException(HttpStatus.FORBIDDEN, "You do not own this order");
+                throw new ApplicationException(HttpStatus.FORBIDDEN, "Đơn hàng này không thuộc về bạn");
             }
             if (order.getStatus() != OrderStatus.COMPLETED) {
-                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Order must be COMPLETED to review");
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Đơn hàng phải ở trạng thái HOÀN THÀNH mới có thể đánh giá");
             }
             // Optional: verify that the specified order actually contains the product
             boolean orderContainsProduct = purchasedItems.stream()
                     .anyMatch(oi -> oi.getOrder().getId().equals(request.getOrderId()));
             if (!orderContainsProduct) {
-                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Product is not found in the specified order");
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Không tìm thấy sản phẩm trong đơn hàng đã chỉ định");
             }
         } else {
             // Auto link the most recent completed order
@@ -84,7 +84,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         // Check duplicate: same user + product + order
         if (reviewRepository.existsByUserAndProductAndOrder(user, product, order)) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "You have already reviewed this product for this order");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Bạn đã đánh giá sản phẩm này cho đơn hàng này rồi");
         }
 
         Review review = Review.builder()
@@ -120,7 +120,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     public ReviewListResponse listByProduct(Long productId, int page, int size) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Product not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm"));
 
         Page<Review> reviews = reviewRepository.findByProductAndHiddenFalse(
                 product,
@@ -141,10 +141,10 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     public Page<ReviewResponse> listMyReviewsByProduct(Long userId, Long productId, int page, int size) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Product not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm"));
 
         Page<Review> reviews = reviewRepository.findByUserAndProductAndHiddenFalse(
                 user,
@@ -189,14 +189,14 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
 
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Review not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá"));
 
         if (review.getUser().getId().equals(userId)) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "You cannot report your own review");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Bạn không thể báo cáo đánh giá của chính mình");
         }
 
         if (review.getReporters().contains(user)) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "You have already reported this review");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Bạn đã báo cáo đánh giá này rồi");
         }
 
         review.getReporters().add(user);
@@ -207,7 +207,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional
     public void hide(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Review not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá"));
         if (!review.getHidden()) {
             review.setHidden(true);
             reviewRepository.save(review);
@@ -219,7 +219,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional
     public void unhide(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Review not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá"));
         if (review.getHidden()) {
             review.setHidden(false);
             reviewRepository.save(review);
@@ -231,15 +231,15 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional
     public ReviewResponse update(Long userId, ReviewUpdateRequest request, List<MultipartFile> images, Long reviewId, boolean canManage) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Review not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá"));
 
         if (!Objects.equals(review.getUser().getId(), userId) && !canManage) {
-            throw new ApplicationException(HttpStatus.FORBIDDEN, "You cannot update this review");
+            throw new ApplicationException(HttpStatus.FORBIDDEN, "Bạn không thể cập nhật đánh giá này");
         }
 
         if (request.getRating() != null) {
             if (request.getRating() < 1 || request.getRating() > 5) {
-                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Rating must be between 1 and 5");
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Điểm đánh giá phải từ 1 đến 5");
             }
             review.setRating(request.getRating());
         }
@@ -276,7 +276,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Review not found"));
 
         if (!Objects.equals(review.getUser().getId(), userId) && !canManage) {
-            throw new ApplicationException(HttpStatus.FORBIDDEN, "You cannot delete this review");
+            throw new ApplicationException(HttpStatus.FORBIDDEN, "Bạn không thể xóa đánh giá này");
         }
 
         if (review.getImages() != null) {

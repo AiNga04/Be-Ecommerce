@@ -58,13 +58,13 @@ public class InventoryServiceImpl implements InventoryService {
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
-            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Unauthenticated!");
+            throw new ApplicationException(HttpStatus.UNAUTHORIZED, "Chưa xác thực");
         }
 
         String email = auth.getName(); // tuỳ bạn mapping email/username, sửa nếu cần
 
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
     }
 
     @Override
@@ -72,19 +72,19 @@ public class InventoryServiceImpl implements InventoryService {
     public InventoryAuditResponse adjustStock(Long productId, AdjustStockRequest request) {
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Product not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm"));
 
         User admin = getCurrentUser();
 
         // Validate Size
         if (request.getSizeId() == null) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Size ID is required for adjustment");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Cần có mã kích thước để điều chỉnh");
         }
         com.zyna.dev.ecommerce.products.models.Size size = sizeRepository.findById(request.getSizeId())
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Size not found linked to id: " + request.getSizeId()));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy kích thước liên kết với id: " + request.getSizeId()));
 
         com.zyna.dev.ecommerce.products.models.ProductSize productSize = productSizeRepository.findByProductAndSize(product, size)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "Product variant unavailable"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "Biến thể sản phẩm không khả dụng"));
 
         int oldStock = productSize.getQuantity() == null ? 0 : productSize.getQuantity();
         int delta = request.getQuantityChange();
@@ -94,7 +94,7 @@ public class InventoryServiceImpl implements InventoryService {
         if (newStock < 0) {
             throw new ApplicationException(
                     HttpStatus.BAD_REQUEST,
-                    "Stock cannot be negative!"
+                    "Tồn kho không thể âm"
             );
         }
 
@@ -148,7 +148,7 @@ public class InventoryServiceImpl implements InventoryService {
             Product product = productRepository.findById(productId)
                     .orElseThrow(() -> new ApplicationException(
                             HttpStatus.NOT_FOUND,
-                            "Product not found with id=" + productId
+                            "Không tìm thấy sản phẩm với id=" + productId
                     ));
             logsPage = auditLogRepository
                     .findByProductAndChangedAtBetweenOrderByChangedAtDesc(product, from, to, pageable);
@@ -182,7 +182,7 @@ public class InventoryServiceImpl implements InventoryService {
             Product product = productRepository.findById(productId)
                     .orElseThrow(() -> new ApplicationException(
                             HttpStatus.NOT_FOUND,
-                            "Product not found with id=" + productId
+                            "Không tìm thấy sản phẩm với id=" + productId
                     ));
             logs = auditLogRepository
                     .findByProductAndChangedAtBetweenOrderByChangedAtAsc(product, from, to);
@@ -200,14 +200,14 @@ public class InventoryServiceImpl implements InventoryService {
             Row header = sheet.createRow(0);
             int col = 0;
             header.createCell(col++).setCellValue("ID");
-            header.createCell(col++).setCellValue("Product ID");
-            header.createCell(col++).setCellValue("Product Name");
-            header.createCell(col++).setCellValue("Old Stock");
-            header.createCell(col++).setCellValue("New Stock");
-            header.createCell(col++).setCellValue("Change");
-            header.createCell(col++).setCellValue("Reason");
-            header.createCell(col++).setCellValue("Changed By");
-            header.createCell(col).setCellValue("Changed At");
+            header.createCell(col++).setCellValue("Mã sản phẩm");
+            header.createCell(col++).setCellValue("Tên sản phẩm");
+            header.createCell(col++).setCellValue("Tồn cũ");
+            header.createCell(col++).setCellValue("Tồn mới");
+            header.createCell(col++).setCellValue("Thay đổi");
+            header.createCell(col++).setCellValue("Lý do");
+            header.createCell(col++).setCellValue("Người thay đổi");
+            header.createCell(col).setCellValue("Thời điểm thay đổi");
 
             // Body
             int rowIdx = 1;
@@ -246,7 +246,7 @@ public class InventoryServiceImpl implements InventoryService {
             return baos.toByteArray();
         } catch (Exception e) {
             throw new ApplicationException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Failed to export Excel: " + e.getMessage());
+                    "Lỗi khi xuất tệp Excel: " + e.getMessage());
         }
     }
 
@@ -286,14 +286,14 @@ public class InventoryServiceImpl implements InventoryService {
             Font headerFont = new Font(Font.HELVETICA, 10, Font.BOLD);
             Font cellFont = new Font(Font.HELVETICA, 9);
 
-            Paragraph title = new Paragraph("Inventory Audit Report", titleFont);
+            Paragraph title = new Paragraph("Báo cáo kiểm kê kho", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             document.add(title);
 
             if (fromDate != null || toDate != null) {
-                String rangeText = String.format("Date range: %s - %s",
-                        fromDate != null ? fromDate.toString() : "ALL",
-                        toDate != null ? toDate.toString() : "ALL"
+                String rangeText = String.format("Khoảng thời gian: %s - %s",
+                        fromDate != null ? fromDate.toString() : "TẤT CẢ",
+                        toDate != null ? toDate.toString() : "TẤT CẢ"
                 );
                 Paragraph range = new Paragraph(rangeText, cellFont);
                 range.setAlignment(Element.ALIGN_CENTER);
@@ -309,14 +309,14 @@ public class InventoryServiceImpl implements InventoryService {
 
             // Header
             addHeaderCell(table, "ID", headerFont);
-            addHeaderCell(table, "Product ID", headerFont);
-            addHeaderCell(table, "Product Name", headerFont);
-            addHeaderCell(table, "Old Stock", headerFont);
-            addHeaderCell(table, "New Stock", headerFont);
-            addHeaderCell(table, "Change", headerFont);
-            addHeaderCell(table, "Reason", headerFont);
-            addHeaderCell(table, "Changed By", headerFont);
-            addHeaderCell(table, "Changed At", headerFont);
+            addHeaderCell(table, "Mã SP", headerFont);
+            addHeaderCell(table, "Tên sản phẩm", headerFont);
+            addHeaderCell(table, "Tồn cũ", headerFont);
+            addHeaderCell(table, "Tồn mới", headerFont);
+            addHeaderCell(table, "Thay đổi", headerFont);
+            addHeaderCell(table, "Lý do", headerFont);
+            addHeaderCell(table, "Người thay đổi", headerFont);
+            addHeaderCell(table, "Thời gian", headerFont);
 
             // Body
             for (InventoryAuditLog log : logs) {
@@ -343,7 +343,7 @@ public class InventoryServiceImpl implements InventoryService {
             return baos.toByteArray();
         } catch (Exception e) {
             throw new ApplicationException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Failed to export PDF: " + e.getMessage());
+                    "Lỗi khi xuất tệp PDF: " + e.getMessage());
         }
     }
 

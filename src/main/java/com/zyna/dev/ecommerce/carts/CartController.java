@@ -38,7 +38,7 @@ public class CartController {
         List<CartItemResponse> items = cartService.getMyCart(userId);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Get cart successfully",
+                "Lấy giỏ hàng thành công",
                 items
         );
     }
@@ -55,7 +55,7 @@ public class CartController {
         CartItemResponse itemResponse = cartService.addToCart(userId, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Add to cart successfully",
+                "Thêm vào giỏ hàng thành công",
                 itemResponse
         );
     }
@@ -73,7 +73,7 @@ public class CartController {
         CartItemResponse itemResponse = cartService.updateCartItem(userId, id, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Update cart item successfully",
+                "Cập nhật sản phẩm trong giỏ thành công",
                 itemResponse
         );
     }
@@ -91,7 +91,7 @@ public class CartController {
 
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Removed cart item successfully!"
+                "Đã xóa sản phẩm khỏi giỏ!"
         );
     }
 
@@ -108,7 +108,7 @@ public class CartController {
 
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Removed cart items successfully!"
+                "Đã xóa các sản phẩm khỏi giỏ!"
         );
     }
 
@@ -122,7 +122,7 @@ public class CartController {
 
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Cleared cart successfully!"
+                "Đã xóa toàn bộ giỏ hàng!"
         );
     }
 }

@@ -59,7 +59,7 @@ public class ProductServiceImpl implements ProductService {
                                          Long sizeGuideId, List<Long> sizeIds) {
 
         if (productRepository.existsByName(name)) {
-            throw new ApplicationException(HttpStatus.CONFLICT, "Product name already exists!");
+            throw new ApplicationException(HttpStatus.CONFLICT, "Tên sản phẩm đã tồn tại");
         }
 
         String imageUrl = FileUploadUtil.saveImage(image);
@@ -70,14 +70,14 @@ public class ProductServiceImpl implements ProductService {
             categoryEntity = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new ApplicationException(
                             HttpStatus.BAD_REQUEST,
-                            "Category ID not found!"
+                            "Không tìm thấy mã danh mục"
                     ));
         }
 
         com.zyna.dev.ecommerce.products.models.SizeGuide sizeGuide = null;
         if (sizeGuideId != null) {
             sizeGuide = sizeGuideRepository.findById(sizeGuideId)
-                    .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "SizeGuide not found!"));
+                    .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy hướng dẫn chọn size"));
         }
 
         Product product = Product.builder()
@@ -96,7 +96,7 @@ public class ProductServiceImpl implements ProductService {
             List<com.zyna.dev.ecommerce.products.models.ProductSize> productSizes = new ArrayList<>();
             for (Long sizeId : sizeIds) {
                 com.zyna.dev.ecommerce.products.models.Size size = sizeRepository.findById(sizeId)
-                        .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Size ID " + sizeId + " not found!"));
+                        .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy mã kích thước " + sizeId));
                 
                 com.zyna.dev.ecommerce.products.models.ProductSize ps = com.zyna.dev.ecommerce.products.models.ProductSize.builder()
                         .product(product)
@@ -120,7 +120,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse getProductById(Long id) {
         Product product = productRepository.findActiveByIdWithGallery(id)
                 .orElseThrow(() ->
-                        new ApplicationException(HttpStatus.NOT_FOUND, "Product not found or inactive!")
+                        new ApplicationException(HttpStatus.NOT_FOUND, "Sản phẩm không tồn tại hoặc đã bị ngừng kinh doanh")
                 );
 
         return productMapper.toProductResponseDetail(product);
@@ -318,10 +318,10 @@ public class ProductServiceImpl implements ProductService {
                                          Long sizeGuideId, List<Long> sizeIds) {
 
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Product not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm"));
 
         if (!product.getIsActive()) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Product is inactive. Restore before updating!");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Sản phẩm đang bị ẩn. Vui lòng khôi phục trước khi cập nhật");
         }
 
         // ... (User check skipped for brevity, keeping existing flow) ...
@@ -329,7 +329,7 @@ public class ProductServiceImpl implements ProductService {
         User changedByUser = null;
         if (email != null) {
             changedByUser = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found!"));
+                    .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
         }
 
         if (image != null && !image.isEmpty()) {
@@ -385,7 +385,7 @@ public class ProductServiceImpl implements ProductService {
             for (Long sid : sizeIds) {
                 if (!currentSizeIds.contains(sid)) {
                     com.zyna.dev.ecommerce.products.models.Size sizeObj = sizeRepository.findById(sid)
-                            .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Size ID " + sid + " not found!"));
+                            .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy mã kích thước " + sid));
 
                     com.zyna.dev.ecommerce.products.models.ProductSize ps = com.zyna.dev.ecommerce.products.models.ProductSize.builder()
                             .product(product)
@@ -425,10 +425,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void softDeleteProduct(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Product not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm"));
 
         if (!product.getIsActive()) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Product already inactive!");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Sản phẩm đã ở trạng thái ẩn");
         }
 
         product.setIsActive(false);
@@ -442,10 +442,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void restoreProduct(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Product not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm"));
 
         if (product.getIsActive()) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Product already active!");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Sản phẩm đã ở trạng thái kích hoạt");
         }
 
         product.setIsActive(true);
@@ -459,7 +459,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void hardDeleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
-            throw new ApplicationException(HttpStatus.NOT_FOUND, "Product not found!");
+            throw new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm");
         }
         productRepository.deleteById(id);
         log.info("Hard deleted product id={}", id);
@@ -531,10 +531,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<GalleryImageResponse> addGalleryImages(Long productId, List<MultipartFile> images) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Product not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm"));
 
         if (!product.getIsActive()) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Cannot add images to inactive product!");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Không thể thêm ảnh vào sản phẩm đang bị ẩn");
         }
 
         List<String> savedUrls = FileUploadUtil.saveImages(images);
@@ -561,14 +561,14 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public GalleryImageResponse updateGalleryImage(Long productId, Long imageId, MultipartFile image) {
         if (image == null || image.isEmpty()) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Image file is required");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Cần có tệp hình ảnh");
         }
 
         ProductImage existing = productImageRepository.findById(imageId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Image not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy ảnh"));
 
         if (existing.getProduct() == null || !existing.getProduct().getId().equals(productId)) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Image does not belong to this product!");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Ảnh không thuộc về sản phẩm này");
         }
 
         String newUrl = FileUploadUtil.replaceImage(existing.getImageUrl(), image);
@@ -587,11 +587,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void deleteGalleryImage(Long productId, Long imageId) {
         ProductImage image = productImageRepository.findById(imageId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Image not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy ảnh"));
 
         // bảo vệ: image phải thuộc đúng product
         if (image.getProduct() == null || !image.getProduct().getId().equals(productId)) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Image does not belong to this product!");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Ảnh không thuộc về sản phẩm này");
         }
 
         // xóa file trên disk

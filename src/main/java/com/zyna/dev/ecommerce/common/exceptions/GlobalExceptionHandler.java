@@ -28,13 +28,13 @@ public class GlobalExceptionHandler {
             String fieldName = error instanceof FieldError fe ? fe.getField() : error.getObjectName();
             String message = error.getDefaultMessage() != null
                     ? error.getDefaultMessage()
-                    : "Invalid value!";
+                    : "Giá trị không hợp lệ";
             fieldErrors.put(fieldName, message);
         });
 
         ApiResponse<Map<String, String>> body = ApiResponse.failedResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "Validation failed!",
+                "Xác thực không thành công",
                 fieldErrors
         );
 
@@ -76,18 +76,18 @@ public class GlobalExceptionHandler {
                     .findFirst()
                     .orElse("unknown");
             String errorMessage = String.format(
-                    "Invalid format for '%s'. Expected type: %s",
+                    "Định dạng không hợp lệ cho '%s'. Kiểu dữ liệu mong đợi: %s",
                     fieldName, ife.getTargetType().getSimpleName()
             );
             errors.put(fieldName, errorMessage);
         } else {
-            errors.put("general", "Invalid JSON data. Please check format and field types!");
+            errors.put("general", "Dữ liệu JSON đầu vào không hợp lệ. Vui lòng kiểm tra định dạng và kiểu dữ liệu");
         }
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(                                                      
                 ApiResponse.failedResponse(
                         HttpStatus.BAD_REQUEST.value(),
-                        "Invalid JSON input!",
+                        "Dữ liệu JSON đầu vào không hợp lệ",
                         errors
                 )
         );
@@ -98,7 +98,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ApiResponse.failedResponse(
                         HttpStatus.NOT_FOUND.value(),
-                        "Resource not found",
+                        "Không tìm thấy tài nguyên",
                         ex.getMessage()
                 )
         );
@@ -109,7 +109,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(
                 ApiResponse.failedResponse(
                         HttpStatus.METHOD_NOT_ALLOWED.value(),
-                        "Method not allowed",
+                        "Phương thức không được hỗ trợ",
                         ex.getMessage()
                 )
         );
@@ -120,12 +120,12 @@ public class GlobalExceptionHandler {
         String name = ex.getName();
         String type = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
         Object value = ex.getValue();
-        String message = String.format("Parameter '%s' should be of type '%s'", name, type);
+        String message = String.format("Tham số '%s' phải có kiểu dữ liệu là '%s'", name, type);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 ApiResponse.failedResponse(
                         HttpStatus.BAD_REQUEST.value(),
-                        "Invalid Argument Type",
+                        "Kiểu tham số không hợp lệ",
                         message
                 )
         );
@@ -136,7 +136,7 @@ public class GlobalExceptionHandler {
 
         ApiResponse<String> body = ApiResponse.failedResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal server error!",
+                "Lỗi hệ thống nội bộ",
                 ex.getMessage()
         );
 

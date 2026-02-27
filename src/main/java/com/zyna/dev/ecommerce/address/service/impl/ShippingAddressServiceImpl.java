@@ -70,7 +70,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
         User user = getUser(userId);
 
         ShippingAddress address = addressRepository.findByIdAndUser(addressId, user)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Address not found!"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Địa chỉ không tồn tại"));
 
         address.setReceiverName(request.getReceiverName());
         address.setReceiverPhone(request.getReceiverPhone());
@@ -102,7 +102,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
     public void deleteAddress(Long userId, Long addressId) {
         User user = getUser(userId);
         ShippingAddress address = addressRepository.findByIdAndUser(addressId, user)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Address not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Địa chỉ không tồn tại"));
 
         addressRepository.delete(address);
     }
@@ -112,7 +112,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
     public ShippingAddressResponse setDefaultAddress(Long userId, Long addressId) {
         User user = getUser(userId);
         ShippingAddress address = addressRepository.findByIdAndUser(addressId, user)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Address not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Địa chỉ không tồn tại"));
 
         addressRepository.findByUserAndIsDefaultTrue(user).ifPresent(a -> {
             if (!a.getId().equals(addressId)) {
@@ -128,6 +128,6 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
 
     private User getUser(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
     }
 }

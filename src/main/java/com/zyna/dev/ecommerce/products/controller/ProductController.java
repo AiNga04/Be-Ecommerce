@@ -33,7 +33,7 @@ public class ProductController {
     @GetMapping("/{id}")
     public ApiResponse<ProductResponse> get(@PathVariable Long id) {
         return ApiResponse.successfulResponse(
-                "Fetched product successfully!",
+                "Lấy thông tin sản phẩm thành công",
                 productService.getProductById(id)
         );
     }
@@ -45,7 +45,7 @@ public class ProductController {
             @RequestParam(defaultValue = "10") int size
     ) {
         return ApiResponse.successfulPageResponse(
-                "Fetched product list!",
+                "Lấy danh sách sản phẩm thành công",
                 productService.searchProducts(criteria, page, size)
         );
     }
@@ -71,7 +71,7 @@ public class ProductController {
         );
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Product created successfully!",
+                "Tạo sản phẩm thành công",
                 response
         );
     }
@@ -96,7 +96,7 @@ public class ProductController {
         );
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Product updated successfully!",
+                "Cập nhật sản phẩm thành công",
                 response
         );
     }
@@ -108,7 +108,7 @@ public class ProductController {
         productService.softDeleteProduct(id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Product soft deleted successfully!"
+                "Xóa tạm thời sản phẩm thành công"
         );
     }
 
@@ -119,7 +119,7 @@ public class ProductController {
         productService.restoreProduct(id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Product restored successfully!"
+                "Khôi phục sản phẩm thành công"
         );
     }
 
@@ -130,7 +130,7 @@ public class ProductController {
         productService.hardDeleteProduct(id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Product hard deleted successfully!"
+                "Xóa vĩnh viễn sản phẩm thành công"
         );
     }
 
@@ -139,7 +139,7 @@ public class ProductController {
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
     public ApiResponse<List<Long>> softDeleteMany(@RequestBody List<Long> ids) {
         return ApiResponse.successfulResponse(
-                "Soft deleted products!",
+                "Xóa tạm thời danh sách sản phẩm thành công",
                 productService.softDeleteProducts(ids)
         );
     }
@@ -148,7 +148,7 @@ public class ProductController {
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
     public ApiResponse<List<Long>> restoreMany(@RequestBody List<Long> ids) {
         return ApiResponse.successfulResponse(
-                "Restored products!",
+                "Khôi phục danh sách sản phẩm thành công",
                 productService.restoreProducts(ids)
         );
     }
@@ -157,7 +157,7 @@ public class ProductController {
     @PreAuthorize("hasAuthority('PRODUCT_WRITE')")
     public ApiResponse<List<Long>> hardDeleteMany(@RequestBody List<Long> ids) {
         return ApiResponse.successfulResponse(
-                "Hard deleted products!",
+                "Xóa vĩnh viễn danh sách sản phẩm thành công",
                 productService.hardDeleteProducts(ids)
         );
     }
@@ -171,7 +171,7 @@ public class ProductController {
             @RequestParam(defaultValue = "10") int size
     ) {
         return ApiResponse.successfulPageResponse(
-                "Fetched deleted products!",
+                "Lấy danh sách sản phẩm đã xóa thành công",
                 productService.getDeletedProducts(criteria, page, size)
         );
     }
@@ -187,7 +187,7 @@ public class ProductController {
         List<GalleryImageResponse> urls = productService.addGalleryImages(productId, images);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Gallery uploaded successfully!",
+                "Tải lên bộ sưu tập ảnh thành công",
                 urls
         );
     }
@@ -203,7 +203,7 @@ public class ProductController {
         var response = productService.updateGalleryImage(productId, imageId, image);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Gallery image updated successfully!",
+                "Cập nhật ảnh bộ sưu tập thành công",
                 response
         );
     }
@@ -219,7 +219,7 @@ public class ProductController {
         productService.deleteGalleryImage(productId, imageId);
         return ApiResponse.successfulResponseNoData(
                 HttpStatus.OK.value(),
-                "Delete gallery image successfully!"
+                "Xóa ảnh bộ sưu tập thành công"
         );
     }
 
@@ -233,7 +233,7 @@ public class ProductController {
         int count = productService.deleteAllGalleryImages(productId);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Delete all gallery images successfully!",
+                "Xóa tất cả ảnh bộ sưu tập thành công",
                 count
         );
     }
@@ -248,7 +248,7 @@ public class ProductController {
         List<PriceHistoryResponse> response = productService.getPriceHistory(id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Fetched price history!",
+                "Lấy lịch sử giá thành công",
                 response
         );
     }
@@ -262,7 +262,7 @@ public class ProductController {
             @RequestParam(defaultValue = "10") int size
     ) {
         return ApiResponse.successfulPageResponse(
-                "Fetched global price history!",
+                "Lấy lịch sử giá toàn cầu thành công",
                 productService.getAllPriceHistory(page, size)
         );
     }

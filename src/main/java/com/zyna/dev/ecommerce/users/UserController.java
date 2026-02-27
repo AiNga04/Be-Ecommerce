@@ -40,7 +40,7 @@ public class UserController {
         UserResponse userResponse = userService.getUserById(userId);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Fetched current user successfully!",
+                "Lấy thông tin người dùng hiện tại thành công",
                 userResponse
         );
     }
@@ -56,7 +56,7 @@ public class UserController {
         UserResponse userResponse = userService.updateAvatar(userId, image);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Avatar updated successfully!",
+                "Cập nhật ảnh đại diện thành công",
                 userResponse
         );
     }
@@ -72,7 +72,7 @@ public class UserController {
         UserResponse userResponse = userService.updateMyInfo(userId, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Profile updated successfully!",
+                "Cập nhật thông tin cá nhân thành công",
                 userResponse
         );
     }
@@ -87,7 +87,7 @@ public class UserController {
         UserResponse userResponse = userService.updateAvatarByAdmin(id, image);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Avatar updated successfully!",
+                "Cập nhật ảnh đại diện thành công",
                 userResponse
         );
     }
@@ -103,7 +103,7 @@ public class UserController {
         Page<UserResponse> result = userService.getShippers(page, size);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get shippers successfully!",
+                "Lấy danh sách người giao hàng thành công",
                 result
         );
     }
@@ -118,7 +118,7 @@ public class UserController {
         UserResponse userResponse = userService.createUser(userRequest);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Create user successfully!",
+                "Tạo người dùng thành công",
                 userResponse
         );
     }
@@ -131,7 +131,7 @@ public class UserController {
         UserResponse userResponse = userService.getUserById(id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Get user successfully!",
+                "Lấy thông tin người dùng thành công",
                 userResponse
         );
     }
@@ -148,7 +148,7 @@ public class UserController {
         Page<UserResponse> result = userService.searchUsers(criteria, page, size);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get users successfully!",
+                "Lấy danh sách người dùng thành công",
                 result
         );
     }
@@ -164,7 +164,7 @@ public class UserController {
         UserResponse userResponse = userService.updateUser(id, userRequest);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Update user successfully!",
+                "Cập nhật người dùng thành công",
                 userResponse
         );
     }
@@ -179,7 +179,7 @@ public class UserController {
         UserResponse userResponse = userService.updateStatus(id, request.getStatus());
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Update user status successfully!",
+                "Cập nhật trạng thái người dùng thành công",
                 userResponse
         );
     }
@@ -192,7 +192,7 @@ public class UserController {
         userService.softDeleteUser(id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Delete user successfully!",
+                "Xóa người dùng thành công",
                 "User " + id + " deleted!"
         );
     }
@@ -205,7 +205,7 @@ public class UserController {
         userService.restoreUser(id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Restore user successfully!",
+                "Khôi phục người dùng thành công",
                 "User " + id + " restored!"
         );
     }
@@ -218,7 +218,7 @@ public class UserController {
         userService.hardDeleteUser(id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Delete user successfully!",
+                "Xóa người dùng thành công",
                 "User " + id + " deleted!"
         );
     }
@@ -237,7 +237,7 @@ public class UserController {
 
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Soft delete users successfully!",
+                "Xóa tạm thời người dùng thành công",
                 result
         );
     }
@@ -256,7 +256,7 @@ public class UserController {
 
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Restore users successfully!",
+                "Khôi phục người dùng thành công",
                 result
         );
     }
@@ -275,7 +275,7 @@ public class UserController {
 
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Hard delete users successfully!",
+                "Xóa vĩnh viễn người dùng thành công",
                 result
         );
     }
@@ -294,7 +294,7 @@ public class UserController {
         Page<UserResponse> deletedUsers = userService.getDeletedUsers(criteria, page, size);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "List of soft-deleted users!",
+                "Lấy danh sách người dùng đã xóa tạm thời thành công",
                 deletedUsers
         );
     }
@@ -308,7 +308,7 @@ public class UserController {
         var result = userService.createUsers(request);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Batch create users done!",
+                "Hoàn tất tạo người dùng hàng loạt",
                 result
         );
     }

@@ -44,7 +44,7 @@ public class OrderController {
         OrderResponse response = orderService.checkout(userId, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Order " + displayCode(response) + " created successfully!",
+                "Đơn hàng " + displayCode(response) + " đã được tạo thành công!",
                 response
         );
     }
@@ -61,7 +61,7 @@ public class OrderController {
         OrderResponse response = orderService.checkoutFromCart(userId, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Order " + displayCode(response) + " created successfully!",
+                "Đơn hàng " + displayCode(response) + " đã được tạo thành công!",
                 response
         );
     }
@@ -81,7 +81,7 @@ public class OrderController {
         OrderResponse response = orderService.checkoutFromCart(userId, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Order " + displayCode(response) + " created successfully!",
+                "Đơn hàng " + displayCode(response) + " đã được tạo thành công!",
                 response
         );
     }
@@ -102,7 +102,7 @@ public class OrderController {
         Page<OrderResponse> result = orderService.getMyOrders(userId, page, size, status, paymentStatus, shipmentStatus);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get my orders successfully!",
+                "Lấy danh sách đơn hàng thành công",
                 result
         );
     }
@@ -119,7 +119,7 @@ public class OrderController {
         OrderResponse response = orderService.getOrderByIdForUser(userId, id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Get order detail successfully!",
+                "Lấy chi tiết đơn hàng thành công",
                 response
         );
     }
@@ -136,7 +136,7 @@ public class OrderController {
         OrderResponse response = orderService.confirmReceived(userId, id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Order confirmed as received!",
+                "Đã xác nhận nhận hàng thành công",
                 response
         );
     }
@@ -154,7 +154,7 @@ public class OrderController {
         Page<OrderResponse> result = orderService.getAllOrders(page, size);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get all orders successfully!",
+                "Lấy danh sách tất cả đơn hàng thành công",
                 result
         );
     }
@@ -169,7 +169,7 @@ public class OrderController {
         OrderResponse response = orderService.getOrderByIdForAdmin(id);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Get order detail successfully!",
+                "Lấy chi tiết đơn hàng thành công",
                 response
         );
     }
@@ -185,7 +185,7 @@ public class OrderController {
         OrderResponse response = orderService.updateOrderStatus(id, request.getStatus());
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Update order status successfully!",
+                "Cập nhật trạng thái đơn hàng thành công",
                 response
         );
     }

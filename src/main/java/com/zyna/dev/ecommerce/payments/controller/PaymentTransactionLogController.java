@@ -36,7 +36,7 @@ public class PaymentTransactionLogController {
 
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Fetched payment logs successfully!",
+                "Lấy danh sách nhật ký thanh toán thành công!",
                 response
         );
     }

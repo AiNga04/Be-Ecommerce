@@ -20,7 +20,7 @@ public class SizeGuideController {
     @GetMapping
     public ApiResponse<List<SizeGuide>> getAllSizeGuides() {
         return ApiResponse.successfulResponse(
-                "Fetched all size guides!",
+                "Lấy danh sách hướng dẫn chọn size thành công!",
                 sizeGuideService.getAllSizeGuides()
         );
     }
@@ -28,7 +28,7 @@ public class SizeGuideController {
     @GetMapping("/{id}")
     public ApiResponse<SizeGuide> getSizeGuideById(@PathVariable Long id) {
         return ApiResponse.successfulResponse(
-                "Fetched size guide successfully!",
+                "Lấy thông tin hướng dẫn chọn size thành công!",
                 sizeGuideService.getSizeGuideById(id)
         );
     }
@@ -43,7 +43,7 @@ public class SizeGuideController {
     ) {
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Size guide created successfully!",
+                "Tạo hướng dẫn chọn size thành công!",
                 sizeGuideService.createSizeGuide(name, description, image)
         );
     }
@@ -58,7 +58,7 @@ public class SizeGuideController {
             @RequestParam(value = "image", required = false) org.springframework.web.multipart.MultipartFile image
     ) {
         return ApiResponse.successfulResponse(
-                "Size guide updated successfully!",
+                "Cập nhật hướng dẫn chọn size thành công!",
                 sizeGuideService.updateSizeGuide(id, name, description, image)
         );
     }
@@ -70,7 +70,7 @@ public class SizeGuideController {
         sizeGuideService.deleteSizeGuide(id);
         return ApiResponse.successfulResponseNoData(
                 HttpStatus.OK.value(),
-                "Size guide deleted successfully!"
+                "Xóa hướng dẫn chọn size thành công!"
         );
     }
 }

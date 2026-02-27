@@ -45,11 +45,11 @@ public class CartServiceImpl implements CartService {
         User user = getUser(userId);
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ApplicationException(
-                        HttpStatus.NOT_FOUND, "Product not found"
+                        HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm"
                 ));
 
         com.zyna.dev.ecommerce.products.models.Size size = sizeRepository.findById(request.getSizeId())
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Size not found linked to id: " + request.getSizeId()));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy kích thước liên kết với id: " + request.getSizeId()));
 
         CartItem cartItem = cartItemRepository.findByUserAndProductAndSize(user, product, size)
                 .orElse(CartItem.builder()
@@ -61,17 +61,17 @@ public class CartServiceImpl implements CartService {
 
         int newQty = cartItem.getQuantity() + request.getQuantity();
         if (newQty <= 0) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Quantity must be > 0");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Số lượng phải lớn hơn 0");
         }
 
         // Check Stock using ProductSize
         com.zyna.dev.ecommerce.products.models.ProductSize productSize = productSizeRepository.findByProductAndSize(product, size)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "Product variant (Size) invalid"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "Biến thể sản phẩm (Kích thước) không hợp lệ"));
 
         if (newQty > productSize.getQuantity()) {
             throw new ApplicationException(
                     HttpStatus.BAD_REQUEST,
-                    "Quantity exceeds available stock for this size"
+                    "Số lượng vượt quá tồn kho khả dụng"
             );
         }
 
@@ -86,10 +86,10 @@ public class CartServiceImpl implements CartService {
     public CartItemResponse updateCartItem(Long userId, Long cartItemId, UpdateCartItemRequest request) {
         User user = getUser(userId);
         CartItem item = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Cart item not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm trong giỏ"));
 
         if (!item.getUser().getId().equals(user.getId())) {
-            throw new ApplicationException(HttpStatus.FORBIDDEN, "Not your cart item");
+            throw new ApplicationException(HttpStatus.FORBIDDEN, "Sản phẩm không thuộc giỏ hàng của bạn");
         }
 
         // Nếu quantity = 0 thì xoá item luôn
@@ -99,12 +99,12 @@ public class CartServiceImpl implements CartService {
         }
 
         com.zyna.dev.ecommerce.products.models.ProductSize productSize = productSizeRepository.findByProductAndSize(item.getProduct(), item.getSize())
-                .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "Product variant definition missing"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "Thiếu định nghĩa biến thể sản phẩm"));
 
         if (request.getQuantity() > productSize.getQuantity()) {
             throw new ApplicationException(
                     HttpStatus.BAD_REQUEST,
-                    "Quantity exceeds available stock for this size"
+                    "Số lượng vượt quá tồn kho khả dụng"
             );
         }
 
@@ -157,6 +157,6 @@ public class CartServiceImpl implements CartService {
 
     private User getUser(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
     }
 }

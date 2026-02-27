@@ -55,7 +55,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
     @Transactional(readOnly = true)
     public SupportTicketResponse getTicketById(Long id) {
         SupportTicket ticket = ticketRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Support ticket not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu hỗ trợ"));
         return mapToResponse(ticket);
     }
 
@@ -63,7 +63,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
     @Transactional
     public void updateTicketStatus(Long id, SupportStatus status) {
         SupportTicket ticket = ticketRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Support ticket not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu hỗ trợ"));
         
         ticket.setStatus(status);
         if (status == SupportStatus.RESOLVED) {
@@ -104,7 +104,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
     private void setProcessor(SupportTicket ticket) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Current user not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng hiện tại"));
         ticket.setProcessedBy(currentUser);
     }
 

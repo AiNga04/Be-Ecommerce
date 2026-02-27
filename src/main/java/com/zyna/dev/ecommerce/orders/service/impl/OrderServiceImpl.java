@@ -76,30 +76,30 @@ public class OrderServiceImpl implements OrderService {
             Product product = productRepository.findById(itemReq.getProductId())
                     .orElseThrow(() -> new ApplicationException(
                             HttpStatus.NOT_FOUND,
-                            "Product not found: " + itemReq.getProductId()
+                            "Không tìm thấy sản phẩm: " + itemReq.getProductId()
                     ));
 
             if (itemReq.getSizeId() == null) {
                 // Assuming all products must have a size chosen if sizes exist. 
                 // Simplification for now: require Size.
-                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Size is required for product: " + product.getName());
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Vui lòng chọn kích thước cho sản phẩm: " + product.getName());
             }
 
             var sizeObj = sizeRepository.findById(itemReq.getSizeId())
-                        .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Size not found"));
+                        .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy kích thước"));
 
             com.zyna.dev.ecommerce.products.models.ProductSize productSize = productSizeRepository.findByProductAndSize(product, sizeObj)
-                    .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "Product variant unavailable"));
+                    .orElseThrow(() -> new ApplicationException(HttpStatus.BAD_REQUEST, "Biến thể sản phẩm không khả dụng"));
 
             int requestedQty = itemReq.getQuantity();
             if (requestedQty <= 0) {
-                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Quantity must be > 0");
+                throw new ApplicationException(HttpStatus.BAD_REQUEST, "Số lượng phải lớn hơn 0");
             }
 
             if (productSize.getQuantity() < requestedQty) {
                 throw new ApplicationException(
                         HttpStatus.BAD_REQUEST,
-                        "Not enough stock for product: " + product.getName() + " (Size: " + sizeObj.getName() + ")"
+                        "Không đủ tồn kho cho sản phẩm: " + product.getName() + " (Kích thước: " + sizeObj.getName() + ")"
                 );
             }
 
@@ -129,12 +129,12 @@ public class OrderServiceImpl implements OrderService {
             // lấy địa chỉ từ address book
             ShippingAddress addr = addressRepository.findById(request.getShippingAddressId())
                     .orElseThrow(() ->
-                            new ApplicationException(HttpStatus.NOT_FOUND, "Address not found")
+                            new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy địa chỉ")
                     );
 
             // check địa chỉ có thuộc về user không
             if (!addr.getUser().getId().equals(user.getId())) {
-                throw new ApplicationException(HttpStatus.FORBIDDEN, "You do not own this address");
+                throw new ApplicationException(HttpStatus.FORBIDDEN, "Địa chỉ này không thuộc về bạn");
             }
 
             shippingName = addr.getReceiverName();
@@ -147,7 +147,7 @@ public class OrderServiceImpl implements OrderService {
                     || !StringUtils.hasText(request.getShippingAddress())) {
                 throw new ApplicationException(
                         HttpStatus.BAD_REQUEST,
-                        "Shipping information is required"
+                        "Vui lòng cung cấp thông tin giao hàng"
                 );
             }
 
@@ -182,7 +182,7 @@ public class OrderServiceImpl implements OrderService {
 
             if (discountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
                 if (discountVoucherUsed) {
-                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Discount voucher already applied");
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Mã giảm giá đã được áp dụng");
                 }
                 discountAmount = discountAmount.add(discountFromVoucher);
                 discountVoucherUsed = true;
@@ -191,7 +191,7 @@ public class OrderServiceImpl implements OrderService {
 
             if (shippingDiscountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
                 if (shippingVoucherUsed) {
-                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipping voucher already applied");
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Mã miễn phí vận chuyển đã được áp dụng");
                 }
                 shippingDiscount = shippingDiscount.add(shippingDiscountFromVoucher);
                 shippingVoucherUsed = true;
@@ -221,7 +221,7 @@ public class OrderServiceImpl implements OrderService {
 
             if (discountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
                 if (discountVoucherUsed) {
-                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Discount voucher already applied");
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Mã giảm giá đã được áp dụng");
                 }
                 discountAmount = discountAmount.add(discountFromVoucher);
                 discountVoucherUsed = true;
@@ -232,7 +232,7 @@ public class OrderServiceImpl implements OrderService {
 
             if (shippingDiscountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
                 if (shippingVoucherUsed) {
-                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipping voucher already applied");
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Mã miễn phí vận chuyển đã được áp dụng");
                 }
                 shippingDiscount = shippingDiscount.add(shippingDiscountFromVoucher);
                 shippingVoucherUsed = true;
@@ -330,7 +330,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderResponse updateOrderStatus(Long orderId, OrderStatus newStatus) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Order not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
 
         OrderStatus currentStatus = order.getStatus();
 
@@ -393,7 +393,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         if (selectedItems.isEmpty()) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "No cart items selected to checkout");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Chưa chọn sản phẩm nào để thanh toán");
         }
 
         List<OrderItem> orderItems = new ArrayList<>();
@@ -409,7 +409,7 @@ public class OrderServiceImpl implements OrderService {
             com.zyna.dev.ecommerce.products.models.Size size = cartItem.getSize();
             if (size == null) {
                 // Should not happen for valid cart items but safeguard
-                 throw new ApplicationException(HttpStatus.BAD_REQUEST, "Cart Item missing size");
+                 throw new ApplicationException(HttpStatus.BAD_REQUEST, "Sản phẩm trong giỏ bị thiếu kích thước");
             }
 
             com.zyna.dev.ecommerce.products.models.ProductSize productSize = productSizeRepository.findByProductAndSize(product, size)
@@ -418,7 +418,7 @@ public class OrderServiceImpl implements OrderService {
             if (productSize.getQuantity() < requestedQty) {
                 throw new ApplicationException(
                         HttpStatus.BAD_REQUEST,
-                        "Not enough stock for product: " + product.getName() + " (Size: " + size.getName() + ")"
+                        "Không đủ tồn kho cho sản phẩm: " + product.getName() + " (Kích thước: " + size.getName() + ")"
                 );
             }
 
@@ -481,7 +481,7 @@ public class OrderServiceImpl implements OrderService {
 
             if (discountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
                 if (discountVoucherUsed) {
-                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Discount voucher already applied");
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Mã giảm giá đã được áp dụng");
                 }
                 discountAmount = discountAmount.add(discountFromVoucher);
                 discountVoucherUsed = true;
@@ -490,7 +490,7 @@ public class OrderServiceImpl implements OrderService {
 
             if (shippingDiscountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
                 if (shippingVoucherUsed) {
-                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipping voucher already applied");
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Mã miễn phí vận chuyển đã được áp dụng");
                 }
                 shippingDiscount = shippingDiscount.add(shippingDiscountFromVoucher);
                 shippingVoucherUsed = true;
@@ -527,7 +527,7 @@ public class OrderServiceImpl implements OrderService {
 
             if (shippingDiscountFromVoucher.compareTo(BigDecimal.ZERO) > 0) {
                 if (shippingVoucherUsed) {
-                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Shipping voucher already applied");
+                    throw new ApplicationException(HttpStatus.BAD_REQUEST, "Mã miễn phí vận chuyển đã được áp dụng");
                 }
                 shippingDiscount = shippingDiscount.add(shippingDiscountFromVoucher);
                 shippingVoucherUsed = true;
@@ -623,7 +623,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Order not found"));
 
         if (!order.getUser().getId().equals(userId)) {
-            throw new ApplicationException(HttpStatus.FORBIDDEN, "You do not own this order");
+            throw new ApplicationException(HttpStatus.FORBIDDEN, "Đơn hàng này không thuộc về bạn");
         }
 
         return orderMapper.toOrderResponse(order);
@@ -683,7 +683,7 @@ public class OrderServiceImpl implements OrderService {
 
     private User getUser(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng!"));
     }
 
     private void createShipmentIfMissing(Order order) {

@@ -30,7 +30,7 @@ public class VnPayPaymentController {
         String url = vnPayService.createPaymentUrl(orderId, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Create VNPay payment URL successfully!",
+                "Tạo URL thanh toán VNPay thành công!",
                 url
         );
     }

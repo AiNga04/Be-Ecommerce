@@ -28,7 +28,7 @@ public class UserAuditLogController {
         Page<UserAuditLogResponse> logs = userAuditLogService.getAllAuditLogs(page, size);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get user audit logs successfully!",
+                "Lấy nhật ký hoạt động người dùng thành công",
                 logs
         );
     }

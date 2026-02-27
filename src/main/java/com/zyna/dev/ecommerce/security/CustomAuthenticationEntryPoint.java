@@ -28,7 +28,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
         ApiResponse<?> api = ApiResponse.failedResponse(
                 HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized! Please login again!"
+                "Không được phép! Vui lòng đăng nhập lại"
         );
 
         response.getWriter().write(mapper.writeValueAsString(api));

@@ -43,7 +43,7 @@ public class ShipmentController {
 
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Shipment assigned successfully",
+                "Đã gán người giao hàng thành công",
                 res
         );
     }
@@ -56,7 +56,7 @@ public class ShipmentController {
     public ApiResponse<ShipmentInfoResponse> markPickedUp(@PathVariable Long shipmentId) {
         return ApiResponse.successfulResponse(
                 200,
-                "Package picked up!",
+                "Đã lấy hàng!",
                 shipmentService.markPickedUp(shipmentId)
         );
     }
@@ -67,7 +67,7 @@ public class ShipmentController {
     public ApiResponse<ShipmentInfoResponse> markOutForDelivery(@PathVariable Long shipmentId) {
         return ApiResponse.successfulResponse(
                 200,
-                "Out for delivery!",
+                "Đang giao hàng!",
                 shipmentService.markOutForDelivery(shipmentId)
         );
     }
@@ -78,7 +78,7 @@ public class ShipmentController {
     public ApiResponse<ShipmentInfoResponse> markDelivered(@PathVariable Long shipmentId) {
         return ApiResponse.successfulResponse(
                 200,
-                "Delivered successfully!",
+                "Giao hàng thành công!",
                 shipmentService.markDelivered(shipmentId)
         );
     }
@@ -92,7 +92,7 @@ public class ShipmentController {
     ) {
         return ApiResponse.successfulResponse(
                 200,
-                "Delivery failed!",
+                "Giao hàng thất bại!",
                 shipmentService.markFailed(shipmentId, request.getReason())
         );
     }
@@ -106,7 +106,7 @@ public class ShipmentController {
     ) {
         return ApiResponse.successfulResponse(
                 200,
-                "Order returned!",
+                "Đơn hàng đã được hoàn trả!",
                 shipmentService.markReturned(shipmentId, request.getReason())
         );
     }
@@ -122,7 +122,7 @@ public class ShipmentController {
     ) {
         return ApiResponse.successfulResponse(
                 200,
-                "Return requested",
+                "Đã yêu cầu trả hàng",
                 shipmentService.userRequestReturn(orderId, clean(reason))
         );
     }
@@ -137,7 +137,7 @@ public class ShipmentController {
     ) {
         return ApiResponse.successfulResponse(
                 200,
-                "Return approved",
+                "Đã duyệt trả hàng",
                 shipmentService.approveReturn(shipmentId, clean(reason))
         );
     }
@@ -160,7 +160,7 @@ public class ShipmentController {
         Page<ShipmentInfoResponse> result = shipmentService.getAllShipments(page, size, status, shipperId, returnRequested);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get all shipments successfully",
+                "Lấy danh mục đơn giao hàng thành công",
                 result
         );
     }
@@ -174,7 +174,7 @@ public class ShipmentController {
     public ApiResponse<ShipmentInfoResponse> getShipmentById(@PathVariable Long shipmentId) {
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Get shipment successfully",
+                "Lấy thông tin đơn giao hàng thành công",
                 shipmentService.getShipmentById(shipmentId)
         );
     }
@@ -188,7 +188,7 @@ public class ShipmentController {
     public ApiResponse<ShipmentInfoResponse> getShipmentByOrderId(@PathVariable Long orderId) {
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Get shipment by order successfully",
+                "Lấy thông tin giao hàng theo đơn hàng thành công",
                 shipmentService.getShipmentByOrderId(orderId)
         );
     }
@@ -205,7 +205,7 @@ public class ShipmentController {
         Page<ShipmentInfoResponse> result = shipmentService.getMyShipments(page, size, status);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get my shipments successfully",
+                "Lấy danh sách đơn giao hàng của tôi thành công",
                 result
         );
     }
@@ -220,7 +220,7 @@ public class ShipmentController {
     ) {
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Get shipper dashboard stats successfully",
+                "Lấy thống kê shipper thành công",
                 shipmentService.getMyDashboardStats(from, to)
         );
     }
@@ -237,7 +237,7 @@ public class ShipmentController {
         Page<ShipmentInfoResponse> result = shipmentService.getMyHistory(page, size, status);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get shipment history successfully",
+                "Lấy lịch sử giao hàng thành công",
                 result
         );
     }
@@ -249,7 +249,7 @@ public class ShipmentController {
     public ApiResponse<ShipmentInfoResponse> getMyShipmentById(@PathVariable Long shipmentId) {
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Get my shipment successfully",
+                "Lấy thông tin đơn giao hàng thành công",
                 shipmentService.getMyShipmentById(shipmentId)
         );
     }

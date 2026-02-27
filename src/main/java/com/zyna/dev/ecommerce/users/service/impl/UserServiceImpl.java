@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(createRequest.getEmail())) {
             throw new ApplicationException(
                     HttpStatus.CONFLICT,
-                    "Email already in use!"
+                    "Email đã được sử dụng"
             );
         }
 
@@ -83,7 +83,7 @@ public class UserServiceImpl implements UserService {
             if (roles.size() != rolesToAssign.size()) {
                 throw new ApplicationException(
                         HttpStatus.BAD_REQUEST,
-                        "Some roles are invalid!"
+                        "Một số vai trò không hợp lệ"
                 );
             }
 
@@ -93,7 +93,7 @@ public class UserServiceImpl implements UserService {
             var userRole = appRoleRepository.findByCode("USER")
                     .orElseThrow(() -> new ApplicationException(
                             HttpStatus.INTERNAL_SERVER_ERROR,
-                            "Default role USER is not configured!"
+                            "Vai trò mặc định USER không tồn tại"
                     ));
             if (user.getRoles() == null) {
                 user.setRoles(new HashSet<>());
@@ -111,7 +111,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ApplicationException(
                         HttpStatus.NOT_FOUND,
-                        "User not found with email: " + email
+                        "Không tìm thấy người dùng với email: " + email
                 ))
                 .getId();
     }
@@ -119,7 +119,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse getUserById(Long id) {
         User user = userRepository.findByIdAndIsDeletedFalse(id).orElseThrow(
-                () -> new ApplicationException(HttpStatus.NOT_FOUND, "User with id " + id + " not found or deleted")
+                () -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với id " + id + " hoặc đã bị xóa")
         );
         return userMapper.toUserResponse(user);
     }
@@ -143,13 +143,13 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(
                         HttpStatus.NOT_FOUND,
-                        "User with id " + id + " not found!"
+                        "Không tìm thấy người dùng với id " + id + " hoặc đã bị xóa"
                 ));
 
         if (user.isDeleted()) {
             throw new ApplicationException(
                     HttpStatus.BAD_REQUEST,
-                    "User is deleted. Restore before updating!"
+                    "Người dùng đã bị xóa. Vui lòng khôi phục trước khi cập nhật"
             );
         }
 
@@ -173,7 +173,7 @@ public class UserServiceImpl implements UserService {
             if (roles.size() != updateRequest.getRoles().size()) {
                 throw new ApplicationException(
                         HttpStatus.BAD_REQUEST,
-                        "Some roles are invalid!"
+                        "Một số vai trò không hợp lệ"
                 );
             }
 
@@ -199,7 +199,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void softDeleteUser(Long id) {
         User user = userRepository.findByIdAndIsDeletedFalse(id).orElseThrow(
-                () -> new ApplicationException(HttpStatus.NOT_FOUND, "User with id " + id + " not found or already deleted")
+                () -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với id " + id + " hoặc đã bị xóa")
         );
         user.setDeleted(true);
         user.setDeletedAt(LocalDateTime.now());
@@ -207,7 +207,6 @@ public class UserServiceImpl implements UserService {
         user.setStatus(Status.DELETED);
 
         userRepository.save(user);
-        log.info("Soft deleted user id={} and set status to DELETED", id);
     }
 
     @Override
@@ -216,13 +215,13 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(
                         HttpStatus.NOT_FOUND,
-                        "User with id " + id + " not found"
+                        "Không tìm thấy người dùng với id " + id
                 ));
 
         if (!user.isDeleted()) {
             throw new ApplicationException(
                     HttpStatus.BAD_REQUEST,
-                    "User is not deleted"
+                    "Người dùng không ở trạng thái đã xóa"
             );
         }
 
@@ -236,8 +235,6 @@ public class UserServiceImpl implements UserService {
         
         // Gửi lại email kích hoạt
         accountActivationService.sendActivationToken(saved, getCurrentActorEmail(), com.zyna.dev.ecommerce.common.enums.ActivationType.RESTORE);
-        
-        log.info("Restored user id={} and set status to PENDING. Activation email sent.", id);
     }
 
     @Override
@@ -246,11 +243,10 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ApplicationException(
                         HttpStatus.NOT_FOUND,
-                        "User with id " + id + " not found!"
+                        "Không tìm thấy người dùng với id " + id
                 ));
 
         userRepository.delete(user);
-        log.info("Hard deleted user id={}", id);
     }
 
     @Override
@@ -310,7 +306,6 @@ public class UserServiceImpl implements UserService {
                 .map(User::getId)
                 .toList();
 
-        log.info("Restored {} users: {}", restoredIds.size(), restoredIds);
         return restoredIds;
     }
 
@@ -329,7 +324,6 @@ public class UserServiceImpl implements UserService {
                 .map(User::getId)
                 .toList();
 
-        log.info("Hard deleted {} users: {}", deletedIds.size(), deletedIds);
         return deletedIds;
     }
 
@@ -364,7 +358,7 @@ public class UserServiceImpl implements UserService {
                     failedList.add(
                             UserBatchCreateResponse.FailedUser.builder()
                                     .email(item.getEmail())
-                                    .reason("Email already in use!")
+                                    .reason("Email đã được sử dụng")
                                     .build()
                     );
                     return;
@@ -393,7 +387,7 @@ public class UserServiceImpl implements UserService {
                         failedList.add(
                                 UserBatchCreateResponse.FailedUser.builder()
                                         .email(item.getEmail())
-                                        .reason("One or more roles are invalid: " + rolesInput)
+                                        .reason("Một số vai trò không hợp lệ: " + rolesInput)
                                         .build()
                         );
                         return;
@@ -405,7 +399,7 @@ public class UserServiceImpl implements UserService {
                     var userRole = appRoleRepository.findByCode("USER")
                             .orElseThrow(() -> new ApplicationException(
                                     HttpStatus.INTERNAL_SERVER_ERROR,
-                                    "Default role USER is not configured!"
+                                    "Vai trò USER mặc định chưa được cấu hình"
                             ));
                     if (user.getRoles() == null) {
                        user.setRoles(new HashSet<>());
@@ -428,11 +422,8 @@ public class UserServiceImpl implements UserService {
                                 .reason(e.getMessage())
                                 .build()
                 );
-                log.error("Failed to create user email={}", item.getEmail(), e);
             }
         });
-
-        log.info("Batch create users: success={}, failed={}", createdList.size(), failedList.size());
 
         return UserBatchCreateResponse.builder()
                 .created(createdList)
@@ -459,11 +450,11 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponse updateAvatar(Long userId, MultipartFile image) {
         if (image == null || image.isEmpty()) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Image file is required");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Cần có tệp hình ảnh");
         }
 
         User user = userRepository.findByIdAndIsDeletedFalse(userId).orElseThrow(
-                () -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found or deleted")
+                () -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng hoặc đã bị xóa")
         );
 
         String newUrl;
@@ -485,15 +476,15 @@ public class UserServiceImpl implements UserService {
         if (newStatus != Status.ACTIVE && newStatus != Status.DISABLED) {
             throw new ApplicationException(
                     HttpStatus.BAD_REQUEST,
-                    "Manual update to status " + newStatus + " is not allowed. Only ACTIVE or DISABLED can be set manually."
+                    "Không được phép cập nhật thủ công sang trạng thái " + newStatus + ". Chỉ ACTIVE hoặc DISABLED có thể được đặt thủ công."
             );
         }
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"));
 
         if (user.isDeleted()) {
-            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Cannot update status of a deleted user. Restore first!");
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Không thể cập nhật trạng thái của người dùng đã xóa. Vui lòng khôi phục trước!");
         }
 
         Status currentStatus = user.getStatus();
@@ -505,7 +496,7 @@ public class UserServiceImpl implements UserService {
                 if (newStatus == Status.ACTIVE) {
                     throw new ApplicationException(
                             HttpStatus.BAD_REQUEST,
-                            "Cannot manually activate a PENDING user. User must verify email!"
+                            "Không thể kích hoạt thủ công người dùng đang chờ. Người dùng phải xác minh email!"
                     );
                 }
                 // PENDING -> DISABLED: Allowed (Admin ban)
@@ -520,16 +511,15 @@ public class UserServiceImpl implements UserService {
             }
             case DELETED -> throw new ApplicationException(
                     HttpStatus.BAD_REQUEST,
-                    "User is DELETED. Cannot change status manually. Use restore function."
+                    "Người dùng đã bị xóa. Không thể thay đổi trạng thái thủ công. Sử dụng chức năng khôi phục."
             );
-            default -> throw new ApplicationException(HttpStatus.BAD_REQUEST, "Unknown current status");
+            default -> throw new ApplicationException(HttpStatus.BAD_REQUEST, "Trạng thái hiện tại không xác định");
         }
 
         // Apply update
         user.setStatus(newStatus);
 
         User saved = userRepository.save(user);
-        log.info("Updated status for user id={} from {} to {}", id, currentStatus, newStatus);
         return userMapper.toUserResponse(saved);
     }
 
@@ -541,7 +531,7 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = userRepository.findByIdAndIsDeletedFalse(targetUserId).orElseThrow(
-                () -> new ApplicationException(HttpStatus.NOT_FOUND, "User not found or deleted")
+                () -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng hoặc đã bị xóa")
         );
 
         String newUrl;

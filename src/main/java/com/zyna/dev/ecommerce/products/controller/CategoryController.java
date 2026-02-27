@@ -30,7 +30,7 @@ public class CategoryController {
         Page<CategoryResponse> data = categoryService.list(page, size, activeOnly, keyword);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Fetched categories successfully!",
+                "Lấy danh sách danh mục thành công",
                 data
         );
     }
@@ -45,7 +45,7 @@ public class CategoryController {
         CategoryResponse data = categoryService.create(request);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Category created successfully!",
+                "Tạo danh mục thành công",
                 data
         );
     }
@@ -61,7 +61,7 @@ public class CategoryController {
         CategoryResponse data = categoryService.update(id, request);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Category updated successfully!",
+                "Cập nhật danh mục thành công",
                 data
         );
     }
@@ -74,7 +74,7 @@ public class CategoryController {
         categoryService.delete(id);
         return ApiResponse.successfulResponseNoData(
                 HttpStatus.OK.value(),
-                "Category deleted successfully!"
+                "Xóa danh mục thành công"
         );
     }
 
@@ -83,7 +83,7 @@ public class CategoryController {
     public ApiResponse<CategoryResponse> getById(@PathVariable Long id) {
         CategoryResponse data = categoryService.getById(id);
         return ApiResponse.successfulResponse(
-                "Fetched category!",
+                "Lấy thông tin danh mục thành công",
                 data
         );
     }

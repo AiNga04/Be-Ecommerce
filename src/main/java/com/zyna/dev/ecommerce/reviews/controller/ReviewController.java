@@ -47,7 +47,7 @@ public class ReviewController {
         ReviewResponse response = reviewService.create(userId, request, images);
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Review created successfully!",
+                "Đánh giá đã được tạo thành công!",
                 response
         );
     }
@@ -63,7 +63,7 @@ public class ReviewController {
         ReviewResponse response = reviewService.create(userId, request, List.of());
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Review created successfully!",
+                "Đánh giá đã được tạo thành công!",
                 response
         );
     }
@@ -79,7 +79,7 @@ public class ReviewController {
         ReviewResponse response = reviewService.create(userId, request, List.of());
         return ApiResponse.successfulResponse(
                 HttpStatus.CREATED.value(),
-                "Review created successfully!",
+                "Đánh giá đã được tạo thành công!",
                 response
         );
     }
@@ -100,7 +100,7 @@ public class ReviewController {
         ReviewResponse response = reviewService.update(userId, request, images, id, canManage);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Review updated successfully!",
+                "Đánh giá đã được cập nhật thành công!",
                 response
         );
     }
@@ -137,24 +137,24 @@ public class ReviewController {
         reviewService.delete(userId, id, canManage);
         return ApiResponse.successfulResponseNoData(
                 HttpStatus.OK.value(),
-                "Review deleted successfully!"
+                "Đã xóa đánh giá thành công!"
         );
     }
 
     private ReviewCreateRequest parseRequest(String data) {
         if (data == null) {
-            throw new IllegalArgumentException("Review data is required");
+            throw new IllegalArgumentException("Thông tin đánh giá là bắt buộc");
         }
         try {
             return objectMapper.readValue(data, ReviewCreateRequest.class);
         } catch (Exception ex) {
-            throw new IllegalArgumentException("Invalid review data format");
+            throw new IllegalArgumentException("Định dạng dữ liệu đánh giá không hợp lệ");
         }
     }
 
     private ReviewUpdateRequest parseUpdateRequest(String data) {
         if (data == null) {
-            throw new IllegalArgumentException("Review data is required");
+            throw new IllegalArgumentException("Thông tin đánh giá là bắt buộc");
         }
         try {
             return objectMapper.readValue(data, ReviewUpdateRequest.class);
@@ -173,7 +173,7 @@ public class ReviewController {
         ReviewListResponse data = reviewService.listByProduct(productId, page, size);
         return ApiResponse.successfulResponse(
                 HttpStatus.OK.value(),
-                "Get reviews successfully!",
+                "Lấy danh sách đánh giá thành công!",
                 data
         );
     }
@@ -191,7 +191,7 @@ public class ReviewController {
         Page<ReviewResponse> data = reviewService.listMyReviewsByProduct(userId, productId, page, size);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get my reviews successfully!",
+                "Lấy danh sách đánh giá của tôi thành công!",
                 data
         );
     }
@@ -207,7 +207,7 @@ public class ReviewController {
         Page<ReviewResponse> data = reviewService.listAll(page, size);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get all reviews successfully!",
+                "Lấy tất cả đánh giá thành công!",
                 data
         );
     }
@@ -223,7 +223,7 @@ public class ReviewController {
         Page<ReviewResponse> data = reviewService.listReported(page, size);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get reported reviews successfully!",
+                "Lấy danh sách đánh giá bị báo cáo thành công!",
                 data
         );
     }
@@ -239,7 +239,7 @@ public class ReviewController {
         Page<ReviewResponse> data = reviewService.listHidden(page, size);
         return ApiResponse.successfulPageResponse(
                 HttpStatus.OK.value(),
-                "Get hidden reviews successfully!",
+                "Lấy danh sách đánh giá đã ẩn thành công!",
                 data
         );
     }
@@ -255,7 +255,7 @@ public class ReviewController {
         reviewService.report(userId, id);
         return ApiResponse.successfulResponseNoData(
                 HttpStatus.OK.value(),
-                "Report submitted"
+                "Đã gửi báo cáo"
         );
     }
 
@@ -266,7 +266,7 @@ public class ReviewController {
         reviewService.hide(id);
         return ApiResponse.successfulResponseNoData(
                 HttpStatus.OK.value(),
-                "Review hidden"
+                "Đã ẩn đánh giá"
         );
     }
 
@@ -277,7 +277,7 @@ public class ReviewController {
         reviewService.unhide(id);
         return ApiResponse.successfulResponseNoData(
                 HttpStatus.OK.value(),
-                "Review unhidden"
+                "Đã bỏ ẩn đánh giá"
         );
     }
 }
