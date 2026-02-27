@@ -55,6 +55,8 @@ public class RolePermissionSeeder implements CommandLineRunner {
         addPerm(admin, "VOUCHER_WRITE");
         addPerm(admin, "VOUCHER_STATUS_MANAGE");
         addPerm(admin, "REVIEW_MANAGE");
+        addPerm(admin, "SUPPORT_READ");
+        addPerm(admin, "SUPPORT_WRITE");
 
         roleRepository.save(admin);
 
@@ -76,6 +78,8 @@ public class RolePermissionSeeder implements CommandLineRunner {
         addPerm(staff, "VOUCHER_READ");
         addPerm(staff, "VOUCHER_STATUS_MANAGE");
         addPerm(staff, "REVIEW_MANAGE");
+        addPerm(staff, "SUPPORT_READ");
+        addPerm(staff, "SUPPORT_WRITE");
 
         roleRepository.save(staff);
 

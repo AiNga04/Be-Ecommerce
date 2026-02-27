@@ -53,6 +53,10 @@ public class PermissionSeeder implements CommandLineRunner {
 
         // DASHBOARD
         create("DASHBOARD_READ", "Can view dashboard statistics");
+
+        // SUPPORT
+        create("SUPPORT_READ", "Can view support tickets");
+        create("SUPPORT_WRITE", "Can update support ticket status");
     }
 
     private void create(String name, String desc) {
