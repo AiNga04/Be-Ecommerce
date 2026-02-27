@@ -2,6 +2,7 @@ package com.zyna.dev.ecommerce.common.mail;
 
 import com.zyna.dev.ecommerce.users.models.User;
 import com.zyna.dev.ecommerce.products.models.Product;
+import com.zyna.dev.ecommerce.support.models.SupportTicket;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import jakarta.mail.internet.MimeMessage;
@@ -105,6 +106,18 @@ public class MailService {
         );
     }
 
+    public void sendSupportReplyEmail(SupportTicket ticket, String replyMessage) {
+        if (!StringUtils.hasText(ticket.getEmail())) {
+            return;
+        }
+        String subject = "Phản hồi yêu cầu hỗ trợ #" + ticket.getId();
+        sendHtmlEmail(
+                new String[]{ticket.getEmail()},
+                subject,
+                buildSupportReplyHtml(ticket, replyMessage)
+        );
+    }
+
     private void sendHtmlEmail(String[] recipients, String subject, String htmlContent) {
         if (recipients == null || recipients.length == 0) {
             return;
@@ -200,6 +213,22 @@ public class MailService {
                         + "<p>ID: " + product.getId() + "</p>"
                         + "<p>Tồn kho hiện tại: <strong style=\"color:#b91c1c;\">" + stock + "</strong></p>"
                         + "<p>Vui lòng nhập thêm hàng để tránh hết hàng.</p>"
+        );
+    }
+
+    private String buildSupportReplyHtml(SupportTicket ticket, String replyMessage) {
+        String greeting = "Xin chào " + ticket.getName() + ",";
+        String safeReply = replyMessage.replace("\n", "<br/>");
+        
+        return baseTemplate(
+                "Phản hồi hỗ trợ khách hàng",
+                "<p>" + greeting + "</p>"
+                        + "<p>Chúng tôi đã nhận được yêu cầu hỗ trợ của bạn về chủ đề: <strong>" + ticket.getSubject() + "</strong></p>"
+                        + "<div style=\"background:#ffffff; border-left:4px solid #60a5fa; padding:16px; margin:20px 0; color:#334155; font-style:italic;\">"
+                        + safeReply
+                        + "</div>"
+                        + "<p>Hy vọng phản hồi này giải đáp được thắc mắc của bạn. Nếu có thêm câu hỏi, đừng ngần ngại liên hệ lại với chúng tôi.</p>"
+                        + "<p>Trân trọng,<br/>Đội ngũ hỗ trợ Zyna</p>"
         );
     }
 

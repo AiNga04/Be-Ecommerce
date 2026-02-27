@@ -1,6 +1,7 @@
 package com.zyna.dev.ecommerce.support.service.impl;
 
 import com.zyna.dev.ecommerce.common.exceptions.ApplicationException;
+import com.zyna.dev.ecommerce.common.mail.MailService;
 import com.zyna.dev.ecommerce.support.dto.request.SupportTicketReplyRequest;
 import com.zyna.dev.ecommerce.support.dto.request.SupportTicketRequest;
 import com.zyna.dev.ecommerce.support.dto.response.SupportTicketResponse;
@@ -27,6 +28,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
 
     private final SupportTicketRepository ticketRepository;
     private final UserRepository userRepository;
+    private final MailService mailService;
 
     @Override
     @Transactional
@@ -92,6 +94,11 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         setProcessor(ticket);
         
         ticketRepository.save(ticket);
+        
+        // Send email notification to customer
+        if (request.getReplyMessage() != null && !request.getReplyMessage().isBlank()) {
+            mailService.sendSupportReplyEmail(ticket, request.getReplyMessage());
+        }
     }
 
     private void setProcessor(SupportTicket ticket) {
