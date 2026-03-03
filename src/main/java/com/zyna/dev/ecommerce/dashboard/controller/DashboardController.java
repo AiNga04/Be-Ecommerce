@@ -21,7 +21,7 @@ public class DashboardController {
 
     // REVENUE
     @GetMapping("/revenue")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasAuthority('ORDER_READ')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ')")
     public ApiResponse<RevenueDashboardResponse> getRevenueStats(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
@@ -37,7 +37,7 @@ public class DashboardController {
 
     // ORDERS
     @GetMapping("/orders/summary")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasAuthority('ORDER_READ')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ')")
     public ApiResponse<OrderStatResponse> getOrderStats() {
         return ApiResponse.successfulResponse(
                 "Lấy thống kê đơn hàng thành công!",
@@ -47,7 +47,7 @@ public class DashboardController {
 
     // TOP PRODUCTS
     @GetMapping("/top-products")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasAuthority('PRODUCT_READ')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ')")
     public ApiResponse<List<TopProductResponse>> getTopSellingProducts(
             @RequestParam(defaultValue = "5") int limit
     ) {
@@ -59,7 +59,7 @@ public class DashboardController {
 
     // LOW STOCK
     @GetMapping("/low-stock")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasAuthority('INVENTORY_READ')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ')")
     public ApiResponse<List<LowStockResponse>> getLowStockProducts(
             @RequestParam(defaultValue = "10") int threshold
     ) {
@@ -87,7 +87,7 @@ public class DashboardController {
 
     // USER STATS
     @GetMapping("/users/summary")
-    @PreAuthorize("hasAuthority('DASHBOARD_READ') or hasAuthority('USER_READ')")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ')")
     public ApiResponse<UserStatResponse> getUserStats() {
         return ApiResponse.successfulResponse(
                 "Lấy thống kê người dùng thành công!",

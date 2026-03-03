@@ -283,7 +283,7 @@ public class UserController {
     // GET DELETED
     @GetMapping("/deleted")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAuthority('USER_READ')")
+    @PreAuthorize("hasAuthority('USER_WRITE')")
     public ApiResponse<List<UserResponse>> getDeletedUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
