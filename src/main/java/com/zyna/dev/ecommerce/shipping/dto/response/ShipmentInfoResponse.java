@@ -18,6 +18,7 @@ public class ShipmentInfoResponse {
     private String orderCode;
 
     private ShipmentStatus status;
+    private String orderStatus;
     private String carrier;
     private String trackingCode;
 
@@ -42,4 +43,5 @@ public class ShipmentInfoResponse {
     private LocalDateTime deliveredAt;
     private LocalDateTime failedAt;
     private LocalDateTime returnedAt;
+    private LocalDateTime completedAt;
 }

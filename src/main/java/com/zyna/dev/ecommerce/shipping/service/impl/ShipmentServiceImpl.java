@@ -609,6 +609,7 @@ public class ShipmentServiceImpl implements ShipmentService {
                 .orderId(order.getId())
                 .orderCode(order.getCode())
                 .status(ship.getStatus())
+                .orderStatus(order.getStatus() != null ? order.getStatus().name() : null)
                 .carrier(ship.getCarrier())
                 .trackingCode(ship.getTrackingCode())
                 .shipperId(shipper != null ? shipper.getId() : null)
@@ -627,6 +628,7 @@ public class ShipmentServiceImpl implements ShipmentService {
                 .deliveredAt(ship.getDeliveredAt())
                 .failedAt(ship.getFailedAt())
                 .returnedAt(ship.getReturnedAt())
+                .completedAt(order.getCompletedAt())
                 .build();
     }
 
