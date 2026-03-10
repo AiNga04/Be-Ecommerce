@@ -285,6 +285,27 @@ public class ShipmentServiceImpl implements ShipmentService {
 
         return toResponse(ship);
     }
+    @Override
+    @Transactional
+    public ShipmentInfoResponse rejectReturn(Long shipmentId, String reason) {
+        Shipment ship = shipmentRepository.findById(shipmentId)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn giao hàng"));
+
+        if (!ship.isReturnRequested()) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST, "Đơn giao hàng không ở trạng thái yêu cầu trả hàng");
+        }
+
+        ship.setReturnRequested(false);
+        ship.setNote(reason != null ? "Từ chối trả hàng: " + reason : "Admin đã từ chối trả hàng");
+
+        Order order = ship.getOrder();
+        syncOrderShipping(order, ship);
+
+        shipmentRepository.save(ship);
+        orderRepository.save(order);
+
+        return toResponse(ship);
+    }
 
     @Override
     @Transactional(readOnly = true)

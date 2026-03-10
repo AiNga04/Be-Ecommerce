@@ -142,6 +142,20 @@ public class ShipmentController {
         );
     }
 
+    @PatchMapping({"/{shipmentId}/reject-return", "/{shipmentId}/reject-return/"})
+    @PreAuthorize("hasAuthority('SHIPPING_MANAGE')")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<ShipmentInfoResponse> rejectReturn(
+            @PathVariable Long shipmentId,
+            @RequestBody(required = false) String reason
+    ) {
+        return ApiResponse.successfulResponse(
+                200,
+                "Đã từ chối trả hàng",
+                shipmentService.rejectReturn(shipmentId, clean(reason))
+        );
+    }
+
     // ======================== ADMIN / STAFF ========================
 
     /**
