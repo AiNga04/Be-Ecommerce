@@ -42,6 +42,8 @@ public class OrderResponse {
     private String shipperName;
     private String shipperPhone;
     private Boolean returnRequested;
+    private String returnRequestReason;
+    private String returnRequestStatus;
 
     private LocalDateTime createdAt;
     private LocalDateTime confirmedAt;

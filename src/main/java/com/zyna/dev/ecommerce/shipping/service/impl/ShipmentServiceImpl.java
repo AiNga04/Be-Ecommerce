@@ -16,6 +16,9 @@ import com.zyna.dev.ecommerce.users.UserRepository;
 import com.zyna.dev.ecommerce.products.repository.SizeRepository;
 import com.zyna.dev.ecommerce.products.repository.ProductSizeRepository;
 import com.zyna.dev.ecommerce.orders.models.OrderItem;
+import com.zyna.dev.ecommerce.shipping.models.ReturnRequest;
+import com.zyna.dev.ecommerce.shipping.repository.ReturnRequestRepository;
+import com.zyna.dev.ecommerce.common.enums.ReturnRequestStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
@@ -38,6 +41,7 @@ public class ShipmentServiceImpl implements ShipmentService {
     private final UserRepository userRepository;
     private final SizeRepository sizeRepository;
     private final ProductSizeRepository productSizeRepository;
+    private final ReturnRequestRepository returnRequestRepository;
 
     // ================= ADMIN / STAFF =================
 
@@ -256,6 +260,13 @@ public class ShipmentServiceImpl implements ShipmentService {
         shipment.setNote(reason);
         syncOrderShipping(order, shipment);
 
+        ReturnRequest rr = ReturnRequest.builder()
+                .shipment(shipment)
+                .reason(reason)
+                .status(ReturnRequestStatus.PENDING)
+                .build();
+        returnRequestRepository.save(rr);
+
         shipmentRepository.save(shipment);
         orderRepository.save(order);
 
@@ -277,6 +288,15 @@ public class ShipmentServiceImpl implements ShipmentService {
         ship.setNote(reason != null ? reason : "Admin đã duyệt trả hàng");
         ship.setReturnRequested(false);
 
+        // Update ReturnRequest
+        returnRequestRepository.findFirstByShipmentAndStatusOrderByCreatedAtDesc(ship, ReturnRequestStatus.PENDING)
+                .ifPresent(rr -> {
+                    rr.setStatus(ReturnRequestStatus.APPROVED);
+                    rr.setResolvedAt(now);
+                    rr.setReviewerNote(reason);
+                    returnRequestRepository.save(rr);
+                });
+
         Order order = ship.getOrder();
         syncOrderShipping(order, ship);
 
@@ -297,6 +317,15 @@ public class ShipmentServiceImpl implements ShipmentService {
 
         ship.setReturnRequested(false);
         ship.setNote(reason != null ? "Từ chối trả hàng: " + reason : "Admin đã từ chối trả hàng");
+
+        // Update ReturnRequest
+        returnRequestRepository.findFirstByShipmentAndStatusOrderByCreatedAtDesc(ship, ReturnRequestStatus.PENDING)
+                .ifPresent(rr -> {
+                    rr.setStatus(ReturnRequestStatus.REJECTED);
+                    rr.setResolvedAt(LocalDateTime.now());
+                    rr.setReviewerNote(reason);
+                    returnRequestRepository.save(rr);
+                });
 
         Order order = ship.getOrder();
         syncOrderShipping(order, ship);
@@ -563,6 +592,18 @@ public class ShipmentServiceImpl implements ShipmentService {
     private ShipmentInfoResponse toResponse(Shipment ship) {
         User shipper = ship.getShipper();
         Order order = ship.getOrder();
+
+        ReturnRequest latestRequest = returnRequestRepository.findFirstByShipmentAndStatusOrderByCreatedAtDesc(ship, ReturnRequestStatus.PENDING)
+                .orElse(null);
+        if (latestRequest == null) {
+            // Check for approved/rejected if no pending
+            latestRequest = returnRequestRepository.findAll().stream()
+                    .filter(r -> r.getShipment().getId().equals(ship.getId()))
+                    .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                    .findFirst()
+                    .orElse(null);
+        }
+
         return ShipmentInfoResponse.builder()
                 .shipmentId(ship.getId())
                 .orderId(order.getId())
@@ -579,6 +620,8 @@ public class ShipmentServiceImpl implements ShipmentService {
                 .attempts(ship.getAttempts())
                 .note(ship.getNote())
                 .returnRequested(ship.isReturnRequested())
+                .returnRequestReason(latestRequest != null ? latestRequest.getReason() : null)
+                .returnRequestStatus(latestRequest != null ? latestRequest.getStatus().name() : null)
                 .assignedAt(ship.getAssignedAt())
                 .pickedUpAt(ship.getPickedUpAt())
                 .deliveredAt(ship.getDeliveredAt())

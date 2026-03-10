@@ -34,6 +34,8 @@ public class ShipmentInfoResponse {
     private String note;
     private Integer attempts;
     private Boolean returnRequested;
+    private String returnRequestReason;
+    private String returnRequestStatus;
 
     private LocalDateTime assignedAt;
     private LocalDateTime pickedUpAt;

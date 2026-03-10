@@ -6,6 +6,9 @@ import com.zyna.dev.ecommerce.orders.models.Order;
 import com.zyna.dev.ecommerce.orders.models.OrderItem;
 import com.zyna.dev.ecommerce.shipping.models.Shipment;
 import com.zyna.dev.ecommerce.shipping.repository.ShipmentRepository;
+import com.zyna.dev.ecommerce.shipping.repository.ReturnRequestRepository;
+import com.zyna.dev.ecommerce.shipping.models.ReturnRequest;
+import com.zyna.dev.ecommerce.common.enums.ReturnRequestStatus;
 import com.zyna.dev.ecommerce.reviews.repository.ReviewRepository;
 import com.zyna.dev.ecommerce.users.models.User;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +22,26 @@ public class OrderMapper {
 
     private final ShipmentRepository shipmentRepository;
     private final ReviewRepository reviewRepository;
+    private final ReturnRequestRepository returnRequestRepository;
 
     public OrderResponse toOrderResponse(Order order) {
         List<OrderItemResponse> items = toOrderItemResponses(order);
 
         Shipment shipment = shipmentRepository.findByOrder(order).orElse(null);
         User shipper = shipment != null ? shipment.getShipper() : null;
+
+        ReturnRequest latestRequest = null;
+        if (shipment != null) {
+            latestRequest = returnRequestRepository.findFirstByShipmentAndStatusOrderByCreatedAtDesc(shipment, ReturnRequestStatus.PENDING)
+                    .orElse(null);
+            if (latestRequest == null) {
+                latestRequest = returnRequestRepository.findAll().stream()
+                        .filter(r -> r.getShipment().getId().equals(shipment.getId()))
+                        .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                        .findFirst()
+                        .orElse(null);
+            }
+        }
 
         return OrderResponse.builder()
                 .id(order.getId())
@@ -49,6 +66,8 @@ public class OrderMapper {
                 .shipperName(shipper != null ? shipper.getFirstName() + " " + shipper.getLastName() : null)
                 .shipperPhone(shipper != null ? shipper.getPhone() : null)
                 .returnRequested(shipment != null ? shipment.isReturnRequested() : null)
+                .returnRequestReason(latestRequest != null ? latestRequest.getReason() : null)
+                .returnRequestStatus(latestRequest != null ? latestRequest.getStatus().name() : null)
                 .createdAt(order.getCreatedAt())
                 .confirmedAt(order.getConfirmedAt())
                 .shippedAt(order.getShippedAt())
